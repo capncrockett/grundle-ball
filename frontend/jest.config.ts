@@ -5,8 +5,9 @@ const config: Config = {
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   testMatch: ['**/__tests__/**/*.(spec|test).[tj]s?(x)', '**/?(*.)+(spec|test).[tj]s?(x)'],
-  moduleNameMapper: {
+moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.md\\?raw$': '<rootDir>/src/test/__mocks__/rawMarkdown.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '@vercel/speed-insights/react': '<rootDir>/src/test/__mocks__/speedInsights.tsx',
     '^msw/node$': '<rootDir>/node_modules/msw/node',
