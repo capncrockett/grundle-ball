@@ -4,9 +4,11 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-Playoff bracket visualization UI for a Sleeper fantasy football keeper league. The app visualizes three interrelated brackets (Champ Bowl, Keeper Bowl, Toilet Bowl) with custom routing rules where losers from Champ Bowl flow into Keeper Bowl, and winners from Toilet Bowl feed into Keeper Bowl.
+Playoff bracket visualization UI for a Sleeper fantasy football keeper league (Grundle). The app visualizes three interrelated brackets (Champ Bowl, Keeper Bowl, Toilet Bowl) with custom routing rules where losers from Champ Bowl flow into Keeper Bowl, and winners from Toilet Bowl feed into Keeper Bowl.
 
-**Current State:** Fully functional React SPA with both "If Today" preview mode and Live playoffs mode. Features responsive design with mobile-optimized layouts. Direct calls to Sleeper public APIs. Backend proxy may be added later (caching/rate-limiting).
+**Current State:** Fully functional React SPA with Live + If-Today playoff modes, matchups, standings, and a Constitution page for in-repo league rules. Responsive design with mobile-optimized layouts. Direct calls to Sleeper public APIs. Backend proxy may be added later (caching/rate-limiting).
+
+**Repo agent docs:** See root `AGENTS.md` for skills, glossary/ADR locations, and conventions. Domain terminology work uses `.agents/skills/grill-with-docs` and writes `CONTEXT.md` / `docs/adr/` at the repo root.
 
 ## Tech Stack
 
@@ -85,6 +87,10 @@ src/
 │   ├── matchups/
 │   │   └── MatchupCard.tsx           # Weekly matchup results card
 │   └── ThemeSelector.tsx             # DaisyUI theme switcher (light/dark/cupcake/synthwave)
+├── content/
+│   ├── constitution.md               # League constitution source of truth (markdown)
+│   ├── constitution.ts               # Parsed document + TOC helpers
+│   └── parseConstitutionMarkdown.ts  # Lightweight markdown -> document AST
 ├── data/
 │   ├── matchupHistory.ts             # Read matchup history from JSON store
 │   ├── matchupHistoryTypes.ts        # Types for matchup history data
@@ -96,13 +102,14 @@ src/
 │   ├── PlayoffsLivePage.tsx          # Live playoff bracket (real game outcomes)
 │   ├── MatchupsPage.tsx              # Weekly matchup results
 │   ├── StandingsPage.tsx             # Season standings table
+│   ├── ConstitutionPage.tsx          # League constitution with TOC + anchors
 │   ├── narratives.tsx                # Narrative text generation for insights
 │   ├── playoffRaceInsights.ts        # Playoff race analysis logic
 │   └── standingsInsights.ts          # Standings insights and division analysis
 ├── test/
 │   ├── fixtures/                     # Test data (Sleeper API mocks, teams, matchups)
 │   ├── mocks/                        # MSW handlers and API mocks
-│   ├── __mocks__/                    # Module mocks
+│   ├── __mocks__/                    # Module mocks (incl. raw markdown import mock)
 │   ├── setupTests.ts                 # Jest/RTL configuration
 │   ├── server.ts                     # MSW server setup
 │   └── testUtils.tsx                 # Test helpers (renderWithRouter, etc.)
@@ -196,6 +203,11 @@ Sleeper API -> sleeperTransforms.ts -> Team models -> bracket/seedAssignment.ts 
   - Shows clinch status, elimination status, magic numbers
   - Division-specific insights and narratives
   - Handles leagues with/without divisions gracefully
+- `/constitution` - Grundle League Constitution (static, in-repo markdown)
+  - Source: `src/content/constitution.md` (edit via PR; original docx archived under `docs/`)
+  - Renders title, sticky table of contents, nested section anchors
+  - Lightweight custom markdown parser (no extra markdown dependency)
+  - Top-nav link labeled Constitution (nav currently has 5 items)
 
 **Both playoff pages share:**
 
@@ -209,14 +221,17 @@ Sleeper API -> sleeperTransforms.ts -> Team models -> bracket/seedAssignment.ts 
 
 - ✅ Jest + React Testing Library configured
 - ✅ Unit tests for utilities (transforms, bracket routing, insights)
-- ✅ Integration tests for all pages
-- ✅ Playwright E2E smoke tests (desktop + mobile)
+- ✅ Integration tests for all pages (including Constitution)
+- ✅ Playwright E2E smoke tests (desktop + mobile; includes `/constitution`)
 - ✅ MSW mocks for Sleeper API
 - ✅ Test fixtures and helpers
 - ✅ CI integration (Jest on every PR, Playwright on release branches)
-- [ ] Complete smoke testing of all routes
+- ✅ Constitution page + in-repo rules source of truth
+- [ ] Complete smoke testing of all routes on staging after deploy
 - [ ] Verify error surfacing
 - [ ] Deploy to production
+
+**Active follow-on:** Domain terminology cleanup (glossary via root `CONTEXT.md`, grill-with-docs skill).
 
 **Phase 3.3 (COMPLETE):** Bracket Connectors
 
@@ -284,10 +299,10 @@ npm run lint
 
 **Test Coverage:**
 
-- Unit tests: Bracket routing, seed assignment, transforms, insights logic
-- Integration tests: All pages (Playoffs If Today, Live, Matchups, Standings)
+- Unit tests: Bracket routing, seed assignment, transforms, insights logic, constitution markdown parser
+- Integration tests: All pages (Playoffs If Today, Live, Matchups, Standings, Constitution)
 - Component tests: BracketTile, BracketGrid, MatchupCard
-- E2E tests: Navigation, route content, mobile viewports, theme toggle
+- E2E tests: Navigation (5 nav links), route content including `/constitution`, TOC anchors, mobile viewports, theme toggle
 
 See `TESTING.md` in the root directory for detailed testing strategy.
 
@@ -303,6 +318,8 @@ See `TESTING.md` in the root directory for detailed testing strategy.
 - **Theme System:** Uses DaisyUI themes with localStorage persistence. Current themes: light, cupcake, synthwave, dark.
 - **Insights:** Playoff race insights use narrative generation and division-aware logic. Handles leagues without divisions gracefully.
 - **Testing:** All critical paths have test coverage. Use `data-testid` attributes for stable E2E selectors.
+- **Constitution content:** Edit `src/content/constitution.md` only. Original Word doc is archived at repo `docs/Grundle Constitution v2.docx`. Jest maps `*.md?raw` via `src/test/__mocks__/rawMarkdown.ts`.
+- **Agent skills / glossary:** Repo-level skill copies live in `../.agents/skills/` (see root `AGENTS.md`). Terminology work should update root `CONTEXT.md` and optional `docs/adr/`.
 
 ## Common Patterns
 
