@@ -205,6 +205,7 @@ Sleeper API -> sleeperTransforms.ts -> Team models -> bracket/seedAssignment.ts 
   - Handles leagues with/without divisions gracefully
 - `/constitution` - Grundle League Constitution 2026 Edition (static, in-repo markdown)
   - Source: `src/content/constitution.md` (edit via PR; 2026 PDF + legacy docx archived under `docs/`)
+  - Hosted PDF download/open link: `/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` (from `frontend/public/docs/`)
   - Renders title, sticky table of contents, nested section anchors, and markdown tables
   - Lightweight custom markdown parser (no extra markdown dependency)
   - Top-nav link labeled Constitution (nav currently has 5 items)

@@ -117,17 +117,36 @@ function SectionView({ section }: { section: ConstitutionSection }) {
   );
 }
 
+export const CONSTITUTION_PDF_HREF =
+  '/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf';
+
 export function ConstitutionPage() {
   const document = constitutionDocument;
   const toc = getConstitutionToc(document);
 
-return (
+  return (
     <div className="max-w-6xl mx-auto px-4 py-6" data-testid="constitution-page">
-      <div className="mb-6 space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold">{document.title}</h1>
-        <p className="text-sm text-base-content/60">
-          2026 Edition review draft. In-repo source of truth — update as amendments and votes land.
-        </p>
+      <div className="mb-6 space-y-3">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">{document.title}</h1>
+          <p className="text-sm text-base-content/60">
+            2026 Edition review draft. In-repo source of truth — update as amendments and votes land.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={CONSTITUTION_PDF_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline btn-sm"
+            data-testid="constitution-pdf-link"
+          >
+            Open PDF
+          </a>
+          <a href={CONSTITUTION_PDF_HREF} download className="btn btn-ghost btn-sm">
+            Download PDF
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] items-start">

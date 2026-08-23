@@ -6,10 +6,17 @@ describe('ConstitutionPage', () => {
   it('renders title, TOC, and major section headings', () => {
     render(<ConstitutionPage />);
 
-    expect(
+expect(
       screen.getByRole('heading', { level: 1, name: /grundle league constitution/i }),
     ).toBeInTheDocument();
     expect(screen.getByTestId('constitution-page')).toBeInTheDocument();
+
+    const pdfLink = screen.getByTestId('constitution-pdf-link');
+    expect(pdfLink).toHaveAttribute(
+      'href',
+      '/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf',
+    );
+    expect(pdfLink).toHaveAttribute('target', '_blank');
 
     const toc = screen.getByRole('navigation', { name: /constitution table of contents/i });
     expect(toc).toBeInTheDocument();

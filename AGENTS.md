@@ -13,6 +13,7 @@ Guidance for coding agents working in this repository.
 | Installed agent skills | `.agents/skills/` |
 | League constitution source of truth | `frontend/src/content/constitution.md` |
 | Current constitution archive (2026 review draft) | `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` |
+| Hosted constitution PDF (Vercel static) | `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` → `/docs/...pdf` |
 | Legacy constitution archive | `docs/Grundle Constitution v2.docx` |
 
 Keep implementation details out of `CONTEXT.md`. That file is a glossary only.
