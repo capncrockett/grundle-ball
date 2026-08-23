@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 import { renderWithRouter } from './test/testUtils';
 
@@ -15,6 +15,10 @@ jest.mock('./pages/PlayoffsLivePage', () => ({
 
 jest.mock('./pages/StandingsPage', () => ({
   StandingsPage: () => <div>Standings Page</div>,
+}));
+
+jest.mock('./pages/ConstitutionPage', () => ({
+  ConstitutionPage: () => <div>Constitution Page</div>,
 }));
 
 // Theme selector manipulates DOM/localStorage; keep it simple for tests
@@ -44,5 +48,16 @@ describe('App routing + nav', () => {
 
     expect(ifTodayLink).toHaveClass('btn-active');
     expect(matchupsLink).not.toHaveClass('btn-active');
+  });
+
+it('renders constitution route and highlights constitution nav', () => {
+    renderWithRouter(<App />, { route: '/constitution' });
+
+    expect(screen.getByText('Constitution Page')).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const constitutionLink = within(banner).getByRole('link', { name: /constitution/i });
+    expect(constitutionLink).toHaveClass('btn-active');
+    expect(constitutionLink).toHaveAttribute('href', '/constitution');
   });
 });
