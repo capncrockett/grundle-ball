@@ -36,13 +36,16 @@ describe('ConstitutionPage', () => {
     }
   });
 
-  it('renders nested board responsibilities and rule-change emphasis', () => {
+it('renders 2026 tables, keeper pending notice, and toilet bowl terminology', () => {
     render(<ConstitutionPage />);
 
-    expect(screen.getByText(/Help identify collusion within the league\/trades/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/In season changes will only be made with full consensus/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/THE CHAMPIONSHIP BELT!!!/i)).toBeInTheDocument();
+expect(screen.getAllByRole('columnheader', { name: /^Setting$/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('cell', { name: /^Managers$/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /^\$25 per team$/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^What it means here$/i })).toBeInTheDocument();
+    expect(screen.getByText(/PENDING 2026 VOTE/i)).toBeInTheDocument();
+    expect(screen.getByText(/King \(Last Place\)/i)).toBeInTheDocument();
+expect(screen.getAllByText(/Rumble in the Grundle/i).length).toBeGreaterThanOrEqual(1);
+expect(screen.getAllByText(/Highest Points Against/i).length).toBeGreaterThanOrEqual(1);
   });
 });

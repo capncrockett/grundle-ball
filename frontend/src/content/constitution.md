@@ -1,201 +1,447 @@
 # Grundle League Constitution
 
-## League Details
+**2026 Edition** · Effective for the 2026 season · **Review Draft**
 
-- League Members: 12 (depending on the number of solid owners we have).
-- Scoring Format: ½ PPR, Decimal Scoring, 4pt QB passing TDs. (Refer to Sleeper scoring settings for more).
-- Roster Construction:
-  - Position Breakdown: QB, 2x RB, 2x WR, TE, FLEX(RB/WR/TE), Kicker, Defense.
-  - Bench Slots: 5.
-  - IR Spots: 2.
-- Waiver System: Free Agent Acquisition Budget (FAAB).
-- In-Season Budget: $100 (Note: This does not carry over to the following season).
-- Divisions: 3 Divisions of 4 teams each, randomized at the start of each season.
-- Trades:
-  - Approval Process: All trades will be approved if agreed upon by all parties involved.
-  - Exception: Collusion, in which case the trade will be vetoed by the league commissioner.
-  - Tradeable Assets: Current players, FAAB.
+This review draft contains one unresolved item in the Keeper section: the 2026 vote on whether a team may exceed two keepers by acquiring keeper packages after the keeper lock.
 
-## 2020 Season Amendments
+## 1. League at a Glance
 
-- (Temporary) Increase IR spots to 4 to allow retention of players in the COVID protocol.
-- (Permanent) The deadline for submitting your keepers will be 72 hours before the start of the draft. If you fail to submit your keepers by the deadline you forfeit your right to any keepers!
-- (Permanent) Update to keepers: in the case of two keepers both costing 1st round picks. See keepers.
-- Draft pick trading turned off.
-- Playoffs moved to weeks 15-17.
+| Setting | Value |
+| --- | --- |
+| Managers | 12 |
+| Buy-in | $25 per team |
+| Scoring | 1/2 PPR, decimal scoring, 4-point passing TDs |
+| Starting QB | 1 |
+| IDP | 1 IDP FLEX (DL/LB/DB), scored at 50% of Sleeper default IDP values |
+| Bench / IR | 6 bench / 2 IR |
+| FAAB | $100 starting seasonal budget; no carryover |
+| Keepers | 2 designated per team |
+| Keeper lock | 72 hours before the scheduled Sleeper draft start |
+| Trade deadline | Week 12, exact timestamp per Sleeper |
+| Auto Subs | Maximum 1 per matchup |
+| Playoffs | 6-team championship bracket, Weeks 15-17 |
+| Rule changes | Offseason 75%; in-season existing-rule changes 100%; in-season new-rule additions 75% |
 
-## Keepers
+This page is a quick reference only. The detailed sections below control.
 
-Prior to the draft, each owner must designate their 2 keepers on the sleeper app prior to that season’s draft. If they do not designate their keepers then they are agreeing to not keep any players. Keepers will be kept at their initial draft equity, for example:
+## 2. League Overview
 
-- If I drafted Lamar Jackson in the 13th round (2019), the following year (2020) I would forfeit my 13th round pick in order to keep him.
-- If I wish to keep L. Jackson the following year (2021) I will sacrifice my 1st round pick.
-- Should I decide to not keep Jackson next year (2020) but draft him in the 1st round, I would then forfeit my 1st round pick the following year (2021) if I wanted to keep him.
-- No player shall be deemed a keeper by the same owner for more than two years. If I draft Jackson in 2019 for a 13th, I can keep him for a 13th in 2020, and a 1st in 2021. After that I cannot deem him a keeper. He must be released.
-- If I trade Jackson away (2019) and the new owner decides to keep him the following year (2020), they would forfeit their 13th round pick, respective to the original draft cost.
-- If a player is traded to another team they will have the option to keep him twice respective to original draft cost.
-- If a player was drafted (in the 13th for example), then dropped by the original owner, and signed by a new owner, that player carries their draft round (13th) designation to the new team. Meaning the new owner can keep them at the original round price (13th). The two year limit now applies to the new owner.
-- Undrafted players will be kept at a cost of the players ADP (average draft position) at time of draft +2 rounds.
-- Example: James Robinson went undrafted in 2020. In 2021, at the time of the draft his ADP is, let’s say, 53.1 (5.05 in round value). He would cost your 5th round pick plus two rounds. (5.04 + 2 = 7.04).
-- If an owner wishes to keep two players drafted (by different owners or via ADP+2) in the same round they will be held at that round and one round above.
-- Example: player A and B both drafted in the 4th round. Player A costs a 4th and player B costs a 3rd. The owner designates which player shall be held respective to round cost.
-- In the case of two players costing a 1st round pick the owner can forfeit their 1st and 2nd round picks (2021 amendment).
+**League size.** The Grundle consists of 12 managers, each controlling one team.
 
-## Regular Season
+**Manager and Team.** A Manager is the person participating in the league. A Team is the persistent Sleeper franchise, including its roster, draft picks, keeper history, and prepaid dues. If a new manager takes over an existing team, that manager inherits those team assets and obligations as they stand.
 
-Buy-In: $25 per owner.
+**Rules hierarchy.** This Constitution is authoritative. If the Constitution does not address an issue, the configured Sleeper setting or normal platform behavior governs. If the Constitution establishes a rule Sleeper cannot enforce automatically, the Commissioner will administer it manually.
 
-The season schedule will be as follows:
+**Settings conflicts.** An accidental Sleeper settings mismatch does not amend the Constitution. If a longstanding mismatch is discovered after the league has already been operating under it, the setting will normally be corrected prospectively; completed matchups and transactions generally stand.
 
-- Weeks 1-3: Divisional matchups
-- Weeks 4-11: Intra-divisional matchups
-- Weeks 12-14: Divisional matchups
-- Weeks 15-17: Playoffs
+**Buy-in.** The standard league buy-in is $25 per team. Future-season prepayments required for draft-pick trading are governed by the Trades section.
 
-The regular season ends after the completion of week 14.
+## 3. Rosters & Scoring
 
-All owners are responsible for fielding a complete lineup each week.
+Each team has the following roster structure:
 
-A complete lineup consists of the following:
+- QB
+- 2 RB
+- 2 WR
+- TE
+- FLEX (RB/WR/TE)
+- K
+- DEF
+- IDP FLEX (DL/LB/DB)
+- 6 Bench
+- 2 IR
+
+**Scoring.** The league uses 1/2 PPR, decimal scoring, and 4-point quarterback passing touchdowns. Other offensive, kicking, defense, and special-teams scoring follows the configured Sleeper settings.
+
+**IDP scoring.** Individual defensive players are scored at 50% of Sleeper's standard/default IDP scoring values. This reduction applies globally to the IDP scoring categories.
+
+**Position eligibility.** Sleeper determines each player's positional designation and eligibility. The roster limits above are constitutional rules even if the platform requires manual administration.
+
+## 4. Complete Lineups
+
+Managers are responsible for fielding a complete, good-faith competitive lineup in every matchup through their team's final game of the season, including championship placement games and Toilet Bowl games through Week 17.
+
+A complete lineup has:
 
 - No empty starting roster spots
-- No players on bye in your starting lineup
-- No players on IR in your starting lineup
+- No players on bye in the starting lineup
+- No players on IR in the starting lineup
 
-Team owners need to make provisions for meeting this clause.
+A starter who is inactive but is properly covered by a valid Sleeper Auto Sub does not violate the complete-lineup rule.
 
-In the event of a computer failure (out of service range, some other problem) prior to the start of a given week’s games, an owner must contact the commissioner prior to kickoff of the first game and inform him of the situation and the subsequent lineup change(s). The commissioner will post notification of the manual lineup change(s) in the chat.
+**Good-faith competition.** Managers may make aggressive, unconventional, or simply bad start/sit decisions. The Commissioner does not second-guess ordinary lineup judgment. Intentionally benching clearly superior healthy starters for the purpose of manipulating standings, draft position, the Toilet Bowl, or another team's outcome is prohibited.
 
-## Playoffs
+**Technical or access problems.** If a manager genuinely cannot access Sleeper, the manager may contact the Commissioner with the exact intended lineup change before the affected player or players lock. The Commissioner may make the manual adjustment and document it in league chat. Requests made after the relevant player has locked will not be honored.
 
-- Playoffs begin week 15 and conclude in week 17
-- 1st and 2nd seed teams will earn a first round bye.
-- The championship bracket will consist of 6 teams.
-- The first place team in each division will be awarded the 1st, 2nd and 3rd seeds respectively, based on their final season record > Points For.
-- The 4th and 5th seeds are awarded to the next 2 best records regardless of division > Points For.
-- The 6th seed is awarded to the highest Points For, regardless of record or division, that did not make the 1st-5th seeds.
+## 5. Sleeper Auto Subs
 
-Ties will be broken in the following order:
+Auto Subs are intended to protect a manager who prepared a valid replacement but misses a late inactive announcement. They are not a substitute for maintaining a legal lineup.
 
-- Most points for
-- Head-2-Head Record
-- Win % within division
-- Fewest points against
+| Setting | Value | What it means here |
+| --- | --- | --- |
+| Maximum Auto Subs per matchup | 1 | A team may designate at most one Auto Sub pairing in a matchup. |
+| Require AutoSub To Not Play Before Starter | Off | The substitute is allowed to play before the starter. Example: a Thursday player may protect a Sunday starter if the pairing is created before the Thursday player locks. |
+| Lock AutoSub If Starter Active | Off | If the starter plays, the unused substitute is not treated as consumed merely because it was designated as the Auto Sub. |
+
+The designated substitute must be eligible for the starter's lineup slot and will enter only if the starter is inactive under Sleeper's Auto Sub rules. The pairing must be established before the relevant players lock.
+
+Sleeper documentation: How do Player AutoSubs work?
+
+## 6. Waivers & IR
+
+**FAAB.** Each team begins the renewed season with $100 in FAAB. Unused FAAB does not carry over. FAAB may be traded, so a team's balance may exceed $100 during the season.
+
+**Waivers.** Players who are dropped are subject to a 1-day waiver period. Sunday waiver/free-agency access follows the configured Sleeper schedule. FAAB ties and other waiver-processing mechanics are handled by Sleeper.
+
+**Pre-draft free agency.** No waiver or free-agent acquisitions are allowed before the draft. Trades are allowed. Once the draft concludes, waiver and free-agent activity resumes according to Sleeper's configured mechanics.
+
+**IR eligibility.** The league has 2 IR spots. IR, PUP, Out, and Doubtful players are eligible for those spots. Suspended, NA, DNR, holdout, and opt-out designations are not eligible.
+
+## 7. Trades
+
+**Tradeable assets.** Managers may trade players, FAAB, and eligible draft picks. Draft-day and offseason trading are permitted whenever Sleeper supports the transaction.
+
+**Approval.** Trades require Commissioner approval. Routine trades should be processed promptly. There is no fixed review window.
+
+A trade is not rejected merely because it is lopsided, shortsighted, unpopular, contains a big-name player, or is a deal another manager would not personally make. The Commissioner may reject or reverse a trade for suspected collusion, a clear accidental transaction, a clear rule violation, or an obvious roster dump that materially harms league integrity.
+
+**Roster dump standard.** This is a narrow standard for plainly noncompetitive asset transfers, not ordinary bad trades. Example: an eliminated team trading Ja'Marr Chase for Brandon Aubrey and $5 FAAB with no legitimate keeper or strategic explanation could qualify.
+
+**Accidental trades.** The Commissioner may reverse a clearly accidental transaction. A manager claiming an accident should report it promptly. Regret after making a deliberate trade is not an accident.
+
+**Future draft picks.** A team may trade picks from the current draft and the next two future drafts supported by Sleeper. During the 2026 season, this permits trading through the 2028 draft; when the league is renewed for 2027, the 2029 draft opens.
+
+A manager who trades away a pick from a future season must prepay dues for every future season in which that manager sends away a pick. Merely receiving a future pick does not require prepayment. Required payment must be confirmed before the trade is approved.
+
+Future dues remain with the team, are nonrefundable, and are inherited by any replacement manager. If the league buy-in later increases, the prepayment is treated as a credit and the team owes the difference.
+
+**Trade deadline.** The deadline is Week 12 at the exact timestamp configured in Sleeper.
+
+**Commissioner trades.** The Commissioner may process trades involving the Commissioner's own team under the same standards as any other trade.
+
+## 8. Keepers
+
+**PENDING 2026 VOTE:** Each team may designate no more than 2 keepers at the 72-hour lock. The league is separately voting on whether a team may end up with more than 2 keepers by acquiring keeper packages after the lock. The result of that vote will replace this notice in the final edition.
+
+**Keeper lock.** Keeper designations lock exactly 72 hours before the scheduled Sleeper draft start. The deadline is strict. A team that fails to designate its keepers by the deadline has no keepers for that draft.
+
+If the draft is rescheduled before the keeper lock occurs, the lock moves with the new draft time. Once the lock has passed, a later draft reschedule does not reopen or move the keeper deadline.
+
+**Designation.** Keepers must be designated in Sleeper. A genuine technical-access problem may be handled by the Commissioner if the manager communicates the intended designation before the deadline.
+
+**Team-specific keeper history.** A team may keep the same player for no more than 2 keeper seasons total. Keeper history belongs to the Team, not the human Manager. A player leaving and later returning to the same team does not reset that team's history with that player.
+
+Different teams maintain their own keeper histories. A trade to another team therefore gives the receiving team its own keeper eligibility, subject to any prior keeper seasons that same receiving team has already used on that player.
+
+**Keeper cost progression.** A drafted player's first keeper season costs the player's original draft round. The second keeper season for that team costs the highest applicable draft pick, normally a 1st-round pick.
+
+If a player was drafted and later dropped, that player retains the original draft-round designation for a team that later acquires the player.
+
+**Undrafted players.** An undrafted player's first keeper cost is based on Sleeper ADP on draft day. In a 12-team draft, the ADP is converted to the round containing that pick, and the keeper costs two rounds later. Any ADP falling within a round counts as that round. If the calculated cost falls beyond the final draft round, the cost is capped at the final round. The second keeper season still costs the highest applicable pick, normally a 1st.
+
+**Same-round keepers.** If two keepers require the same round and the team owns two distinct picks in that round, both picks may be spent. If the team owns only one pick in that round, one keeper uses that pick and the other moves one round earlier. The team chooses which player is assigned to which cost.
+
+**Unavailable required picks.** A keeper may never become cheaper because the team traded away the required pick. If the required pick is unavailable, the cost moves earlier until an available qualifying pick is found. A first-round-cost keeper therefore requires a 1st-round pick, except for the established two-first-round-keeper exception below.
+
+**Two first-round keepers.** If a team has two players each costing a 1st and owns two 1st-round picks, both 1sts are spent. If the team has only one 1st, it may keep both players for a 1st and a 2nd, provided it owns both required picks. If the necessary 2nd has been traded away, the team cannot keep both players.
+
+**Picks are spent at lock.** At the keeper lock, the team must possess every pick required to pay for its designated keepers. Those picks are considered spent and attach to the corresponding keeper.
+
+**Post-lock keeper packages.** During the 72 hours before the draft, and during the draft where Sleeper permits, a designated keeper may be traded together with the already-spent pick. The receiving team inherits the keeper designation and the attached pick cost. No new keeper designation may be created after the lock.
+
+A keeper-package trade does not reset the receiving team's keeper clock. If that team has already used two keeper seasons on the player, it cannot receive the player as a keeper. If it has used one keeper season, the transferred package may count as its second and final keeper season at the package's already-spent pick cost.
+
+## 9. Draft
+
+The annual draft is a snake draft in reverse order of the prior season's final standings.
+
+Final standings include the Championship bracket, Championship placement games, and Toilet Bowl results. The last-place team receives pick 1.01. The league champion receives pick 1.12.
+
+Draft-day trades are permitted whenever Sleeper supports them, including players, FAAB, eligible draft picks, and post-lock keeper packages. Normal trade approval and future-dues requirements still apply.
+
+## 10. Regular Season & Divisions
+
+The regular season ends after Week 14. The schedule structure is:
+
+- Weeks 1-3: Division games
+- Weeks 4-11: Non-division games
+- Weeks 12-14: Division games
+- Weeks 15-17: Playoffs
+
+**Divisions.** The league has 3 divisions of 4 teams. Division assignment is determined annually by the Rumble in the Grundle.
+
+**Rumble in the Grundle.** A 12-man Royal Rumble is run in WWF No Mercy using an N64 emulator and live streamed. Nobody plays; the CPU controls all wrestlers. Each manager selects one wrestler.
+
+Wrestlers are selected on a first-come, first-served basis from the WWF No Mercy roster. If a manager fails to select a wrestler by the announced deadline, the Rumble in the Grundle board of directors shall assign an available wrestler on their behalf, more than likely the worst and most ridiculous option available, so that thou might be shamed to the maximum for thy lack of participation in established traditions of The Grundle.
+
+Wrestler roster: WWF No Mercy roster
+
+Division assignment follows elimination order cyclically: 1st eliminated goes to Division 1, 2nd to Division 2, 3rd to Division 3, 4th to Division 1, and so on until all 12 teams are assigned.
+
+## 11. Playoffs & Toilet Bowl
+
+**Championship bracket.** Six teams qualify. Seeds 1 and 2 receive first-round byes. Playoffs run Weeks 15-17.
+
+**Seeds 1-3.** The three division winners receive the first three seeds, ordered by the playoff-seeding tiebreakers below.
+
+**Seeds 4-5.** The next two teams with the best regular-season records qualify regardless of division, using the same tiebreakers.
+
+**Seed 6.** After Seeds 1-5 are set, the remaining team with the highest regular-season Points For qualifies regardless of record or division.
+
+**Playoff-seeding tiebreakers.**
+
+- Most Points For
+- Head-to-Head record
+- Division win percentage
+- Highest Points Against
 - Coin flip
 
-Playoff Payouts: respective to number of teams.
+Regular-season matchup ties may stand and are recorded as ties. If a playoff matchup ends in an exact scoring tie, the higher seed advances.
 
-- 3rd: buy-in returned
-- 2nd: buy-in x2
-- 1st: The remainder after 2nd and 3rd are paid out along with….
-- THE CHAMPIONSHIP BELT!!!
-- Belt Requirements:
-  - The previous year’s champ is responsible for all shipping and handling costs, as well as purchasing a new set of nameplate tags for the new champ (see commish for details). If the costs are too high, funds can be pooled from the league.
-  - The champ must post pictures with the belt, talk a lot of smack, post WWE/UFC/Boxing gifs, etc. As they see fit.
+**No reseeding.** The Championship bracket remains fixed after the initial seeds are assigned.
 
-## Overtly Unnecessary And Pedantic Constitutional Stuff We Should Never Need.
+**Toilet Bowl.** The six teams that do not qualify for the Championship bracket enter the Toilet Bowl. Championship qualifiers are removed first; the remaining six teams are then assigned overall seeds 7-12 by regular-season record, with Points For as the tiebreaker. Seeds 11 and 12 receive first-round byes.
 
-### Commissioner
+The Toilet Bowl uses reverse elimination: the loser advances toward the Last Place game, while the winner moves away from last place. The final loser finishes 12th, becomes King (Last Place), and receives pick 1.01 the following season.
 
-Commissioner: Joseph Davey
+The Toilet Bowl is not a competition to win 1.01. Managers must continue trying to win their matchups and field competitive lineups.
 
-During the season, the commissioner will be responsible for efficiently running the day-to-day operations of the League and will be required to interpret the appropriate course of action based on the terms outlined in this constitution and by (Sleeper App Guidelines).
+Championship placement games, including the 3rd- and 5th-place games, and all Toilet Bowl results count toward final standings and the next draft order.
 
-### League Board Members
+**Official scoring corrections.** Official stat corrections applied by Sleeper control matchup results, including playoff results, even if the initially displayed winner later changes.
 
-League Board Members: (Let me know if you are interested in this role)
+## 12. Payouts & Championship Belt
 
-- ???
-- ???
+The standard 12-team, $25 league produces a $300 prize pool. The payout formula is:
 
-The league board members will be voted on prior to the draft and should be those intending to play every season. League board members will retain their spot on the board for the duration of their involvement in the league. League board members can be removed through a league vote initiated by any league member.
+- 3rd place: buy-in returned ($25 at the current buy-in)
+- 2nd place: 2x buy-in ($50 at the current buy-in)
+- 1st place: all remaining prize-pool funds ($225 at the current buy-in)
 
-To remove a board member, the league vote must receive a super majority (75%).
+The formula controls if the buy-in or league size changes.
 
-League Board Responsibilities:
+**Payout finality.** Prize money is not distributed until Week 17 results are fully final and Sleeper's normal stat-correction period has passed.
 
-- Help identify collusion within the league/trades
-- To be a sounding board for the league commissioner
-- To serve as a committee to steer the direction of the league
-- Suggest improvements and rule changes
+**The Championship Belt.** The previous year's champion is responsible for shipping and handling and for purchasing the new champion's nameplate tags. Those costs are separate from the league prize pool. If the cost is unusually high, the league may voluntarily pool separate funds.
 
-### Executive Power
+The champion must post pictures with the belt, talk a lot of smack, post WWE/UFC/Boxing GIFs, etc., as they see fit.
 
-The Commissioner reserves the right to use judgment in the case of suspected collusion. The Commissioner will approve/reject trades in such a scenario. For the most part, only obvious collusion or accidental trades will be overturned. While most changes will be voted on, the Commissioner reserves the right to make immediate rules decisions that deal with unanticipated scenarios or rules loopholes.
+## 13. Commissioner & Governance
 
-### Grievances
+**Commissioner.** The Commissioner administers the league and applies this Constitution and Sleeper settings.
 
-Grievances against other players should be brought to the Commissioner first before being made public.
+**Unanticipated situations.** The Commissioner may make immediate decisions concerning unanticipated situations, platform limitations, or rules loopholes. Significant or recurring issues should be submitted to a league vote as soon as practical.
 
-### Collusion/Bans
+**Delegation.** The Commissioner may appoint a Sleeper Co-Commissioner and delegate specific administrative duties temporarily or as needed. A Co-Commissioner has only the authority that has been delegated.
 
-- secret or illegal cooperation or conspiracy, especially in order to cheat or deceive others.
-- Collusion is a secret agreement between two or more parties to limit open competition by deceiving, misleading, or defrauding others of their legal rights, or to obtain an objective forbidden by law typically by defrauding or gaining an unfair market advantage.
-- Fantasy Football Collusion Article:
+**Commissioner vacancy.** If the Commissioner role becomes vacant, the remaining managers select an interim Commissioner by simple majority. The interim Commissioner serves until a permanent replacement is selected or appointed.
 
-ALL trades will be brought before the league Board for a vote FOR THE SOLE PURPOSE OF DECIDING WHETHER OR NOT COLLUSION IS TAKING PLACE.
+**Grievances.** A dispute involving another manager should be brought to the Commissioner before public escalation in league chat.
 
-The league Board shall vote on whether or not collusion is taking place and the commissioner shall vote if one member is on the league board. Upon the result of the vote, the league commissioner shall carry out the results. Upon vote resulting in a tie, the commissioner will have final say.
+**Clerical edits.** Typos, formatting, terminology cleanup, links, and other editorial corrections may be made without a vote when they do not change the meaning or application of a rule. Substantive rule changes require the voting process below.
 
-Trades shall NOT be vetoed for the following:
+## 14. Voting & Rule Changes
 
-- You personally do not like the trade
-- You personally would not have done the trade
-- You are bummed you did not make a better trade
-- Trade is slightly unbalanced. (you have to give to get).
-- Just because it contains a “big name” etc.
+**One vote per team.** Constitutional votes are counted by team, not by individual participant.
 
-Bottom line, DON’T CHEAT, you get banned if you cheat.
+**Offseason changes.** A constitutional change outside the season requires 75% approval. In a 12-team league, that means 9 affirmative/effective votes. Unless the proposal explicitly states otherwise, an offseason rule change takes effect immediately upon passage and governs the upcoming season.
 
-### Bans
+**In-season period.** For voting purposes, the season begins when the Grundle draft starts and ends when the final Week 17 matchup is complete.
 
-Bans can occur for any of the following reasons:
+**In-season changes to an existing rule.** Changing an existing constitutional rule during the season requires 100% approval.
 
-- Democratic league vote for any reason.
-- Egregious cheating, collusion or dishonesty.
-- Inactivity which may include:
-  - Not fielding a valid lineup two weeks in a row.
-  - Not fielding a valid lineup for three cumulative weeks throughout the season.
-  - Not communicating or posting in chat (we’re here to have fun!).
+**In-season additions where no rule exists.** Establishing a new rule during the season for an issue the Constitution does not already address requires 75% approval.
 
-Any member who is banned must sit out the remainder of the season.
+**Participation.** All 12 managers are expected to vote. There are no true abstentions. The Commissioner may offer an option such as "I'm with the majority" that delegates the team's vote to the winning explicit option when a clear winner exists.
 
-If the once banned player is then banned in the second season they will receive a lifetime ban from the league.
+If explicit votes are tied on a proposal to change an existing rule and delegated votes cannot resolve the tie, the proposal fails and the status quo remains. If a rule must be established for a true constitutional gap and the explicit vote is tied, delegated voters must return and choose between the tied options.
 
-Any member who is scheduled to play the banned member will score points as usual, but the banned member’s score will be adjusted to the league median score for that week.
+**Multi-option proposals.** The Constitution does not mandate a single voting mechanism for proposals with more than two options. The Commissioner may use a suitable runoff, ranked-choice, or similar process while preserving the applicable approval threshold.
 
-Any member who faced the banned member in the past will retain the outcome they received when they faced the banned member.
+## 15. Manager Conduct & Removal
 
-### Rule Changes
+**Collusion.** Managers may not coordinate trades, roster moves, lineup decisions, or other league actions to give an unfair advantage or circumvent league rules. A lopsided or unpopular trade is not, by itself, collusion.
 
-Commissioner will administer votes/polls for league rule changes. Any changes to this League Constitution must be voted on and passed by owners with a 75% approval rate. One vote per Team.
+**Communication.** Managers should be reasonably responsive to league matters. Trade proposals should receive some response within 48 hours when reasonably possible. A manager does not have to accept or reject immediately; acknowledging that the proposal was seen and is being considered is sufficient. Travel, work, family matters, and similar circumstances can reasonably require more time.
 
-*In season changes will only be made with full consensus; that is 100% of owners in agreement*
+**Inactivity.** Repeated failure to field a valid lineup may trigger removal, including an invalid lineup in 2 consecutive weeks or 3 cumulative weeks during a season. Extended failure to respond to Commissioner messages, league matters, or trade requests may also constitute inactivity.
 
-*In season rule additions (I.e. something we don’t have a rule for) will require 75%*
+**Removal.** A manager may be removed for collusion, cheating, serious dishonesty, sustained inactivity, or materially harmful conduct. If removal is decided by league vote, the targeted manager does not vote and removal requires unanimous approval from the other 11 managers. If the Commissioner is the targeted manager, another manager administers the vote.
 
-## Archived Season Amendments
+**Vacant team during the season.** A vacant team's roster is frozen: no adds, drops, waivers, or trades. Completed prior matchup results stand. Until a replacement manager is found, each future matchup involving the vacant team uses the league median score for that week. The league should seek a replacement promptly.
 
-### 2020 Season
+## 16. Rule & Vote History
 
-Amendments:
+This section is a legal-style changelog, not a second copy of the active rules. Historical wording has been modernized to use "manager" and "team." Passed and failed initiatives are included where the surviving record is reliable.
 
-- (Temporary) Increase IR spots to 4 to allow retention of players who contract COVID.
-- In the event the NFL season is cut short, dues will be refunded before week 8. After week 8, if the season is canceled before playoffs conclude, winnings will be paid out following the Playoff portion of this constitution. If the season is canceled after week 8, but before the playoffs conclude a retro-active playoff bracket will be applied across the previous 4 (fully concluded) weeks. The 4th week is required for seeding.
-- See Playoffs highlighted in green.
-- (Permanent) Rules change votes are counted as one vote per team. Not one vote per owner.
-- (2020) We will hold a two round “mini-draft” before the main draft commences for the three newest owners as follows:
-  - 1.01-1.03, 2.10-2.12.
-  - After those six picks are done we move on to the 1.04-1.12, 2.01-2.09 for all the returning owners.
-  - Once we hit pick 3.01 we are back to a regular snake draft.
-- (Permanent) The deadline for submitting your keepers will be 24 hours before the start of the draft. If you fail to submit your keepers by the deadline you forfeit your right to any keepers!
-- (Permanent) Update to keepers: in the case of two keepers drafted at the same round. See keepers.
-- Added “Belt Requirement” under playoffs.
+### 2026
 
-### 2019 Season
+**Keeper Bowl playoff structure**
 
-Initial Draft: Happened in 2018
+Proposal to add a Keeper Bowl playoff structure.
 
-Follow up drafts
+- **Status:** Failed
+- **Vote:** 8-4 effective tally; 9 required
 
-Each subsequent draft will be in reverse order of final standings and will be a snake draft. New owners will have the first picks in a random order between them (no keepers as they are not taking over a team).
+**Division payout / buy-in increase**
+
+Proposal to increase the buy-in by $10 and fund a division payout.
+
+- **Status:** Failed
+- **Vote:** 3-9 effective tally
+
+**Open Sunday waivers**
+
+Proposal to open Sunday waivers/free agency under the configured Sleeper schedule.
+
+- **Status:** Active
+- **Vote:** Passed 10-2
+
+**Dropped-player waiver period reduced**
+
+Dropped-player waivers were reduced from 2 days to 1 day.
+
+- **Status:** Active
+- **Vote:** Passed 11-1
+
+**Future draft-pick trading enabled**
+
+Future draft-pick trading was restored, with required dues prepayment when a manager trades away picks from a future season.
+
+- **Status:** Active
+- **Vote:** Passed 9-3
+
+**Immediate trade processing**
+
+Proposal to remove Commissioner trade approval and have trades process immediately.
+
+- **Status:** Failed
+- **Vote:** 5-5 explicit tie; delegated votes could not resolve
+
+**Sleeper Auto Subs enabled**
+
+Sleeper Auto Subs were enabled with a maximum of one Auto Sub per matchup.
+
+- **Status:** Active
+- **Vote:** Passed 11-1
+
+**Doubtful players eligible for IR**
+
+Doubtful designation was added to the league's IR eligibility.
+
+- **Status:** Active
+- **Vote:** Passed 9-3
+
+**Abandon IDP experiment**
+
+Proposal to remove the IDP position.
+
+- **Status:** Failed
+- **Vote:** 5-5 explicit tie; delegated votes could not resolve
+
+**Playoff tiebreaker maintenance update**
+
+The legacy "Fewest Points Against" tiebreaker was corrected to "Highest Points Against," reflecting the intended hardship tiebreaker. The legacy provision had not been invoked.
+
+- **Status:** Active
+- **Vote:** No vote - maintenance update
+
+### 2021
+
+**Two first-round keeper exception**
+
+The 2020 same-round keeper rule was amended so that two first-round-cost keepers could be paid with a 1st and 2nd when only one 1st-round pick was available.
+
+- **Status:** Active
+
+### 2020
+
+**Temporary COVID IR expansion**
+
+IR was temporarily increased from 2 to 4 spots for COVID-related absences.
+
+- **Status:** Expired
+
+**COVID season-cancellation contingency**
+
+A temporary procedure addressed refunds and a retroactive playoff bracket if the NFL season was cut short.
+
+- **Status:** Expired
+
+**One vote per team**
+
+Rule-change votes were established as one vote per team rather than one vote per individual participant.
+
+- **Status:** Active
+
+**Two-round mini-draft for new managers**
+
+A one-time two-round mini-draft procedure was used for three new managers before the main draft.
+
+- **Status:** Expired / Historical Only
+
+**Keeper deadline set to 24 hours**
+
+The keeper deadline was set at 24 hours before the draft.
+
+- **Status:** Superseded
+
+**Keeper deadline extended to 72 hours**
+
+The keeper deadline was later extended to 72 hours before the draft.
+
+- **Status:** Active
+
+**Same-round keeper pricing**
+
+When two keeper costs landed in the same round, one used that round and the other moved one round earlier.
+
+- **Status:** Active / Later Amended
+
+**Draft-pick trading disabled**
+
+Draft-pick trading was turned off.
+
+- **Status:** Superseded
+
+**Playoffs moved to Weeks 15-17**
+
+The playoff schedule was moved to Weeks 15 through 17.
+
+- **Status:** Active
+
+**Playoff rules updated**
+
+The surviving record states "See Playoffs highlighted in green," but the highlighted amendment details are no longer preserved.
+
+- **Status:** Historical
+
+**Championship belt requirement added**
+
+Championship belt transfer responsibilities and champion traditions were added.
+
+- **Status:** Active
+
+### 2019
+
+**Move to Sleeper**
+
+2019 was the league's inaugural season on Sleeper.
+
+- **Status:** Historical Only
+
+**Reverse-standings snake draft**
+
+Follow-up drafts were established as snake drafts in reverse order of final standings. Early new-manager priority procedures were later superseded by the current persistent-team structure.
+
+- **Status:** Active / Procedure Updated
+
+### 2017
+
+**League founded**
+
+The Grundle began play in 2017. The first two seasons were hosted on ESPN; detailed ESPN-era data is no longer available.
+
+- **Status:** Historical Only
+
+Pending: The 2026 post-lock keeper-cap vote will be added to this history once the result is final.

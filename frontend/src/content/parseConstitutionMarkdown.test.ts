@@ -6,11 +6,9 @@ import {
 import { CONSTITUTION_MARKDOWN, constitutionDocument, getConstitutionToc } from './constitution';
 
 describe('slugifyHeading', () => {
-  it('normalizes titles into stable anchor ids', () => {
-    expect(slugifyHeading('League Details')).toBe('league-details');
-    expect(slugifyHeading("Overtly Unnecessary And Pedantic Constitutional Stuff We Should Never Need.")).toBe(
-      'overtly-unnecessary-and-pedantic-constitutional-stuff-we-should-never-need',
-    );
+it('normalizes titles into stable anchor ids', () => {
+    expect(slugifyHeading('1. League at a Glance')).toBe('1-league-at-a-glance');
+    expect(slugifyHeading('11. Playoffs & Toilet Bowl')).toBe('11-playoffs-toilet-bowl');
   });
 });
 
@@ -88,7 +86,7 @@ More detail.
     });
   });
 
-  it('deduplicates repeated heading slugs', () => {
+it('deduplicates repeated heading slugs', () => {
     const doc = parseConstitutionMarkdown(`# Title
 
 ## Season
@@ -103,37 +101,72 @@ More detail.
     expect(doc.sections[0].children[0].id).toBe('2020-season');
     expect(doc.sections[1].children[0].id).toBe('2020-season-2');
   });
+
+  it('parses markdown tables', () => {
+    const doc = parseConstitutionMarkdown(`# Sample
+
+## Glance
+
+| Setting | Value |
+| --- | --- |
+| Managers | 12 |
+| Buy-in | $25 |
+`);
+
+    expect(doc.sections[0].blocks[0]).toMatchObject({
+      type: 'table',
+      table: {
+        headers: [[{ type: 'text', text: 'Setting' }], [{ type: 'text', text: 'Value' }]],
+        rows: [
+          [[{ type: 'text', text: 'Managers' }], [{ type: 'text', text: '12' }]],
+          [[{ type: 'text', text: 'Buy-in' }], [{ type: 'text', text: '$25' }]],
+        ],
+      },
+    });
+  });
 });
 
 describe('constitution source content', () => {
-  it('loads the production markdown and exposes expected sections', () => {
+  it('loads the 2026 production markdown and exposes expected sections', () => {
     expect(CONSTITUTION_MARKDOWN).toContain('# Grundle League Constitution');
+    expect(CONSTITUTION_MARKDOWN).toContain('2026 Edition');
     expect(constitutionDocument.title).toBe('Grundle League Constitution');
 
     const sectionTitles = constitutionDocument.sections.map((section) => section.title);
     expect(sectionTitles).toEqual(
       expect.arrayContaining([
-        'League Details',
-        'Keepers',
-        'Regular Season',
-        'Playoffs',
-        'Archived Season Amendments',
+        '1. League at a Glance',
+        '8. Keepers',
+        '11. Playoffs & Toilet Bowl',
+        '16. Rule & Vote History',
       ]),
     );
 
     const toc = getConstitutionToc();
-    expect(toc.some((item) => item.id === 'keepers')).toBe(true);
-    expect(toc.find((item) => item.id === 'archived-season-amendments')?.children.map((c) => c.id)).toEqual(
-      expect.arrayContaining(['2020-season', '2019-season']),
-    );
+    expect(toc.some((item) => item.id === '8-keepers')).toBe(true);
+    expect(
+      toc.find((item) => item.id === '16-rule-vote-history')?.children.map((c) => c.id),
+    ).toEqual(expect.arrayContaining(['2026', '2020', '2017']));
   });
 
-  it('includes key rule text from the imported constitution', () => {
-    const playoffs = constitutionDocument.sections.find((section) => section.id === 'playoffs');
+  it('includes key 2026 rule text from the imported constitution', () => {
+    const playoffs = constitutionDocument.sections.find(
+      (section) => section.id === '11-playoffs-toilet-bowl',
+    );
     expect(playoffs).toBeDefined();
 
-    const serialized = JSON.stringify(playoffs);
-    expect(serialized).toContain('THE CHAMPIONSHIP BELT!!!');
-    expect(serialized).toContain('6th seed is awarded to the highest Points For');
+const serialized = JSON.stringify(playoffs);
+    expect(serialized).toContain('Highest Points Against');
+    expect(serialized).toContain('King (Last Place)');
+
+    const divisions = constitutionDocument.sections.find(
+      (section) => section.id === '10-regular-season-divisions',
+    );
+    expect(JSON.stringify(divisions)).toContain('Rumble in the Grundle');
+
+    const glance = constitutionDocument.sections.find(
+      (section) => section.id === '1-league-at-a-glance',
+    );
+    expect(glance?.blocks.some((block) => block.type === 'table')).toBe(true);
   });
 });

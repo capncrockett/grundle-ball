@@ -6,6 +6,7 @@ import {
   type ConstitutionInline,
   type ConstitutionListItem,
   type ConstitutionSection,
+  type ConstitutionTable,
 } from '../content/constitution';
 
 function renderInlines(inlines: ConstitutionInline[]): ReactNode[] {
@@ -51,9 +52,38 @@ function ListItems({ items, ordered }: { items: ConstitutionListItem[]; ordered:
   );
 }
 
+function TableView({ table }: { table: ConstitutionTable }) {
+  return (
+    <div className="overflow-x-auto rounded-box border border-base-300">
+      <table className="table table-zebra table-sm sm:table-md">
+        <thead>
+          <tr>
+            {table.headers.map((header, index) => (
+              <th key={`header-${String(index)}`}>{renderInlines(header)}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row, rowIndex) => (
+            <tr key={`row-${String(rowIndex)}`}>
+              {row.map((cell, cellIndex) => (
+                <td key={`cell-${String(rowIndex)}-${String(cellIndex)}`}>{renderInlines(cell)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function BlockView({ block }: { block: ConstitutionBlock }) {
   if (block.type === 'paragraph') {
     return <p className="leading-relaxed text-base-content/90">{renderInlines(block.inlines)}</p>;
+  }
+
+  if (block.type === 'table') {
+    return <TableView table={block.table} />;
   }
 
   return <ListItems items={block.items} ordered={block.ordered} />;
@@ -91,12 +121,12 @@ export function ConstitutionPage() {
   const document = constitutionDocument;
   const toc = getConstitutionToc(document);
 
-  return (
+return (
     <div className="max-w-6xl mx-auto px-4 py-6" data-testid="constitution-page">
       <div className="mb-6 space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold">{document.title}</h1>
         <p className="text-sm text-base-content/60">
-          League rules source of truth. Update the constitution content in-repo as amendments pass.
+          2026 Edition review draft. In-repo source of truth — update as amendments and votes land.
         </p>
       </div>
 

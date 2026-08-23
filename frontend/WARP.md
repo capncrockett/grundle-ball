@@ -203,9 +203,9 @@ Sleeper API -> sleeperTransforms.ts -> Team models -> bracket/seedAssignment.ts 
   - Shows clinch status, elimination status, magic numbers
   - Division-specific insights and narratives
   - Handles leagues with/without divisions gracefully
-- `/constitution` - Grundle League Constitution (static, in-repo markdown)
-  - Source: `src/content/constitution.md` (edit via PR; original docx archived under `docs/`)
-  - Renders title, sticky table of contents, nested section anchors
+- `/constitution` - Grundle League Constitution 2026 Edition (static, in-repo markdown)
+  - Source: `src/content/constitution.md` (edit via PR; 2026 PDF + legacy docx archived under `docs/`)
+  - Renders title, sticky table of contents, nested section anchors, and markdown tables
   - Lightweight custom markdown parser (no extra markdown dependency)
   - Top-nav link labeled Constitution (nav currently has 5 items)
 
@@ -318,7 +318,7 @@ See `TESTING.md` in the root directory for detailed testing strategy.
 - **Theme System:** Uses DaisyUI themes with localStorage persistence. Current themes: light, cupcake, synthwave, dark.
 - **Insights:** Playoff race insights use narrative generation and division-aware logic. Handles leagues without divisions gracefully.
 - **Testing:** All critical paths have test coverage. Use `data-testid` attributes for stable E2E selectors.
-- **Constitution content:** Edit `src/content/constitution.md` only. Original Word doc is archived at repo `docs/Grundle Constitution v2.docx`. Jest maps `*.md?raw` via `src/test/__mocks__/rawMarkdown.ts`.
+- **Constitution content:** Edit `src/content/constitution.md` only. Current archive: `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` (legacy: `docs/Grundle Constitution v2.docx`). Jest maps `*.md?raw` via `src/test/__mocks__/rawMarkdown.ts`.
 - **Agent skills / glossary:** Repo-level skill copies live in `../.agents/skills/` (see root `AGENTS.md`). Terminology work should update root `CONTEXT.md` and optional `docs/adr/`.
 
 ## Common Patterns

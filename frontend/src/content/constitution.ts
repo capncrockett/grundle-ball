@@ -1,7 +1,14 @@
 import constitutionMarkdown from './constitution.md?raw';
 import { parseConstitutionMarkdown, type ConstitutionDocument } from './parseConstitutionMarkdown';
 
-export type { ConstitutionDocument, ConstitutionSection, ConstitutionBlock, ConstitutionInline, ConstitutionListItem } from './parseConstitutionMarkdown';
+export type {
+  ConstitutionDocument,
+  ConstitutionSection,
+  ConstitutionBlock,
+  ConstitutionInline,
+  ConstitutionListItem,
+  ConstitutionTable,
+} from './parseConstitutionMarkdown';
 export { parseConstitutionMarkdown, parseInlineMarkdown, slugifyHeading } from './parseConstitutionMarkdown';
 
 export const CONSTITUTION_MARKDOWN = constitutionMarkdown;

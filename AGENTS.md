@@ -12,7 +12,8 @@ Guidance for coding agents working in this repository.
 | Architecture Decision Records | `docs/adr/` (created lazily) |
 | Installed agent skills | `.agents/skills/` |
 | League constitution source of truth | `frontend/src/content/constitution.md` |
-| Original constitution doc archive | `docs/Grundle Constitution v2.docx` |
+| Current constitution archive (2026 review draft) | `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` |
+| Legacy constitution archive | `docs/Grundle Constitution v2.docx` |
 
 Keep implementation details out of `CONTEXT.md`. That file is a glossary only.
 

@@ -3,9 +3,15 @@ export type ConstitutionInline =
   | { type: 'strong'; text: string }
   | { type: 'em'; text: string };
 
+export type ConstitutionTable = {
+  headers: ConstitutionInline[][];
+  rows: ConstitutionInline[][][];
+};
+
 export type ConstitutionBlock =
   | { type: 'paragraph'; inlines: ConstitutionInline[] }
-  | { type: 'list'; ordered: boolean; items: ConstitutionListItem[] };
+  | { type: 'list'; ordered: boolean; items: ConstitutionListItem[] }
+  | { type: 'table'; table: ConstitutionTable };
 
 export type ConstitutionListItem = {
   inlines: ConstitutionInline[];
@@ -28,6 +34,51 @@ export type ConstitutionDocument = {
 const HEADING_RE = /^(#{1,3})\s+(.+?)\s*$/;
 const UNORDERED_ITEM_RE = /^(\s*)[-*+]\s+(.+)$/;
 const ORDERED_ITEM_RE = /^(\s*)\d+\.\s+(.+)$/;
+
+const TABLE_ROW_RE = /^\|.+\|$/;
+const TABLE_SEPARATOR_RE = /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|$/;
+
+function splitTableRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return trimmed.split('|').map((cell) => cell.trim());
+}
+
+function parseTableBlock(
+  lines: string[],
+  startIndex: number,
+): { block: ConstitutionBlock; nextIndex: number } | null {
+  if (startIndex + 1 >= lines.length) {
+    return null;
+  }
+
+  const headerLine = lines[startIndex].trim();
+  const separatorLine = lines[startIndex + 1].trim();
+  if (!TABLE_ROW_RE.test(headerLine) || !TABLE_SEPARATOR_RE.test(separatorLine)) {
+    return null;
+  }
+
+  const headers = splitTableRow(headerLine).map((cell) => parseInlineMarkdown(cell));
+  const rows: ConstitutionInline[][][] = [];
+  let index = startIndex + 2;
+
+  while (index < lines.length) {
+    const candidate = lines[index].trim();
+    if (!candidate || !TABLE_ROW_RE.test(candidate) || TABLE_SEPARATOR_RE.test(candidate)) {
+      break;
+    }
+    rows.push(splitTableRow(candidate).map((cell) => parseInlineMarkdown(cell)));
+    index += 1;
+  }
+
+  return {
+    block: {
+      type: 'table',
+      table: { headers, rows },
+    },
+    nextIndex: index,
+  };
+}
+
 
 export function slugifyHeading(title: string): string {
   return title
@@ -245,6 +296,13 @@ export function parseConstitutionMarkdown(markdown: string): ConstitutionDocumen
       continue;
     }
 
+    const table = parseTableBlock(lines, index);
+    if (table) {
+      ensureSection().blocks.push(table.block);
+      index = table.nextIndex;
+      continue;
+    }
+
     if (UNORDERED_ITEM_RE.test(line) || ORDERED_ITEM_RE.test(line)) {
       const { block, nextIndex } = parseListBlock(lines, index);
       ensureSection().blocks.push(block);
@@ -261,6 +319,7 @@ export function parseConstitutionMarkdown(markdown: string): ConstitutionDocumen
       if (!nextTrimmed) break;
       if (HEADING_RE.test(nextTrimmed)) break;
       if (UNORDERED_ITEM_RE.test(next) || ORDERED_ITEM_RE.test(next)) break;
+      if (TABLE_ROW_RE.test(nextTrimmed)) break;
       paragraphLines.push(nextTrimmed);
       index += 1;
     }
