@@ -1,5 +1,5 @@
 {
-  "name": "keeper-bowl-playoffs",
+  "name": "grundle-ball",
   "private": true,
   "workspaces": ["frontend", "backend"],
   "scripts": {

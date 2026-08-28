@@ -1,6 +1,6 @@
-# Keeper Bowl Playoffs
+# Grundle Ball
 
-Playoff visualization and bracket UI for a Sleeper keeper league.
+Playoff visualization and bracket UI for the Grundle League (a Sleeper keeper league). Formerly "Keeper Bowl Playoffs."
 
 ## Tech Stack
 

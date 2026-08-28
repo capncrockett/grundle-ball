@@ -13,6 +13,11 @@ jest.mock('./pages/PlayoffsLivePage', () => ({
   default: () => <div>Live Playoffs Page</div>,
 }));
 
+jest.mock('./pages/PlayoffsPage', () => ({
+  __esModule: true,
+  default: () => <div>Playoffs Page</div>,
+}));
+
 jest.mock('./pages/StandingsPage', () => ({
   StandingsPage: () => <div>Standings Page</div>,
 }));
@@ -27,19 +32,29 @@ jest.mock('./components/ThemeSelector', () => ({
 }));
 
 describe('App routing + nav', () => {
-  it('redirects "/" to "/playoffs/live" and highlights nav', async () => {
+  it('redirects "/" to "/standings" and highlights nav', async () => {
     renderWithRouter(<App />, { route: '/' });
 
-    expect(await screen.findByText('Live Playoffs Page')).toBeInTheDocument();
+    expect(await screen.findByText('Standings Page')).toBeInTheDocument();
 
-    const playoffsLink = screen.getByRole('link', { name: /playoffs/i });
+    const standingsLink = screen.getByRole('link', { name: /standings/i });
     await waitFor(() => {
-      expect(playoffsLink).toHaveClass('btn-active');
+      expect(standingsLink).toHaveClass('btn-active');
     });
   });
 
-  it('renders requested route and nav state', () => {
-    renderWithRouter(<App />, { route: '/playoffs/if-today' });
+  it('renders the new Playoffs route and highlights its nav item', () => {
+    renderWithRouter(<App />, { route: '/playoffs' });
+
+    expect(screen.getByText('Playoffs Page')).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const playoffsLink = within(banner).getByRole('link', { name: /^playoffs$/i });
+    expect(playoffsLink).toHaveClass('btn-active');
+  });
+
+  it('renders the relocated Beta If Today route and nav state', () => {
+    renderWithRouter(<App />, { route: '/beta/grundle-bowl/if-today' });
 
     expect(screen.getByText('If Today Page')).toBeInTheDocument();
 
@@ -48,6 +63,16 @@ describe('App routing + nav', () => {
 
     expect(ifTodayLink).toHaveClass('btn-active');
     expect(matchupsLink).not.toHaveClass('btn-active');
+
+    const banner = screen.getByRole('banner');
+    const betaLink = within(banner).getByRole('link', { name: /grundle bowl/i });
+    expect(betaLink).toHaveClass('btn-active');
+  });
+
+  it('redirects the legacy /playoffs/live route into the Beta section', () => {
+    renderWithRouter(<App />, { route: '/playoffs/live' });
+
+    expect(screen.getByText('Live Playoffs Page')).toBeInTheDocument();
   });
 
 it('renders constitution route and highlights constitution nav', () => {

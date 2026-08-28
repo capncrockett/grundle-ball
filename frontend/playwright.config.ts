@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
 dotenv.config({ path: path.resolve(process.cwd(), '..', '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const baseURL = process.env.E2E_BASE_URL ?? 'https://keeper-bowl-playoffs-staging.vercel.app';
+const baseURL = process.env.E2E_BASE_URL ?? 'https://grundle-ball-staging.vercel.app';
 
 export default defineConfig({
   testDir: './tests/e2e',
