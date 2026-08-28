@@ -54,7 +54,7 @@ jobs:
 
       - name: Run Playwright smoke against staging
         env:
-          E2E_BASE_URL: https://keeper-bowl-playoffs-staging.vercel.app
+          E2E_BASE_URL: https://grundle-ball-staging.vercel.app
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           CI: '1'
         run: npm run test:e2e -w frontend
