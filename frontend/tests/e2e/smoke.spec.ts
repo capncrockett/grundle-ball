@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 const routes = [
-  { path: '/', heading: /live playoffs/i },
-  { path: '/playoffs/if-today', heading: /if the season ended today/i },
-  { path: '/playoffs/live', heading: /live playoffs/i },
-  { path: '/standings', heading: /standings/i },
+  { path: '/', heading: /^standings$/i },
+  { path: '/playoffs', heading: /^playoffs$/i },
+  { path: '/standings', heading: /^standings$/i },
   { path: '/constitution', heading: /grundle league constitution/i },
+  { path: '/beta/grundle-bowl/live', heading: /live playoffs/i },
+  { path: '/beta/grundle-bowl/if-today', heading: /if the season ended today/i },
 ];
 
 test.describe('Happy path smoke', () => {
@@ -17,11 +18,11 @@ test.describe('Happy path smoke', () => {
   test('renders header/footer on home', async ({ page }) => {
     await page.goto('/');
 
-    // Home redirects to the live playoffs page.
-    await expect(page).toHaveURL(/\/playoffs\/live/);
-    await expect(page.getByRole('heading', { name: /live playoffs/i })).toBeVisible();
+    // Home redirects to the standings page.
+    await expect(page).toHaveURL(/\/standings/);
+    await expect(page.getByRole('heading', { name: /^standings$/i })).toBeVisible();
     await expect(page.getByRole('banner')).toBeVisible();
-    await expect(page.getByRole('contentinfo')).toContainText(/keeper bowl playoffs/i);
+    await expect(page.getByRole('contentinfo')).toContainText(/grundle ball/i);
   });
 
   routes.forEach(({ path, heading }) => {
@@ -35,17 +36,17 @@ test.describe('Happy path smoke', () => {
     test.skip(testInfo.project.name.includes('iphone'), 'Nav labels are hidden on mobile width');
 
     await page.goto('/');
-    await page.getByRole('link', { name: /if today/i }).click();
-    await expect(page).toHaveURL(/\/playoffs\/if-today/);
-    await expect(page.getByRole('heading', { name: /if the season ended today/i })).toBeVisible();
-
-await page.getByRole('link', { name: /playoffs/i }).click();
-    await expect(page).toHaveURL(/\/playoffs\/live/);
-    await expect(page.getByRole('heading', { name: /live playoffs/i })).toBeVisible();
+    await page.getByRole('link', { name: /^playoffs$/i }).click();
+    await expect(page).toHaveURL(/\/playoffs$/);
+    await expect(page.getByRole('heading', { name: /^playoffs$/i })).toBeVisible();
 
     await page.getByRole('link', { name: /constitution/i }).click();
     await expect(page).toHaveURL(/\/constitution/);
     await expect(page.getByRole('heading', { name: /grundle league constitution/i })).toBeVisible();
+
+    await page.getByRole('link', { name: /grundle bowl/i }).click();
+    await expect(page).toHaveURL(/\/beta\/grundle-bowl\/live/);
+    await expect(page.getByRole('heading', { name: /live playoffs/i })).toBeVisible();
   });
 
   test('shows compact nav on mobile', async ({ page }, testInfo) => {
@@ -53,7 +54,7 @@ await page.getByRole('link', { name: /playoffs/i }).click();
 
     await page.goto('/');
 
-    await expect(page.getByText(/KB Playoffs/i)).toBeVisible();
+    await expect(page.getByText(/^Grundle Ball$/)).toBeVisible();
     await expect(page.locator('nav a')).toHaveCount(5);
   });
 

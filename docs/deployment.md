@@ -22,7 +22,7 @@ Why Vercel
 
 Current Deployment
 
-- Repository: Connected to GitHub (`capncrockett/keeper-bowl-playoffs`)
+- Repository: Connected to GitHub (`capncrockett/grundle-ball`, formerly `capncrockett/keeper-bowl-playoffs`)
 - Branch: `main` auto-deploys
 - Build command: Auto-detected (runs from `frontend` directory)
 - Output directory: `frontend/dist`

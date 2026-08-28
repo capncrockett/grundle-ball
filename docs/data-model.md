@@ -1,6 +1,6 @@
 # Data Models
 
-This document describes the TypeScript models used by the Keeper Bowl Playoffs frontend.
+This document describes the TypeScript models used by the Grundle Ball frontend.
 
 ## SleeperUser
 

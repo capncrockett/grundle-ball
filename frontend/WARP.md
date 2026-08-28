@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-Playoff bracket visualization UI for a Sleeper fantasy football keeper league (Grundle). The app visualizes three interrelated brackets (Champ Bowl, Keeper Bowl, Toilet Bowl) with custom routing rules where losers from Champ Bowl flow into Keeper Bowl, and winners from Toilet Bowl feed into Keeper Bowl.
+Playoff bracket visualization UI for the Grundle League (a Sleeper fantasy football keeper league). Formerly "Keeper Bowl Playoffs." The official `/playoffs` page mirrors Sleeper's real `winners_bracket`/`losers_bracket` directly (no custom routing). The original three-bracket house rule (Champ Bowl, Keeper Bowl, Toilet Bowl with custom cross-bracket routing) was voted down by the league and lives on at `/beta/grundle-bowl` as a labeled Beta feature - see `src/content/constitution.md` "Rule & Vote History" (2026).
 
 **Current State:** Fully functional React SPA with Live + If-Today playoff modes, matchups, standings, and a Constitution page for in-repo league rules. Responsive design with mobile-optimized layouts. Direct calls to Sleeper public APIs. Backend proxy may be added later (caching/rate-limiting).
 
@@ -98,14 +98,18 @@ src/
 ├── models/
 │   └── fantasy.ts                    # Team, PairedMatchup domain types
 ├── pages/
-│   ├── PlayoffsIfTodayPage.tsx       # Preview bracket (seeded from current standings)
-│   ├── PlayoffsLivePage.tsx          # Live playoff bracket (real game outcomes)
+│   ├── PlayoffsPage.tsx              # Official playoffs (Sleeper bracket mirrored directly)
+│   ├── PlayoffsIfTodayPage.tsx       # Beta: preview bracket (seeded from current standings)
+│   ├── PlayoffsLivePage.tsx          # Beta: live playoff bracket (custom Champ/Keeper/Toilet)
 │   ├── MatchupsPage.tsx              # Weekly matchup results
-│   ├── StandingsPage.tsx             # Season standings table
+│   ├── StandingsPage.tsx             # Season standings table (default landing page)
 │   ├── ConstitutionPage.tsx          # League constitution with TOC + anchors
 │   ├── narratives.tsx                # Narrative text generation for insights
 │   ├── playoffRaceInsights.ts        # Playoff race analysis logic
 │   └── standingsInsights.ts          # Standings insights and division analysis
+├── sleeperBracket/
+│   ├── types.ts                      # BracketSide, ResolvedBracketMatchup types
+│   └── resolveBracket.ts             # Resolves raw Sleeper bracket matchups (no custom routing)
 ├── test/
 │   ├── fixtures/                     # Test data (Sleeper API mocks, teams, matchups)
 │   ├── mocks/                        # MSW handlers and API mocks
@@ -115,10 +119,12 @@ src/
 │   └── testUtils.tsx                 # Test helpers (renderWithRouter, etc.)
 └── utils/
     ├── sleeperTransforms.ts          # Sleeper data -> Teams, seeds, standings
-    ├── sleeperPlayoffTransforms.ts   # Sleeper playoff matchups -> BracketGameOutcomes
+    ├── sleeperPlayoffTransforms.ts   # Beta: Sleeper playoff matchups -> BracketGameOutcomes
     ├── applyMatchupScores.ts         # Apply current/projected points to bracket slots
     └── playerGameStatus.ts           # Player status tracking (finished/yet to play)
 ```
+
+Also: `components/sleeperBracket/SleeperBracketBoard.tsx` (generic round-by-round board for the official `/playoffs` page) and `components/GrundleBowlBetaLayout.tsx` (Beta banner + Live/If-Today sub-nav wrapping the relocated legacy pages).
 
 ### Bracket Engine (Most Critical System)
 
@@ -188,29 +194,30 @@ Sleeper API -> sleeperTransforms.ts -> Team models -> bracket/seedAssignment.ts 
 
 ### Pages
 
-- `/playoffs/if-today` - Preview bracket seeded from current standings
-  - Includes playoff race insights (clinch scenarios, magic numbers)
-  - Shows division standings and narratives
-  - Team selector and mode toggle (score/reward)
-- `/playoffs/live` - Real playoff bracket with live game outcomes from Sleeper
-  - Fetches NFL state to determine current playoff week
-  - Shows live scores with BYE week totals
-  - Conditionally resolves round outcomes based on current week
-- `/matchups` - Weekly matchup results with week selector
-  - Uses matchup history from cached JSON store
-  - Shows head-to-head matchups with scores
+- `/` - redirects to `/standings` (default landing page)
 - `/standings` - Season standings table with division insights
   - Shows clinch status, elimination status, magic numbers
   - Division-specific insights and narratives
   - Handles leagues with/without divisions gracefully
+- `/playoffs` - **Official** playoff bracket, mirrored directly from Sleeper's `winners_bracket`/`losers_bracket`
+  - No custom routing; renders whatever shape Sleeper computed (byes, consolation games, placements via `p`)
+  - Shows a "playoffs haven't started" placeholder before Sleeper seeds the bracket (~Week 15)
+  - See `src/sleeperBracket/resolveBracket.ts` and `components/sleeperBracket/SleeperBracketBoard.tsx`
+- `/matchups` - Weekly matchup results with week selector
+  - Uses matchup history from cached JSON store
+  - Shows head-to-head matchups with scores
 - `/constitution` - Grundle League Constitution 2026 Edition (static, in-repo markdown)
   - Source: `src/content/constitution.md` (edit via PR; 2026 PDF + legacy docx archived under `docs/`)
   - Hosted PDF download/open link: `/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` (from `frontend/public/docs/`)
   - Renders title, sticky table of contents, nested section anchors, and markdown tables
   - Lightweight custom markdown parser (no extra markdown dependency)
-  - Top-nav link labeled Constitution (nav currently has 5 items)
+- `/beta/grundle-bowl` (redirects to `/beta/grundle-bowl/live`) - **Beta:** the original custom three-bracket house rule
+  - `/beta/grundle-bowl/live` (`PlayoffsLivePage`) and `/beta/grundle-bowl/if-today` (`PlayoffsIfTodayPage`), wrapped in `GrundleBowlBetaLayout`
+  - Legacy `/playoffs/live` and `/playoffs/if-today` routes redirect here for old links/bookmarks
+  - Powered by the unchanged `bracket/*` engine (`BRACKET_TEMPLATE`, `ROUTING_RULES`, `<Bracket/>`)
+- Top-nav has 5 items: Standings, Playoffs, Matchups, Constitution, Grundle Bowl (Beta)
 
-**Both playoff pages share:**
+**Both Beta playoff pages share:**
 
 - Mode toggle: Score view (shows current/projected points) vs Reward view (shows prize text)
 - Team selector: Highlight a specific team across the bracket
