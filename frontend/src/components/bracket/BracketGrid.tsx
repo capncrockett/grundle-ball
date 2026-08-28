@@ -1,4 +1,11 @@
-// Shared bracket grid + connectors
+// Shared bracket grid + connectors (layout layer)
+//
+// This component is responsible for:
+// - Structural layout of bracket columns/rows
+// - SVG connectors between games/slots
+// - Ghost/placeholder cards and BYE masking
+// It deliberately does NOT know about Sleeper APIs or seeding logic — it just
+// receives BracketSlot data and renders it using the BracketTile card layer.
 
 import type { FC, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';

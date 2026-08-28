@@ -5,6 +5,7 @@ const routes = [
   { path: '/playoffs/if-today', heading: /if the season ended today/i },
   { path: '/playoffs/live', heading: /live playoffs/i },
   { path: '/standings', heading: /standings/i },
+  { path: '/constitution', heading: /grundle league constitution/i },
 ];
 
 test.describe('Happy path smoke', () => {
@@ -38,9 +39,13 @@ test.describe('Happy path smoke', () => {
     await expect(page).toHaveURL(/\/playoffs\/if-today/);
     await expect(page.getByRole('heading', { name: /if the season ended today/i })).toBeVisible();
 
-    await page.getByRole('link', { name: /playoffs/i }).click();
+await page.getByRole('link', { name: /playoffs/i }).click();
     await expect(page).toHaveURL(/\/playoffs\/live/);
     await expect(page.getByRole('heading', { name: /live playoffs/i })).toBeVisible();
+
+    await page.getByRole('link', { name: /constitution/i }).click();
+    await expect(page).toHaveURL(/\/constitution/);
+    await expect(page.getByRole('heading', { name: /grundle league constitution/i })).toBeVisible();
   });
 
   test('shows compact nav on mobile', async ({ page }, testInfo) => {
@@ -49,7 +54,16 @@ test.describe('Happy path smoke', () => {
     await page.goto('/');
 
     await expect(page.getByText(/KB Playoffs/i)).toBeVisible();
-    await expect(page.locator('nav a')).toHaveCount(4);
+    await expect(page.locator('nav a')).toHaveCount(5);
+  });
+
+  test('constitution TOC jumps to section anchors', async ({ page }) => {
+    await page.goto('/constitution');
+
+    await expect(page.getByRole('heading', { name: /grundle league constitution/i })).toBeVisible();
+    await page.getByRole('navigation', { name: /constitution table of contents/i }).getByRole('link', { name: /^keepers$/i }).click();
+    await expect(page).toHaveURL(/#keepers/);
+    await expect(page.locator('#keepers')).toBeVisible();
   });
 
   test('surfaces API errors as overlays', async ({ page }) => {

@@ -1,4 +1,12 @@
 // src/components/bracket/BracketTile.tsx
+//
+// Card layer for a single bracket matchup. Responsible for:
+// - Mobile vs desktop rendering
+// - Score vs reward modes (including flip effect for some rounds)
+// - Highlighting a specific team
+// - Presenting BYE/TBD placeholders
+// Layout structure and connectors live in BracketGrid; this component only
+// cares about how one matchup card looks.
 
 import type { FC, ReactNode } from 'react';
 import type { BracketSlot } from '../../bracket/types';
@@ -164,6 +172,35 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
     );
   };
 
+  const renderByeRow = () => (
+    <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+      {/* Top section: empty avatar space left, scores right */}
+      <div className="flex justify-between items-start gap-2 min-w-0">
+        {/* Empty avatar placeholder to keep layout consistent */}
+        <div className="flex items-center gap-1 md:gap-2 min-w-0">
+          <div
+            className="rounded-full invisible md:scale-125 shrink-0"
+            style={{ width: 32, height: 32 }}
+            aria-hidden
+          />
+        </div>
+
+        {/* Scores on the right */}
+        {mode === 'score' && (
+          <div className="flex flex-col items-end text-right leading-tight flex-shrink-0">
+            {/* Current week score */}
+            <div className={SCORE_CLASS}>-</div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom row: BYE label across full width */}
+      <div className="mt-1 min-w-0 w-full">
+        <div className={TEAM_NAME_CLASS}>BYE</div>
+      </div>
+    </div>
+  );
+
   if (!pos) {
     return renderPlaceholderRow('TBD', { invisibleAvatar: true });
   }
@@ -171,34 +208,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
   if (!team) {
     // BYE without a concrete team should still use the same visual layout
     if (pos.isBye) {
-      return (
-        <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
-          {/* Top section: empty avatar space left, scores right */}
-          <div className="flex justify-between items-start gap-2 min-w-0">
-            {/* Empty avatar placeholder to keep layout consistent */}
-            <div className="flex items-center gap-1 md:gap-2 min-w-0">
-              <div
-                className="rounded-full invisible md:scale-125 shrink-0"
-                style={{ width: 32, height: 32 }}
-                aria-hidden
-              />
-            </div>
-
-            {/* Scores on the right */}
-            {mode === 'score' && (
-              <div className="flex flex-col items-end text-right leading-tight flex-shrink-0">
-                {/* Current week score */}
-                <div className={SCORE_CLASS}>-</div>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom row: BYE label across full width */}
-          <div className="mt-1 min-w-0 w-full">
-            <div className={TEAM_NAME_CLASS}>BYE</div>
-          </div>
-        </div>
-      );
+      return renderByeRow();
     }
 
     // For non-BYE unknown teams, just show seed or TBD

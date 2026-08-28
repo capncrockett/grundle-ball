@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import App from './App';
 import { renderWithRouter } from './test/testUtils';
 
@@ -19,12 +19,25 @@ describe('App routing and navigation', () => {
     expect(matchupsLink).not.toHaveClass('btn-active');
   });
 
-  it('shows mobile brand text at small widths', async () => {
+it('shows mobile brand text at small widths', async () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, value: 480 });
     window.dispatchEvent(new Event('resize'));
 
     renderWithRouter(<App />, { route: '/' });
 
     expect(await screen.findByText(/KB Playoffs/i)).toBeInTheDocument();
+  });
+
+it('routes to constitution and highlights its nav item', async () => {
+    renderWithRouter(<App />, { route: '/constitution' });
+
+    expect(
+      await screen.findByRole('heading', { name: /grundle league constitution/i }),
+    ).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const constitutionLink = within(banner).getByRole('link', { name: /constitution/i });
+    expect(constitutionLink).toHaveClass('btn-active');
+    expect(constitutionLink).toHaveAttribute('href', '/constitution');
   });
 });
