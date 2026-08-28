@@ -285,9 +285,14 @@ export function parseConstitutionMarkdown(markdown: string): ConstitutionDocumen
 
       // Heading match is limited to #..###, so remaining levels are 2 or 3.
       const sectionLevel: 2 | 3 = level === 2 ? 2 : 3;
+      // Section headings are authored with a leading ordinal (e.g. "8. Keepers")
+      // to mirror the source document's numbering. Strip it for the displayed
+      // title and anchor id so links/TOC entries read as "Keepers" / "#keepers"
+      // instead of "8. Keepers" / "#8-keepers".
+      const cleanedTitle = headingTitle.replace(/^\d+\.\s+/, '');
       current = {
-        id: uniqueSlug(slugifyHeading(headingTitle), usedIds),
-        title: headingTitle,
+        id: uniqueSlug(slugifyHeading(cleanedTitle), usedIds),
+        title: cleanedTitle,
         level: sectionLevel,
         blocks: [],
       };

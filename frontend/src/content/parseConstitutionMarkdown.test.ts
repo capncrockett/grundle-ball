@@ -135,23 +135,23 @@ describe('constitution source content', () => {
     const sectionTitles = constitutionDocument.sections.map((section) => section.title);
     expect(sectionTitles).toEqual(
       expect.arrayContaining([
-        '1. League at a Glance',
-        '8. Keepers',
-        '11. Playoffs & Toilet Bowl',
-        '16. Rule & Vote History',
+        'League at a Glance',
+        'Keepers',
+        'Playoffs & Toilet Bowl',
+        'Rule & Vote History',
       ]),
     );
 
     const toc = getConstitutionToc();
-    expect(toc.some((item) => item.id === '8-keepers')).toBe(true);
+    expect(toc.some((item) => item.id === 'keepers')).toBe(true);
     expect(
-      toc.find((item) => item.id === '16-rule-vote-history')?.children.map((c) => c.id),
+      toc.find((item) => item.id === 'rule-vote-history')?.children.map((c) => c.id),
     ).toEqual(expect.arrayContaining(['2026', '2020', '2017']));
   });
 
   it('includes key 2026 rule text from the imported constitution', () => {
     const playoffs = constitutionDocument.sections.find(
-      (section) => section.id === '11-playoffs-toilet-bowl',
+      (section) => section.id === 'playoffs-toilet-bowl',
     );
     expect(playoffs).toBeDefined();
 
@@ -160,12 +160,12 @@ const serialized = JSON.stringify(playoffs);
     expect(serialized).toContain('King (Last Place)');
 
     const divisions = constitutionDocument.sections.find(
-      (section) => section.id === '10-regular-season-divisions',
+      (section) => section.id === 'regular-season-divisions',
     );
     expect(JSON.stringify(divisions)).toContain('Rumble in the Grundle');
 
     const glance = constitutionDocument.sections.find(
-      (section) => section.id === '1-league-at-a-glance',
+      (section) => section.id === 'league-at-a-glance',
     );
     expect(glance?.blocks.some((block) => block.type === 'table')).toBe(true);
   });
