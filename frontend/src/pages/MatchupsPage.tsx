@@ -18,9 +18,7 @@ import {
 } from '../utils/sleeperTransforms';
 import type { Team, LiveMatchData } from '../models/fantasy';
 import { MatchupCard } from '../components/matchups/MatchupCard';
-
-// 🔑 replace with your real Sleeper league id
-const LEAGUE_ID = '1251950356187840512';
+import { LEAGUE_ID } from '../config/league';
 
 export function MatchupsPage() {
   const [teams, setTeams] = useState<Team[]>([]);

@@ -101,7 +101,7 @@ export interface SleeperPlayoffMatchup {
   w?: number | null;
   /** Loser roster ID (null if not yet played) */
   l?: number | null;
-  /** Points scored by team 1 */
+  /** Winner's final placement; the loser finishes one place lower */
   p?: number | null;
 }
 

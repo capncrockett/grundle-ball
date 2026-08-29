@@ -20,6 +20,7 @@ test.describe('Happy path smoke', () => {
 
     // Home redirects to the standings page.
     await expect(page).toHaveURL(/\/standings/);
+    await expect(page).toHaveTitle('Grundle Ball');
     await expect(page.getByRole('heading', { name: /^standings$/i })).toBeVisible();
     await expect(page.getByRole('banner')).toBeVisible();
     await expect(page.getByRole('contentinfo')).toContainText(/grundle ball/i);

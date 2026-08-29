@@ -14,9 +14,7 @@ import {
   getStoredMatchups,
   normalizeTeamName,
 } from '../data/matchupHistory';
-
-// TODO: unify with other pages later (config/env)
-const LEAGUE_ID = '1251950356187840512';
+import { LEAGUE_ID } from '../config/league';
 
 const formatRecord = (record: Team['record']): string => {
   const base = `${record.wins.toString()}-${record.losses.toString()}`;

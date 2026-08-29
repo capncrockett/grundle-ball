@@ -9,12 +9,19 @@ const THEMES = [
 
 type ThemeValue = (typeof THEMES)[number]['value'];
 
-const STORAGE_KEY = 'keeper-bowl-theme';
+const STORAGE_KEY = 'grundle-ball-theme';
+const LEGACY_STORAGE_KEY = 'keeper-bowl-theme';
+
+const isThemeValue = (value: string | null): value is ThemeValue =>
+  THEMES.some((theme) => theme.value === value);
 
 const getStoredTheme = (): ThemeValue => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  const isStoredTheme = THEMES.some(({ value }) => value === stored);
-  return isStoredTheme ? (stored as ThemeValue) : 'dracula';
+  if (isThemeValue(stored)) return stored;
+
+  // Preserve an existing preference while retiring the pre-rebrand storage key.
+  const legacyStored = localStorage.getItem(LEGACY_STORAGE_KEY);
+  return isThemeValue(legacyStored) ? legacyStored : 'dracula';
 };
 
 export function ThemeSelector() {
@@ -24,6 +31,7 @@ export function ThemeSelector() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(STORAGE_KEY, theme);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   }, [theme]);
 
   return (

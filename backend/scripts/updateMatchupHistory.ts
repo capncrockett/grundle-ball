@@ -6,14 +6,13 @@ import {
   type SleeperRoster,
   type SleeperUser,
 } from '../../frontend/src/api/sleeper';
+import { LEAGUE_ID as DEFAULT_LEAGUE_ID } from '../../frontend/src/config/league';
 import {
   getMatchupStore,
   type MatchupHistoryStore,
   type StoreConfig,
 } from '../matchupHistoryStore';
 import type { StoredMatchup } from '../../frontend/src/data/matchupHistoryTypes';
-
-const DEFAULT_LEAGUE_ID = '1251950356187840512';
 
 type CliOptions = {
   weeks: number[];

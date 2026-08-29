@@ -8,8 +8,7 @@ import {
 } from '../../src/test/fixtures/sleeper';
 import { mockESPNScoreboard } from '../../src/test/fixtures/espn';
 import type { SleeperMatchup } from '../../src/api/sleeper';
-
-const LEAGUE_ID = '1251950356187840512';
+import { LEAGUE_ID } from '../../src/config/league';
 
 const week14Matchups: SleeperMatchup[] = [
   {
