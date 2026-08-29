@@ -147,7 +147,7 @@ Projected totals and win probability are not currently part of `LiveMatchData`. 
 1. Fetch users, rosters, `winners_bracket`, and `losers_bracket` from Sleeper.
 2. Build the roster-to-team display map.
 3. `resolveBracketMatchups()` resolves direct participants, winner/loser placeholders, results, and placement metadata.
-4. `SleeperBracketBoard` groups and renders matchups by round.
+4. `SleeperBracketBoard` uses the Beta boards' proven three-column sizing, vertical distribution, card geometry, and responsive SVG winner connectors while leaving Sleeper's matchup graph untouched. Loser-fed placement games remain explicit without adding crossing connector clutter.
 
 Do not feed official bracket data through the custom `bracket/` routing engine.
 

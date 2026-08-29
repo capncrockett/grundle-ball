@@ -28,9 +28,16 @@ describe('PlayoffsPage', () => {
     // Round 1 shows a resolved real team.
     expect(await screen.findByText(/The Dudes From Cocoon/i)).toBeInTheDocument();
     // Round 2 shows a real team (bye) alongside an unresolved placeholder side.
-    expect(await screen.findByText(/Big Ol' TDs/i)).toBeInTheDocument();
-    expect((await screen.findAllByText(/Winner of Game/i)).length).toBeGreaterThan(0);
-    expect(await screen.findByText('Decides 7th / 8th')).toBeInTheDocument();
+    expect((await screen.findAllByText(/Big Ol' TDs/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/^TBD$/i)).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/Decides 5th \/ 6th/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Decides 7th \/ 8th/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Decides 9th \/ 10th/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Decides 11th \/ 12th/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Decides 11th \/ 12th.*Week 16/i)).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('sleeper-bracket-grid')).toHaveLength(2);
+    expect(screen.getAllByText('Week 15')).toHaveLength(2);
+    expect(screen.getAllByText('Finals')).toHaveLength(2);
   });
 
   it('marks Sleeper bracket seeds as provisional before games are played', async () => {
@@ -75,6 +82,7 @@ describe('PlayoffsPage', () => {
     expect(
       await screen.findByRole('heading', { name: /championship bracket/i }),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/^Seed \d+$/i)).not.toBeInTheDocument();
   });
 
   it('shows a placeholder before the bracket has been seeded', async () => {

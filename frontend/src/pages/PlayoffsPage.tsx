@@ -14,7 +14,7 @@ import {
   getWinnersBracket,
 } from '../api/sleeper';
 import type { SleeperLeague } from '../api/sleeper';
-import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
+import { mergeRostersAndUsersToTeams } from '../utils/sleeperTransforms';
 import { resolveBracketMatchups } from '../sleeperBracket/resolveBracket';
 import type { ResolvedBracketMatchup } from '../sleeperBracket/types';
 import { SleeperBracketBoard } from '../components/sleeperBracket/SleeperBracketBoard';
@@ -45,7 +45,7 @@ export default function PlayoffsPage() {
 
         const merged = mergeRostersAndUsersToTeams(rosters, users, leagueData);
         setLeague(leagueData);
-        setTeams(computeSeeds(merged));
+        setTeams(merged);
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
       } catch (err) {
@@ -133,6 +133,7 @@ export default function PlayoffsPage() {
               subtitle={`Places 1-${String(playoffTeams)}`}
               matchups={winners}
               teamsById={teamsById}
+              weekStart={playoffWeekStart}
             />
           )}
           {losers.length > 0 && (
@@ -142,6 +143,8 @@ export default function PlayoffsPage() {
               matchups={losers}
               teamsById={teamsById}
               placementOffset={playoffTeams}
+              placementOrder="reverse"
+              weekStart={playoffWeekStart}
             />
           )}
         </div>
