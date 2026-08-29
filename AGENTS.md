@@ -62,3 +62,4 @@ These skills are based on [mattpocock/skills](https://github.com/mattpocock/skil
    `Co-Authored-By: Oz <oz-agent@warp.dev>`
 6. Classify releases by the declared public and operational contract in `docs/versioning.md`. Release branches use `release/MAJOR.MINOR.PATCH`, and the root `package.json` version is canonical.
 7. Before committing maintained frontend code or content, run `npm run format:write`, then verify `npm run format`. Husky and lint-staged also format supported staged text files during `git commit`; CI enforces the full frontend formatting check on pull requests and `release/**` pushes.
+8. Never use Unicode em dashes or en dashes anywhere in the repository. Use the ASCII hyphen-minus (`-`) instead.

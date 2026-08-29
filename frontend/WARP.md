@@ -2,6 +2,8 @@
 
 This file is the working index for `frontend/`. Read the root `AGENTS.md` first for repository conventions, skills, and naming rules.
 
+All frontend code, content, tests, and documentation must follow the root prohibition on Unicode em dashes and en dashes. Use the ASCII hyphen-minus (`-`) instead.
+
 ## Product boundary
 
 Grundle Ball is the Grundle League dashboard, not only a playoff visualizer. Its primary features are standings/insights, weekly matchups, the official Sleeper playoff bracket, and the league constitution.
