@@ -1,54 +1,92 @@
 # Grundle Ball
 
-Playoff visualization and bracket UI for the Grundle League (a Sleeper keeper league). Formerly "Keeper Bowl Playoffs."
+Grundle Ball is the Grundle League dashboard: standings and playoff-race insights, weekly matchups, the official Sleeper playoff bracket, and the league constitution in one React app.
 
-## Tech Stack
+The official `/playoffs` page renders Sleeper's `winners_bracket` and `losers_bracket` without applying house routing. The custom Champ Bowl / Keeper Bowl / Toilet Bowl proposal is preserved separately as the clearly labeled **Grundle Bowl Beta** at `/beta/grundle-bowl`; it is not the league's active playoff format.
 
-- React
-- Vite
-- TypeScript
-- Tailwind CSS
-- DaisyUI
-- ESLint + Prettier (soon)
+## Features
 
-## Testing
+- Standings, division summaries, seeding, and playoff-race insights.
+- Weekly Sleeper matchups with ESPN-backed starter completion counts.
+- Official playoff bracket derived directly from Sleeper.
+- In-repo Grundle League constitution with a table of contents and downloadable review-draft PDF.
+- Grundle Bowl Beta with Live and If-Today views of the rejected custom bracket proposal.
+- Responsive DaisyUI interface, selectable themes, and Vercel build metadata.
 
-- Unit/integration: `cd frontend && npm test` (Jest + RTL, jsdom). See `TESTING.md` for roadmap.
-- E2E smoke: `cd frontend && npm run test:e2e` (Playwright). Configure base URL via `E2E_BASE_URL` in `.env` (root uses the deployed Vercel URL by default).
+## Tech stack
 
-## Getting Started
+- React, Vite, and TypeScript
+- Tailwind CSS and DaisyUI
+- Jest, React Testing Library, MSW, and Playwright
+- Node maintenance scripts with JSON and optional local SQLite matchup-history stores
+
+## Getting started
+
+Run these commands from the repository root:
 
 ```bash
-cd frontend
 npm install
-npm run dev
+npm run dev -w frontend
 ```
 
-## Playoff seeding
+The development server defaults to `http://localhost:5173`.
 
-- Playoffs begin Week 15 and conclude in Week 17.
-- Six-team championship bracket; seeds 1 and 2 earn first-round byes.
-- Seeds 1-3: Division winners, ordered by record (wins/losses/ties) > Points For.
-- Seeds 4-5: Next two best records regardless of division > Points For.
-- Seed 6: Highest Points For among teams not already seeded (ignores record/division).
+## Quality checks
 
-## Bracket rules (routing)
+```bash
+# Frontend and backend lint
+npm run lint
 
-- Champ Bowl
+# Frontend and backend TypeScript checks
+npm run typecheck
 
-  - Seeds 1 and 2 get byes into Round 2.
-  - Round 1: 4 vs 5 (top), and 3 vs 6 (bottom). Losers drop into the Keeper Bowl as Floaters.
-  - Round 2: 1 plays winner of 4/5; 2 plays winner of 3/6.
-  - Finals: Round 2 winners play for 1st/2nd; Round 2 losers play to determine 3rd/4th.
+# Frontend Jest suite
+npm run test:ci -w frontend
 
-- Keeper Bowl
+# Production build
+npm run build -w frontend
+```
 
-  - Floaters come from the Champ Round 2 losers (top and bottom sides).
-  - Splashbacks come from Toilet Round 1 winners: winner of 8/9 feeds Splash Back 1; winner of 7/10 feeds Splash Back 2.
-  - Splashbacks winners play for 5th/6th; Splashbacks losers play for 7th/8th.
+For local end-to-end testing, start the dev server in one terminal and run this in another:
 
-- Toilet Bowl
-  - Seeds 12 and 11 punished with byes into Round 2.
-  - Round 1: 8 vs 9 (top), 7 vs 10 (bottom). Winners jump up into the Keeper Bowl as Splashback.
-  - Round 2: 12 plays loser of 8/9; 11 plays loser of 7/10.
-  - Finals: Round 2 winners play for 12th (Toilet King gets 1.01)/11th; Round 2 losers play to determine 10th/9th (Poop King).
+```bash
+npm run test:e2e:local -w frontend
+```
+
+Playwright's default non-local target is the Grundle Ball staging deployment. Set `E2E_BASE_URL` to test a different deployment. See [`TESTING.md`](TESTING.md) for browser setup, CI behavior, coverage, and known gaps.
+
+Production is hosted at <https://grundle-ball.vercel.app>. A live root check returned HTTP 200 with the title “Grundle Ball”; route-by-route production smoke coverage remains a release task.
+
+## Routes
+
+| Route                         | Purpose                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `/standings`                  | Default landing page; standings, division summaries, and playoff-race insights |
+| `/playoffs`                   | Official Sleeper winners and consolation brackets                              |
+| `/matchups`                   | Week-selectable matchups and starter completion counts                         |
+| `/constitution`               | Current in-repo constitution and review-draft PDF link                         |
+| `/beta/grundle-bowl/live`     | Beta custom bracket populated from playoff results                             |
+| `/beta/grundle-bowl/if-today` | Beta custom bracket seeded from current standings                              |
+
+Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the corresponding Beta routes.
+
+## Data and configuration
+
+- The browser calls Sleeper's public API directly. The Matchups page also calls ESPN's public NFL scoreboard endpoint to determine whether starters' games are complete.
+- League targeting is code-configured. `frontend/src/config/league.ts` exports the confirmed 2026 Sleeper league ID (`1385053148233621511`) used by every frontend page, the Playwright Matchups test, and the backend history updater's default. The updater can still target another league explicitly with `--league=<id>`.
+- `frontend/src/data/matchupHistoryStore.json` is a checked-in snapshot used by standings insights. Its current rows came from the 2025 season, but the stored model has no league or season field yet. Until the high-priority scoping work in `ROADMAP.md` and `backend/TODO.md` is complete, those rows can incorrectly influence 2026 stat-correction insights. The existing maintenance syntax is:
+
+  ```bash
+  npm run fetch:matchups -w frontend -- --week=14
+  ```
+
+  The maintenance script defaults to the JSON store; set `MATCHUP_STORE=sqlite` to use its local SQLite adapter. Do not mix 2026 updates into an unscoped 2025 store without the planned migration or an explicit full-store replacement. Hosted persistence and scheduling remain tracked in [`backend/TODO.md`](backend/TODO.md).
+
+## Documentation
+
+- [`frontend/WARP.md`](frontend/WARP.md): frontend architecture, patterns, and commands
+- [`docs/architecture.md`](docs/architecture.md): system boundaries and data flows
+- [`docs/data-model.md`](docs/data-model.md): current TypeScript domain models
+- [`docs/deployment.md`](docs/deployment.md): Vercel and release operations
+- [`docs/sleeper-api.md`](docs/sleeper-api.md): external API calls used by the app
+- [`ROADMAP.md`](ROADMAP.md): active and deferred work

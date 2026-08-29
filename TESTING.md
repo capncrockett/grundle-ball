@@ -1,67 +1,107 @@
-# Testing Strategy & Roadmap (Phase 7)
+# Testing Guide
 
-This plan drives Phase 7 (Release / Hosting / QA). Bias toward integration tests in Jest, keep unit tests minimal (pure utilities only), and reserve a small Playwright suite for end-to-end smoke.
+Grundle Ball uses Jest and React Testing Library for unit/integration coverage and Playwright for browser smoke coverage. Unless noted otherwise, run commands from the repository root.
 
-## Quick how-to
+## Commands
 
-- Jest/RT: `npm run test -w frontend` (or `npm run test:ci -w frontend` in CI).
-- Playwright local: start the dev server (`npm run dev -w frontend`, default `http://localhost:5173`), then in another terminal run `npm run test:e2e:local -w frontend` (adds `E2E_BASE_URL=http://localhost:5173` and pins the local browser cache). This runs all configured Playwright projects (desktop + mobile). Append `-- --headed` if you want the browser window.
-- Playwright staging: `npm run test:e2e -w frontend` (defaults to the staging base URL from `playwright.config.ts`), or override with `E2E_BASE_URL=... npm run test:e2e -w frontend`.
-- CI: Jest runs on every PR, and a Playwright smoke job runs on pushes to `release/**` or when manually dispatched, targeting staging.
-- For PRs targeting `main`: after promoting the release branch to staging, run the full Playwright suite against staging (`npm run test:e2e -w frontend`) and record the results in the PR.
+```bash
+# Jest (interactive/default)
+npm run test -w frontend
 
-## Principles
+# Jest as CI runs it
+npm run test:ci -w frontend
 
-- Integration-first: use Jest + React Testing Library to exercise pages/components with realistic data and routing.
-- Minimal unit tests: only for deterministic helpers (bracket transforms, routing rules, score math).
-- Slim e2e: Playwright for top-level smoke flows (navigation, route content, mobile widths), not full regression.
-- Fast feedback: keep tests hermetic via mock fetch/fixtures; avoid hitting Sleeper/ESPN APIs.
+# Jest watch mode
+npm run test:watch -w frontend
 
-## Tooling Setup (to do)
+# Frontend + backend lint
+npm run lint
 
-- Add Jest with jsdom: `jest`, `ts-jest`, `@types/jest`, `jest-environment-jsdom`, `babel-jest` (or `ts-jest` in ESM mode), and a `jest.config.ts`.
-- React Testing Library stack: `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`.
-- Network mocks: prefer `msw` for request interception; fall back to `jest.spyOn(global, 'fetch')` when simpler.
-- Playwright: `@playwright/test` with a `playwright.config.ts` for desktop + iPhone-sized viewports.
-- Scripts to add later: `test`, `test:watch`, `test:ci`, `test:e2e`, `test:e2e:headed`, plus a `lint:test` combo in CI.
+# Frontend + backend TypeScript checks
+npm run typecheck
 
-## Workstreams & Owners (agents)
+# Production build
+npm run build -w frontend
+```
 
-- **Agent Infra (A):** Jest config, scripts, and ts-jest/jsdom wiring; sets up Testing Library + jest-dom matchers; CI hook.
-- **Agent Fixtures (B):** Build reusable Sleeper/league fixtures (`frontend/src/test/fixtures/...`), mock server helpers (msw), and a `renderWithRouter` test utility.
-- **Agent Integration (C):** Page/component coverage in Jest (routing, nav highlighting, bracket tiles, matchups data + error surfacing).
-- **Agent Resilience (D):** API failure cases (Sleeper outages), loading states, empty data, and mobile viewport snapshot sanity (jest-axe optional).
-- **Agent E2E (E):** Playwright smoke: app boots, each route loads, nav works, mobile width layout holds, basic interaction (theme toggle optional).
+### Playwright against local development
 
-## Initial Backlog (priority)
+Install the browsers once in the cache used by the local script:
 
-- Routing/nav
-  - `/` redirects to `/matchups`; nav highlights active route; footer renders.
-  - App survives unknown routes (404 redirect or behavior-as-implemented).
-- Matchups page
-  - Renders matchup cards from fixture; handles loading skeleton; shows API error banner/toast (ties to Phase 7 “surface errors cleanly”).
-  - Optional: verify projected/actual scores formatting when data exists.
-- Playoffs — If Today
-  - Bracket tiles render seeds/bye placeholders from template; highlight logic toggles class when `highlightTeamId` present.
-  - Mode switch (score vs reward) preserves layout.
-- Playoffs — Live
-  - Live data fixture renders without crashes; protects against missing starters/rosters; renders BYE rows correctly.
-- Standings
-  - Table renders sorted data; handles empty/partial standings payload.
-- Layout/responsiveness
-  - Snapshot/regression at mobile width for nav + bracket tiles (Jest with `window.innerWidth` mocks).
-- Data boundaries
-  - Utilities that map Sleeper data to internal models (pure functions) get unit tests.
+```bash
+cd frontend
+PLAYWRIGHT_BROWSERS_PATH=node_modules/playwright-core/.local-browsers npx playwright install chromium webkit
+cd ..
+```
 
-## Playwright Smoke (thin)
+Start Vite in one terminal:
 
-- Load app, hit `/matchups`, `/playoffs/if-today`, `/playoffs/live`, `/standings`; assert key header text to prove render.
-- Mobile viewport check (e.g., iPhone 12): nav buttons visible, overflow handled.
-- Error overlay check: mock network 500 for Sleeper call, verify user-facing error text and non-crash.
+```bash
+npm run dev -w frontend
+```
 
-## Definition of Done
+Then run Playwright in another:
 
-- Jest suite runs in CI < 60s, deterministic with offline fixtures.
-- Playwright smoke runs headless in CI and locally in ~2–3 minutes.
-- Coverage on: routing/nav, bracket rendering, matchups data path, error surfacing, and at least one mobile-width assertion.
-- README gains a short “Testing” snippet pointing here once scripts land.
+```bash
+npm run test:e2e:local -w frontend
+```
+
+The local script sets `E2E_BASE_URL=http://localhost:5173` and runs the configured Chromium desktop and iPhone 12 projects.
+
+### Playwright against a deployment
+
+```bash
+# Uses the staging URL configured in frontend/playwright.config.ts
+npm run test:e2e -w frontend
+
+# Override the target
+E2E_BASE_URL=https://example.invalid npm run test:e2e -w frontend
+
+# Visible browser; set E2E_BASE_URL as needed
+npm run test:e2e:headed -w frontend
+```
+
+The Playwright config loads `.env` from the repository root and then `frontend/.env`. If a protected Vercel deployment is targeted, set `VERCEL_AUTOMATION_BYPASS_SECRET`; the config sends the corresponding Vercel bypass headers.
+
+## Current automated coverage
+
+### Jest
+
+- App routing, active navigation, the Grundle Ball header, Constitution route, and Beta redirects.
+- Official Sleeper playoff rendering and its loading, empty, and error states.
+- Grundle Bowl Beta Live and If-Today pages, including API failures.
+- Standings and Matchups page rendering, loading, empty/partial data, and API failures.
+- Constitution rendering, table of contents, source content, and Markdown parsing.
+- Bracket layout/cards, seed assignment, routing-related transforms, and score application.
+- Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.
+
+Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `frontend/tests/e2e/` through `frontend/jest.config.ts`.
+
+### Playwright
+
+- `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
+- `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
+- `theme.spec.ts`: theme selection and persistence across reloads.
+- Both Chromium desktop and the iPhone 12 device profile run for every Playwright invocation.
+
+Most smoke checks target the configured deployment and therefore exercise its current API environment. The dedicated Matchups flow intercepts external API calls with fixtures for deterministic assertions.
+
+## GitHub Actions behavior
+
+- Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
+- `.github/workflows/lint.yml` runs root `npm run lint` and `npm run typecheck` on pull requests and manual dispatch, covering both frontend and backend workspaces.
+- `.github/workflows/test.yml` runs the frontend Jest CI suite on pull requests, `release/**` pushes, and manual dispatch.
+- The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It targets `https://grundle-ball-staging.vercel.app` and installs Chromium and WebKit.
+
+For a release, run the full Playwright suite against staging and record the result before merging to `main`; after deployment, repeat the smoke suite against the production URL.
+
+## Known gaps
+
+- [ ] No Jest coverage thresholds or coverage-report artifact are configured.
+- [ ] Backend store and history-update scripts have no automated tests; the high-priority league/season scoping migration needs overlapping-week regression coverage across JSON, SQLite, CLI, and Standings selectors.
+- [ ] GitHub Actions do not currently run the production Vite build.
+- [ ] The deployment smoke suite does not mock every external request, so it is useful for environment verification but is not fully hermetic.
+- [ ] There is no automated link checker or stale-brand scanner for maintained documentation.
+- [ ] Production-route smoke results are operational steps, not a current CI job.
+
+Track implementation work for these gaps in `ROADMAP.md` or the relevant frontend/backend TODO file rather than marking them complete here without test evidence.

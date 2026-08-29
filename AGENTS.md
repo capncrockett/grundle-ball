@@ -4,19 +4,29 @@ Guidance for coding agents working in this repository.
 
 ## Where things live
 
-| Concern | Location |
-| --- | --- |
-| Frontend agent index (architecture, commands, patterns) | `frontend/WARP.md` |
-| Repo-level agent conventions + skills index | `AGENTS.md` (this file) |
-| Domain glossary (ubiquitous language) | `CONTEXT.md` (created when terminology work starts) |
-| Architecture Decision Records | `docs/adr/` (created lazily) |
-| Installed agent skills | `.agents/skills/` |
-| League constitution source of truth | `frontend/src/content/constitution.md` |
-| Current constitution archive (2026 review draft) | `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` |
-| Hosted constitution PDF (Vercel static) | `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` → `/docs/...pdf` |
-| Legacy constitution archive | `docs/Grundle Constitution v2.docx` |
+| Concern                                                 | Location                                                                                     |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Frontend agent index (architecture, commands, patterns) | `frontend/WARP.md`                                                                           |
+| Repo-level agent conventions + skills index             | `AGENTS.md` (this file)                                                                      |
+| Domain glossary (ubiquitous language)                   | `CONTEXT.md` (created when terminology work starts)                                          |
+| Architecture Decision Records                           | `docs/adr/` (created lazily)                                                                 |
+| Installed agent skills                                  | `.agents/skills/`                                                                            |
+| League constitution source of truth                     | `frontend/src/content/constitution.md`                                                       |
+| Current constitution archive (2026 review draft)        | `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`                                  |
+| Hosted constitution PDF (Vercel static)                 | `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf` → `/docs/...pdf` |
+| Legacy constitution archive                             | `docs/Grundle Constitution v2.docx`                                                          |
 
 Keep implementation details out of `CONTEXT.md`. That file is a glossary only.
+
+## Product and bracket names
+
+- **Grundle Ball** is the current application and repository brand.
+- **Grundle League** is the fantasy league represented by the application.
+- **Playoffs** means the official bracket mirrored from Sleeper at `/playoffs`.
+- **Grundle Bowl Beta** is the rejected custom three-bracket proposal retained under `/beta/grundle-bowl` for experimentation.
+- **Keeper Bowl** is still the proper name of the middle bracket inside that Beta proposal and of the corresponding historical 2026 vote. Do not use it as the application name.
+
+Do not reintroduce the previous application brand in current-facing copy. Retain old names only where repository migration history or league rule history genuinely requires them, and label that context as historical.
 
 ## Skills
 
