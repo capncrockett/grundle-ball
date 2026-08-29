@@ -50,9 +50,7 @@ export async function getESPNScoreboard(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `ESPN API error (${response.status.toString()}): ${response.statusText}`,
-    );
+    throw new Error(`ESPN API error (${response.status.toString()}): ${response.statusText}`);
   }
 
   return (await response.json()) as ESPNScoreboard;

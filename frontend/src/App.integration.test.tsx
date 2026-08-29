@@ -19,13 +19,13 @@ describe('App routing and navigation', () => {
     expect(matchupsLink).not.toHaveClass('btn-active');
   });
 
-it('shows the Grundle Ball brand in the header', async () => {
+  it('shows the Grundle Ball brand in the header', async () => {
     renderWithRouter(<App />, { route: '/' });
 
     expect(await screen.findByText(/^Grundle Ball$/)).toBeInTheDocument();
   });
 
-it('routes to constitution and highlights its nav item', async () => {
+  it('routes to constitution and highlights its nav item', async () => {
     renderWithRouter(<App />, { route: '/constitution' });
 
     expect(

@@ -19,20 +19,18 @@ export type DivisionInsight = {
   topSeed: DerivedTeamWithInsights;
 };
 
-export type StandingsInsights =
-  | {
-      derived: DerivedTeamWithInsights[];
-      leagueAvgPaPerGame: number;
-      toughestSchedule: DerivedTeamWithInsights;
-      easiestSchedule: DerivedTeamWithInsights;
-      luckiestRecord: DerivedTeamWithInsights;
-      unluckiestRecord: DerivedTeamWithInsights;
-      divisionStats: DivisionInsight[];
-      highestAvgPfDivision: DivisionInsight | null;
-      lowestAvgPaDivision: DivisionInsight | null;
-      hasDivisionData: boolean;
-    }
-  | null;
+export type StandingsInsights = {
+  derived: DerivedTeamWithInsights[];
+  leagueAvgPaPerGame: number;
+  toughestSchedule: DerivedTeamWithInsights;
+  easiestSchedule: DerivedTeamWithInsights;
+  luckiestRecord: DerivedTeamWithInsights;
+  unluckiestRecord: DerivedTeamWithInsights;
+  divisionStats: DivisionInsight[];
+  highestAvgPfDivision: DivisionInsight | null;
+  lowestAvgPaDivision: DivisionInsight | null;
+  hasDivisionData: boolean;
+} | null;
 
 export function computeStandingsInsights(teams: Team[]): StandingsInsights {
   if (teams.length === 0) {
@@ -102,10 +100,8 @@ export function computeStandingsInsights(teams: Team[]): StandingsInsights {
 
   const divisionStats: DivisionInsight[] = Array.from(divisionBuckets.entries()).map(
     ([divisionId, members]) => {
-      const avgPfPerGame =
-        members.reduce((sum, team) => sum + team.pfPerGame, 0) / members.length;
-      const avgPaPerGame =
-        members.reduce((sum, team) => sum + team.paPerGame, 0) / members.length;
+      const avgPfPerGame = members.reduce((sum, team) => sum + team.pfPerGame, 0) / members.length;
+      const avgPaPerGame = members.reduce((sum, team) => sum + team.paPerGame, 0) / members.length;
       const topSeed = members.reduce((prev, curr) =>
         curr.standingRank < prev.standingRank ? curr : prev,
       );

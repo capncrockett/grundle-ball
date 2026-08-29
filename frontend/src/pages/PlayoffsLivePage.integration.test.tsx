@@ -7,9 +7,7 @@ describe('PlayoffsLivePage', () => {
   it('renders live bracket and allows mode toggle', async () => {
     render(<PlayoffsLivePage />);
 
-    expect(
-      await screen.findByRole('heading', { name: /live playoffs/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /live playoffs/i })).toBeInTheDocument();
 
     const [teamLabel] = await screen.findAllByText(/Big Ol' TDs/i);
     expect(teamLabel).toBeInTheDocument();
@@ -26,8 +24,6 @@ describe('PlayoffsLivePage', () => {
 
     render(<PlayoffsLivePage />);
 
-    expect(
-      await screen.findByText(/Failed to load live playoffs/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Failed to load live playoffs/i)).toBeInTheDocument();
   });
 });

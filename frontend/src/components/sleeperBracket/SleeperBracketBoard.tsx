@@ -33,7 +33,9 @@ const SideRow: FC<SideRowProps> = ({ side, isWinner, teamsById }) => {
     const teamName = team?.teamName ?? `Roster ${String(side.rosterId)}`;
 
     return (
-      <div className={`flex items-center gap-2 py-1 min-w-0 ${isWinner ? 'font-semibold' : 'opacity-80'}`}>
+      <div
+        className={`flex items-center gap-2 py-1 min-w-0 ${isWinner ? 'font-semibold' : 'opacity-80'}`}
+      >
         <TeamAvatars teamName={teamName} teamAvatarUrl={team?.teamAvatarUrl} size="sm" />
         <span className="text-sm truncate">{teamName}</span>
       </div>
@@ -78,13 +80,18 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
                 matchup.sideB.rosterId === matchup.winnerRosterId;
 
               return (
-                <div key={matchup.matchId} className="card bg-base-100 border border-base-300 shadow-sm">
+                <div
+                  key={matchup.matchId}
+                  className="card bg-base-100 border border-base-300 shadow-sm"
+                >
                   <div className="card-body p-3 gap-0">
                     <SideRow side={matchup.sideA} isWinner={winnerIsSideA} teamsById={teamsById} />
                     <div className="divider my-0" />
                     <SideRow side={matchup.sideB} isWinner={winnerIsSideB} teamsById={teamsById} />
                     {placementLabel && (
-                      <div className="text-[0.65rem] text-base-content/50 mt-1">{placementLabel}</div>
+                      <div className="text-[0.65rem] text-base-content/50 mt-1">
+                        {placementLabel}
+                      </div>
                     )}
                   </div>
                 </div>

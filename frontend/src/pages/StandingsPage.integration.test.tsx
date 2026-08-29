@@ -1,10 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { StandingsPage } from './StandingsPage';
-import {
-  mockSleeperLeague,
-  mockSleeperRosters,
-  mockSleeperUsers,
-} from '../test/fixtures/sleeper';
+import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 import * as sleeperApi from '../api/sleeper';
 import * as matchupHistory from '../data/matchupHistory';
 import type { StoredMatchup } from '../data/matchupHistoryTypes';
@@ -28,13 +24,9 @@ describe('StandingsPage', () => {
   it('renders standings table with seeds', async () => {
     render(<StandingsPage />);
 
-    expect(
-      await screen.findByRole('heading', { name: /standings/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /standings/i })).toBeInTheDocument();
     const rows = await screen.findAllByRole('row');
-    const row = rows.find((candidate) =>
-      within(candidate).queryByText(/Big Ol' TDs/i),
-    );
+    const row = rows.find((candidate) => within(candidate).queryByText(/Big Ol' TDs/i));
     expect(row).toBeInTheDocument();
     expect(row).toHaveTextContent(/\b1\b/);
   });
@@ -174,9 +166,7 @@ describe('StandingsPage', () => {
 
     render(<StandingsPage />);
 
-    expect(
-      await screen.findByText(/No teams found/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/No teams found/i)).toBeInTheDocument();
   });
 
   it('surfaces API errors', async () => {
@@ -184,9 +174,7 @@ describe('StandingsPage', () => {
 
     render(<StandingsPage />);
 
-    expect(
-      await screen.findByText(/Failed to load standings/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Failed to load standings/i)).toBeInTheDocument();
   });
 
   it('hides insights before any games are played', async () => {
@@ -207,9 +195,7 @@ describe('StandingsPage', () => {
 
     render(<StandingsPage />);
 
-    expect(
-      await screen.findByRole('heading', { name: /standings/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /standings/i })).toBeInTheDocument();
     expect(screen.queryByText(/Toughest Schedule/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Easiest Schedule/i)).not.toBeInTheDocument();
   });

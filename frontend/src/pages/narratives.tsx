@@ -225,7 +225,10 @@ const findBubbleThirdTeam = (
   return gapToPfLeader <= threshold ? pfLeader : null;
 };
 
-const buildBubbleNarrative = (teams: Team[], ranges: Map<number, BestWorst>): NarrativeSection | null => {
+const buildBubbleNarrative = (
+  teams: Team[],
+  ranges: Map<number, BestWorst>,
+): NarrativeSection | null => {
   const race = computePlayoffRaceInsights(teams)?.bubbleRace;
   if (!race) return null;
 
@@ -248,7 +251,11 @@ const buildBubbleNarrative = (teams: Team[], ranges: Map<number, BestWorst>): Na
   const pfGap = pfSwingNeeded(cutoff, challenger);
   const avgPf = leagueAvgPfPerGame(teams);
   const contexts = computePfContexts(teams);
-  const pfEdgePlus = describePfSwing(pfGap, contexts.median, contexts.perTeam.get(cutoff.sleeperRosterId)?.estHigh ?? avgPf * 1.35);
+  const pfEdgePlus = describePfSwing(
+    pfGap,
+    contexts.median,
+    contexts.perTeam.get(cutoff.sleeperRosterId)?.estHigh ?? avgPf * 1.35,
+  );
   const pfEdgePlain = formatPfEdge(pfGap, false);
   const thirdTeam = findBubbleThirdTeam(teams, cutoff, challenger, avgPf);
 
@@ -299,8 +306,8 @@ const buildBubbleNarrative = (teams: Team[], ranges: Map<number, BestWorst>): Na
             {pfEdgePlus}.
           </>,
           <>
-          {boldName(challenger)} can take it by outscoring {boldName(cutoff)} by {pfEdgePlus}{' '}
-          while keeping their record edge.
+            {boldName(challenger)} can take it by outscoring {boldName(cutoff)} by {pfEdgePlus}{' '}
+            while keeping their record edge.
           </>,
           <>{boldName(cutoff)} keeps No. 6 if the PF lead holds, even if the records stay split.</>,
         ];
@@ -311,9 +318,14 @@ const buildBubbleNarrative = (teams: Team[], ranges: Map<number, BestWorst>): Na
     thirdTeam && thirdRange && thirdRange.best <= 6 && thirdCtx ? (
       <>
         A third team ({seedToken(thirdTeam)}) can still enter the mix. They would need a big PF week
-        to clear the {describePfSwing(Math.abs(cutoff.pointsFor - thirdTeam.pointsFor), contexts.median, thirdCtx.estHigh)} gap;
-        league median weekly PF is {contexts.median.toFixed(1)}, so it likely takes a monster outing
-        while both bubble teams stumble. Otherwise, Seeds 6/7 stay as-is.
+        to clear the{' '}
+        {describePfSwing(
+          Math.abs(cutoff.pointsFor - thirdTeam.pointsFor),
+          contexts.median,
+          thirdCtx.estHigh,
+        )}{' '}
+        gap; league median weekly PF is {contexts.median.toFixed(1)}, so it likely takes a monster
+        outing while both bubble teams stumble. Otherwise, Seeds 6/7 stay as-is.
       </>
     ) : (
       'No other teams are in range to take Seeds 6 or 7 this week based on current record and PF math.'
@@ -352,7 +364,10 @@ const findByeThirdTeam = (
   return pfGapToHolder <= threshold ? recordThreat : null;
 };
 
-const buildByeNarrative = (teams: Team[], ranges: Map<number, BestWorst>): NarrativeSection | null => {
+const buildByeNarrative = (
+  teams: Team[],
+  ranges: Map<number, BestWorst>,
+): NarrativeSection | null => {
   const race = computePlayoffRaceInsights(teams)?.byeRace;
   if (!race) return null;
 
@@ -447,7 +462,10 @@ const buildByeNarrative = (teams: Team[], ranges: Map<number, BestWorst>): Narra
   };
 };
 
-const buildDivisionNarratives = (teams: Team[], ranges: Map<number, BestWorst>): NarrativeSection[] => {
+const buildDivisionNarratives = (
+  teams: Team[],
+  ranges: Map<number, BestWorst>,
+): NarrativeSection[] => {
   const insights = computePlayoffRaceInsights(teams);
   if (!insights) return [];
   if (isSeasonComplete(teams)) return [];

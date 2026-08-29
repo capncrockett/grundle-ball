@@ -34,11 +34,8 @@ export function MatchupsPage() {
   useEffect(() => {
     async function loadSeasonState() {
       try {
-        const [nflState, players] = await Promise.all([
-          getNFLState(),
-          getAllPlayers(),
-        ]);
-        
+        const [nflState, players] = await Promise.all([getNFLState(), getAllPlayers()]);
+
         const seasonState = mapNFLStateToSeasonState(nflState);
         setPlayersById(players);
         setSelectedWeek(seasonState.displayWeek);
@@ -166,14 +163,7 @@ export function MatchupsPage() {
             live.teamIdB?.toString() ?? 'bye',
           ].join('-');
 
-          return (
-            <MatchupCard
-              key={matchupKey}
-              live={live}
-              teamA={teamA}
-              teamB={teamB}
-            />
-          );
+          return <MatchupCard key={matchupKey} live={live} teamA={teamA} teamB={teamB} />;
         })}
       </div>
     </div>

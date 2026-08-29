@@ -6,7 +6,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getLeagueRosters, getLeagueUsers, getLosersBracket, getWinnersBracket } from '../api/sleeper';
+import {
+  getLeagueRosters,
+  getLeagueUsers,
+  getLosersBracket,
+  getWinnersBracket,
+} from '../api/sleeper';
 import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
 import { resolveBracketMatchups } from '../sleeperBracket/resolveBracket';
 import type { ResolvedBracketMatchup } from '../sleeperBracket/types';

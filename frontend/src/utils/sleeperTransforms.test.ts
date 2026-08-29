@@ -1,7 +1,11 @@
 // frontend/src/utils/sleeperTransforms.test.ts
 
 import { mergeRostersAndUsersToTeams, pairMatchups, computeSeeds } from './sleeperTransforms';
-import { mockSleeperUsers, mockSleeperRosters, mockSleeperMatchupsWeek13 } from '../test/fixtures/sleeper';
+import {
+  mockSleeperUsers,
+  mockSleeperRosters,
+  mockSleeperMatchupsWeek13,
+} from '../test/fixtures/sleeper';
 
 describe('sleeperTransforms', () => {
   describe('mergeRostersAndUsersToTeams', () => {
@@ -9,7 +13,7 @@ describe('sleeperTransforms', () => {
       const teams = mergeRostersAndUsersToTeams(mockSleeperRosters, mockSleeperUsers);
 
       expect(teams).toHaveLength(12);
-      expect(teams[0].teamName).toBe('Big Ol\' TDs');
+      expect(teams[0].teamName).toBe("Big Ol' TDs");
       expect(teams[0].ownerDisplayName).toBe('Joe Champion');
       expect(teams[0].sleeperRosterId).toBe(1);
       expect(teams[0].record).toEqual({ wins: 11, losses: 2, ties: 0 });

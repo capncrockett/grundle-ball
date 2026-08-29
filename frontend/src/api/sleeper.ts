@@ -136,9 +136,7 @@ async function sleeperFetch<T>(path: string, bustCache = false): Promise<T> {
 
   if (!response.ok) {
     // You can add more robust logging / error boundaries later
-    throw new Error(
-      `Sleeper API error (${response.status.toString()}): ${response.statusText}`,
-    );
+    throw new Error(`Sleeper API error (${response.status.toString()}): ${response.statusText}`);
   }
 
   return (await response.json()) as T;
@@ -162,10 +160,7 @@ export async function getLeagueMatchupsForWeek(
   leagueId: string,
   week: number,
 ): Promise<SleeperMatchup[]> {
-  return sleeperFetch<SleeperMatchup[]>(
-    `/league/${leagueId}/matchups/${String(week)}`,
-    true,
-  );
+  return sleeperFetch<SleeperMatchup[]>(`/league/${leagueId}/matchups/${String(week)}`, true);
 }
 
 export async function getNFLState(): Promise<SleeperNFLState> {
@@ -184,9 +179,7 @@ export async function getPlayerProjections(
   season: number,
   week: number,
 ): Promise<SleeperPlayerProjection[]> {
-  const url = `${SLEEPER_PROJECTIONS_BASE}/${String(season)}/${String(
-    week,
-  )}?season_type=regular`;
+  const url = `${SLEEPER_PROJECTIONS_BASE}/${String(season)}/${String(week)}?season_type=regular`;
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(
@@ -212,9 +205,7 @@ export async function getAllPlayers(): Promise<Record<string, SleeperPlayer>> {
     cache: 'force-cache', // Cache aggressively since player data changes rarely
   });
   if (!response.ok) {
-    throw new Error(
-      `Players API error (${response.status.toString()}): ${response.statusText}`,
-    );
+    throw new Error(`Players API error (${response.status.toString()}): ${response.statusText}`);
   }
   return (await response.json()) as Record<string, SleeperPlayer>;
 }

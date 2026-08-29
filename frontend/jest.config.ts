@@ -14,9 +14,7 @@ const config: Config = {
     '^@mswjs/interceptors/ClientRequest$':
       '<rootDir>/node_modules/@mswjs/interceptors/ClientRequest',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(msw|@mswjs|until-async)/)',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(msw|@mswjs|until-async)/)'],
   testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setupTests.ts'],
   transform: {

@@ -37,9 +37,7 @@ describe('MatchupsPage', () => {
 
     render(<MatchupsPage />);
 
-    expect(
-      await screen.findByText(/Sleeper API error/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Sleeper API error/i)).toBeInTheDocument();
   });
 
   it('surfaces ESPN scoreboard errors', async () => {
@@ -51,31 +49,21 @@ describe('MatchupsPage', () => {
 
     render(<MatchupsPage />);
 
-    expect(
-      await screen.findByText(/ESPN API error/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/ESPN API error/i)).toBeInTheDocument();
   });
 
   it('shows empty state when no matchups found', async () => {
     server.use(
-      http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, () =>
-        HttpResponse.json([]),
-      ),
+      http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, () => HttpResponse.json([])),
     );
 
     render(<MatchupsPage />);
 
-    expect(
-      await screen.findByText(/No matchups found for this week/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/No matchups found for this week/i)).toBeInTheDocument();
   });
 
   it('falls back when roster data is missing', async () => {
-    server.use(
-      http.get(`${SLEEPER_BASE}/league/:leagueId/rosters`, () =>
-        HttpResponse.json([]),
-      ),
-    );
+    server.use(http.get(`${SLEEPER_BASE}/league/:leagueId/rosters`, () => HttpResponse.json([])));
 
     render(<MatchupsPage />);
 

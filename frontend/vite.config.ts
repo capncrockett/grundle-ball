@@ -11,9 +11,7 @@ const buildInfo = {
   gitOwner: process.env.VERCEL_GIT_REPO_OWNER ?? null,
   gitCommitMessage: process.env.VERCEL_GIT_COMMIT_MESSAGE ?? null,
   gitCommitAuthor:
-    process.env.VERCEL_GIT_COMMIT_AUTHOR_LOGIN ??
-    process.env.VERCEL_GIT_COMMIT_AUTHOR_NAME ??
-    null,
+    process.env.VERCEL_GIT_COMMIT_AUTHOR_LOGIN ?? process.env.VERCEL_GIT_COMMIT_AUTHOR_NAME ?? null,
   gitPullRequestId: process.env.VERCEL_GIT_PULL_REQUEST_ID ?? null,
   gitPullRequestTitle: process.env.VERCEL_GIT_PULL_REQUEST_TITLE ?? null,
   vercelEnv: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? null,

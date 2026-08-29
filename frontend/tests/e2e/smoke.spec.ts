@@ -63,7 +63,10 @@ test.describe('Happy path smoke', () => {
     await page.goto('/constitution');
 
     await expect(page.getByRole('heading', { name: /grundle league constitution/i })).toBeVisible();
-    await page.getByRole('navigation', { name: /constitution table of contents/i }).getByRole('link', { name: /^keepers$/i }).click();
+    await page
+      .getByRole('navigation', { name: /constitution table of contents/i })
+      .getByRole('link', { name: /^keepers$/i })
+      .click();
     await expect(page).toHaveURL(/#keepers/);
     await expect(page.locator('#keepers')).toBeVisible();
   });

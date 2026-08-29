@@ -68,8 +68,7 @@ export function findMatchupForTeam(
   if (byWeek.length > 0) return choose(byWeek);
 
   const anyWeek = matchups.filter(
-    (m) =>
-      normalizeTeamName(m.team) === normalized || normalizeTeamName(m.opponent) === normalized,
+    (m) => normalizeTeamName(m.team) === normalized || normalizeTeamName(m.opponent) === normalized,
   );
   if (anyWeek.length > 0) return choose(anyWeek);
 

@@ -19,7 +19,7 @@ export function countFinishedPlayers(
 
   for (const playerId of starterIds) {
     const player = playersById[playerId];
-    
+
     if (!player || !player.team) {
       // Player not found or doesn't have a team (e.g., free agent)
       // Assume their game is complete if we can't determine status
@@ -28,7 +28,7 @@ export function countFinishedPlayers(
     }
 
     const isGameComplete = teamGameStatus.get(player.team) ?? false;
-    
+
     if (isGameComplete) {
       finished++;
     }

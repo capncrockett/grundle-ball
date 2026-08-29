@@ -30,13 +30,25 @@ const week14Matchups: SleeperMatchup[] = [
 test.describe('Matchups page with mocked data', () => {
   test('loads fixture data and updates when changing weeks', async ({ page }) => {
     await page.route('**/state/nfl**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockNFLState) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockNFLState),
+      }),
     );
     await page.route(`**/league/${LEAGUE_ID}/users`, (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockSleeperUsers) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperUsers),
+      }),
     );
     await page.route(`**/league/${LEAGUE_ID}/rosters`, (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockSleeperRosters) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperRosters),
+      }),
     );
     await page.route(`**/league/${LEAGUE_ID}/matchups/**`, (route) => {
       const url = new URL(route.request().url());
@@ -50,10 +62,18 @@ test.describe('Matchups page with mocked data', () => {
       });
     });
     await page.route('**/players/nfl', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockSleeperPlayers) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperPlayers),
+      }),
     );
     await page.route('**/apis/site/v2/sports/football/nfl/scoreboard**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockESPNScoreboard) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockESPNScoreboard),
+      }),
     );
 
     await page.goto('/matchups');

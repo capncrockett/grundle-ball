@@ -299,9 +299,7 @@ export const BracketTile: FC<BracketTileProps> = ({
   const involvesHighlight =
     highlightTeamId != null && slot.positions.some((pos) => pos?.teamId === highlightTeamId);
   const hasBye = slot.positions.some((pos) => pos?.isBye);
-  const rewardTitle = slot.rewardTitle
-    ? renderRewardTitle(slot.id, slot.rewardTitle)
-    : undefined;
+  const rewardTitle = slot.rewardTitle ? renderRewardTitle(slot.id, slot.rewardTitle) : undefined;
 
   const cardClassName = [
     'card card-compact bg-base-100 w-full max-w-full min-w-0 h-full overflow-hidden border border-base-300',
