@@ -49,7 +49,7 @@ Database migrations must be assessed twice: once for product behavior and once f
 2. Branch from `main` as `release/MAJOR.MINOR.PATCH`.
 3. Set the matching version in the root `package.json` and refresh `package-lock.json`.
 4. Keep release notes focused on user-visible behavior, operator actions, compatibility, and migrations; internal detail may be summarized separately.
-5. Run the checks and staging flow in [`deployment.md`](deployment.md) before merging the release branch to `main`.
+5. Run the required checks and release flow in [`deployment.md`](deployment.md) before merging the release branch to `main`.
 6. If Git tags or hosted releases are added, their version must match the root package version; a separate tag naming convention should be documented before first use.
 
 If impact is ambiguous, write down who must adapt and what they must do. That concrete effect determines the bump more reliably than the size of the code change.

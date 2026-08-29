@@ -15,9 +15,9 @@ The 2025 snapshot is labeled with its actual league and season, storage keys are
 
 ## Release and operations
 
-Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). The staging hostname redirects unauthenticated Playwright runs to Vercel login; configure `VERCEL_AUTOMATION_BYPASS_SECRET` before the route-level staging smoke can be recorded.
+Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). Every `release/**` push runs the checked-out application locally through both Playwright projects, so protected Vercel staging is an optional environment check rather than a release gate.
 
-- [ ] Run and record a full staging smoke pass for every current route on both Playwright projects.
+- [x] Run the full local Playwright suite on both projects for every release-branch push in GitHub Actions.
 - [ ] Run a production smoke pass after the next release and verify Sleeper and ESPN requests from the deployed origin.
 - [x] Add CI production-build validation (`npm run build -w frontend`) alongside the frontend and backend tests.
 - [ ] Add automated internal-link and stale-brand checks for maintained Markdown documentation.

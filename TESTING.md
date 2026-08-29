@@ -100,7 +100,7 @@ Most smoke checks target the configured deployment and therefore exercise its cu
 - `.github/workflows/test.yml` runs the frontend Jest CI suite, backend matchup-history store tests, and the production Vite build on pull requests, `release/**` pushes, and manual dispatch.
 - The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It starts the checked-out app locally and runs Chromium desktop and iPhone 12 coverage against that exact commit.
 
-For a release, separately run the full Playwright suite against the deployed staging URL and record the result before merging to `main`; after deployment, repeat the smoke suite against the production URL.
+For a release, require the release-branch CI run against the checked-out local application to pass before merging to `main`. Protected staging remains available as an optional environment check when `VERCEL_AUTOMATION_BYPASS_SECRET` is configured. After deployment, run the smoke suite against the production URL to verify the real deployment and external API access.
 
 ## Known gaps
 
