@@ -65,7 +65,7 @@ npm run fetch:matchups -w frontend -- --week=14
 npm run fetch:matchups -w frontend -- --range=1-14
 ```
 
-The history schema is not yet league/season-scoped. Do not use the fetch commands to mix 2026 rows into the existing 2025 snapshot without the migration or an explicit full-store replacement described in root `ROADMAP.md`.
+Matchup-history rows and replacement keys are scoped by league, season, and week. The checked-in snapshot contains labeled 2025 history; fetch commands can add 2026 weeks without overwriting the prior season.
 
 See root `TESTING.md` for browser installation, CI triggers, and known gaps.
 

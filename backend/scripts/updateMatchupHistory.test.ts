@@ -101,6 +101,7 @@ const createHarness = (overrides: Partial<UpdateDependencies> = {}) => {
       appendCalls.push({ scope, week, entries });
       return Promise.resolve(entries);
     },
+    close: () => undefined,
   };
   const dependencies: Partial<UpdateDependencies> = {
     getLeague: () => Promise.resolve(league),

@@ -18,6 +18,7 @@ export type MatchupHistoryStore = {
     week: number,
     entries: StoredMatchup[],
   ) => Promise<MatchupHistory>;
+  close: () => void;
 };
 
 export type StoreConfig = {
@@ -97,7 +98,7 @@ function createJsonStore(path = MATCHUP_HISTORY_STORE_PATH): MatchupHistoryStore
     return write([...withoutWeek, ...normalized]);
   };
 
-  return { kind: 'json', describe, read, write, appendWeek };
+  return { kind: 'json', describe, read, write, appendWeek, close: () => undefined };
 }
 
 function ensureSqliteSchema(db: BetterSqliteDatabase): void {
@@ -178,6 +179,7 @@ type BetterSqliteStatement = {
 };
 
 type BetterSqliteDatabase = {
+  close: () => void;
   exec: (sql: string) => unknown;
   prepare: (sql: string) => BetterSqliteStatement;
   transaction: <Args extends unknown[], Result>(
@@ -272,7 +274,7 @@ async function createSqliteStore(sqlitePath = DEFAULT_SQLITE_PATH): Promise<Matc
     return read();
   };
 
-  return { kind: 'sqlite', describe, read, write, appendWeek };
+  return { kind: 'sqlite', describe, read, write, appendWeek, close: () => db.close() };
 }
 
 export async function getMatchupStore(config: StoreConfig = {}): Promise<MatchupHistoryStore> {
@@ -290,12 +292,20 @@ export async function getMatchupStore(config: StoreConfig = {}): Promise<Matchup
 
 export async function readMatchupHistoryFromDisk(): Promise<MatchupHistory> {
   const store = await getMatchupStore();
-  return store.read();
+  try {
+    return await store.read();
+  } finally {
+    store.close();
+  }
 }
 
 export async function writeMatchupHistoryToDisk(matchups: MatchupHistory): Promise<MatchupHistory> {
   const store = await getMatchupStore();
-  return store.write(matchups);
+  try {
+    return await store.write(matchups);
+  } finally {
+    store.close();
+  }
 }
 
 export async function appendWeekMatchups(
@@ -304,7 +314,11 @@ export async function appendWeekMatchups(
   entries: StoredMatchup[],
 ): Promise<MatchupHistory> {
   const store = await getMatchupStore();
-  return store.appendWeek(scope, week, entries);
+  try {
+    return await store.appendWeek(scope, week, entries);
+  } finally {
+    store.close();
+  }
 }
 
 export function getMarginsForWeekFromEntries(

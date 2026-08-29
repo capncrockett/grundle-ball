@@ -265,64 +265,68 @@ export async function updateMatchupHistory(
   logger.log(`Fetching Sleeper matchups for week(s): ${options.weeks.join(', ')}...`);
 
   const store: MatchupHistoryStore = await dependencies.getMatchupStore(config.storeConfig);
-  logger.log(`Using matchup store: ${store.describe()}`);
+  try {
+    logger.log(`Using matchup store: ${store.describe()}`);
 
-  const [league, usersPayload, rostersPayload] = await Promise.all([
-    dependencies.getLeague(options.leagueId),
-    dependencies.getLeagueUsers(options.leagueId),
-    dependencies.getLeagueRosters(options.leagueId),
-  ]);
-  const scope = resolveScope(league, options.leagueId);
-  const users = requireArray<SleeperUser>(usersPayload, 'league users');
-  const rosters = requireArray<SleeperRoster>(rostersPayload, 'league rosters');
+    const [league, usersPayload, rostersPayload] = await Promise.all([
+      dependencies.getLeague(options.leagueId),
+      dependencies.getLeagueUsers(options.leagueId),
+      dependencies.getLeagueRosters(options.leagueId),
+    ]);
+    const scope = resolveScope(league, options.leagueId);
+    const users = requireArray<SleeperUser>(usersPayload, 'league users');
+    const rosters = requireArray<SleeperRoster>(rostersPayload, 'league rosters');
 
-  logger.log(`Resolved matchup scope: league ${scope.leagueId}, season ${scope.season}`);
+    logger.log(`Resolved matchup scope: league ${scope.leagueId}, season ${scope.season}`);
 
-  const nameMap = rosterIdToTeamName(users, rosters);
+    const nameMap = rosterIdToTeamName(users, rosters);
 
-  let totalWritten = 0;
-  const touchedWeeks = new Set<number>();
+    let totalWritten = 0;
+    const touchedWeeks = new Set<number>();
 
-  for (const week of options.weeks) {
-    const matchupPayload = await dependencies.getLeagueMatchupsForWeek(options.leagueId, week);
-    const matchups = requireValidMatchups(matchupPayload, week);
-    const entries = buildMatchups(scope, week, matchups, nameMap, options.markFinished, logger);
-    if (entries.length === 0) {
-      logger.warn(`No matchup entries created for week ${week.toString()}; skipping write.`);
-      continue;
+    for (const week of options.weeks) {
+      const matchupPayload = await dependencies.getLeagueMatchupsForWeek(options.leagueId, week);
+      const matchups = requireValidMatchups(matchupPayload, week);
+      const entries = buildMatchups(scope, week, matchups, nameMap, options.markFinished, logger);
+      if (entries.length === 0) {
+        logger.warn(`No matchup entries created for week ${week.toString()}; skipping write.`);
+        continue;
+      }
+
+      const updated = await store.appendWeek(scope, week, entries);
+      touchedWeeks.add(week);
+      totalWritten += entries.length;
+      const weeks = Array.from(
+        new Set(
+          updated
+            .filter(
+              (matchup) => matchup.leagueId === scope.leagueId && matchup.season === scope.season,
+            )
+            .map((matchup) => matchup.week),
+        ),
+      ).sort((a, b) => a - b);
+      logger.log(
+        `Wrote ${entries.length.toString()} rows for week ${week.toString()} to ${store.describe()}`,
+      );
+      logger.log(`Store now covers weeks: ${weeks.join(', ')}`);
     }
 
-    const updated = await store.appendWeek(scope, week, entries);
-    touchedWeeks.add(week);
-    totalWritten += entries.length;
-    const weeks = Array.from(
-      new Set(
-        updated
-          .filter(
-            (matchup) => matchup.leagueId === scope.leagueId && matchup.season === scope.season,
-          )
-          .map((matchup) => matchup.week),
-      ),
-    ).sort((a, b) => a - b);
-    logger.log(
-      `Wrote ${entries.length.toString()} rows for week ${week.toString()} to ${store.describe()}`,
-    );
-    logger.log(`Store now covers weeks: ${weeks.join(', ')}`);
-  }
+    if (touchedWeeks.size > 0) {
+      logger.log(
+        `Completed update for weeks [${Array.from(touchedWeeks)
+          .sort((a, b) => a - b)
+          .join(', ')}]; total rows written: ${totalWritten.toString()}`,
+      );
+    }
 
-  if (touchedWeeks.size > 0) {
-    logger.log(
-      `Completed update for weeks [${Array.from(touchedWeeks)
-        .sort((a, b) => a - b)
-        .join(', ')}]; total rows written: ${totalWritten.toString()}`,
-    );
+    return {
+      scope,
+      touchedWeeks: Array.from(touchedWeeks).sort((a, b) => a - b),
+      totalWritten,
+    };
+  } finally {
+    store.close();
   }
-
-  return {
-    scope,
-    touchedWeeks: Array.from(touchedWeeks).sort((a, b) => a - b),
-    totalWritten,
-  };
 }
 
 async function main(storeConfig: StoreConfig = {}) {

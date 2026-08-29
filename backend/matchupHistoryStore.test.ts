@@ -34,29 +34,33 @@ const assertScopedReplacement = async (kind: 'json' | 'sqlite', path: string) =>
   const store = await getMatchupStore(
     kind === 'json' ? { kind, jsonPath: path } : { kind, sqlitePath: path },
   );
-  await store.write([matchup(scopeA2025, 5), matchup(scopeA2026, 10), matchup(scopeB2026, 15)]);
+  try {
+    await store.write([matchup(scopeA2025, 5), matchup(scopeA2026, 10), matchup(scopeB2026, 15)]);
 
-  const updated = await store.appendWeek(scopeA2026, 1, [matchup(scopeA2026, 20.126)]);
+    const updated = await store.appendWeek(scopeA2026, 1, [matchup(scopeA2026, 20.126)]);
 
-  assert.equal(updated.length, 3);
-  assert.equal(
-    updated.find(
-      (entry) => entry.leagueId === scopeA2025.leagueId && entry.season === scopeA2025.season,
-    )?.margin,
-    5,
-  );
-  assert.equal(
-    updated.find(
-      (entry) => entry.leagueId === scopeA2026.leagueId && entry.season === scopeA2026.season,
-    )?.margin,
-    20.13,
-  );
-  assert.equal(
-    updated.find(
-      (entry) => entry.leagueId === scopeB2026.leagueId && entry.season === scopeB2026.season,
-    )?.margin,
-    15,
-  );
+    assert.equal(updated.length, 3);
+    assert.equal(
+      updated.find(
+        (entry) => entry.leagueId === scopeA2025.leagueId && entry.season === scopeA2025.season,
+      )?.margin,
+      5,
+    );
+    assert.equal(
+      updated.find(
+        (entry) => entry.leagueId === scopeA2026.leagueId && entry.season === scopeA2026.season,
+      )?.margin,
+      20.13,
+    );
+    assert.equal(
+      updated.find(
+        (entry) => entry.leagueId === scopeB2026.leagueId && entry.season === scopeB2026.season,
+      )?.margin,
+      15,
+    );
+  } finally {
+    store.close();
+  }
 };
 
 test('JSON week replacement is scoped by league and season', async (context) => {
@@ -94,9 +98,13 @@ test('SQLite migrates the known unscoped snapshot as 2025 history', async (conte
   legacyDb.close();
 
   const store = await getMatchupStore({ kind: 'sqlite', sqlitePath: path });
-  const [migrated] = await store.read();
+  try {
+    const [migrated] = await store.read();
 
-  assert.equal(migrated?.leagueId, '1251950356187840512');
-  assert.equal(migrated?.season, '2025');
-  assert.equal(migrated?.week, 14);
+    assert.equal(migrated?.leagueId, '1251950356187840512');
+    assert.equal(migrated?.season, '2025');
+    assert.equal(migrated?.week, 14);
+  } finally {
+    store.close();
+  }
 });
