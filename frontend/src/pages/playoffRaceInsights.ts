@@ -62,7 +62,11 @@ export function computePlayoffRaceInsights(teams: Team[]): PlayoffRaceInsights |
   const byeChallenger = seedMap.get(3);
   const byeRace: ByeRace | null =
     byeHolder && byeChallenger
-      ? { holder: byeHolder, challenger: byeChallenger, gamesBack: gamesBack(byeHolder, byeChallenger) }
+      ? {
+          holder: byeHolder,
+          challenger: byeChallenger,
+          gamesBack: gamesBack(byeHolder, byeChallenger),
+        }
       : null;
 
   const byDivision = teams.reduce((map, team) => {

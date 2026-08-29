@@ -1,7 +1,5 @@
 export type ConstitutionInline =
-  | { type: 'text'; text: string }
-  | { type: 'strong'; text: string }
-  | { type: 'em'; text: string };
+  { type: 'text'; text: string } | { type: 'strong'; text: string } | { type: 'em'; text: string };
 
 export type ConstitutionTable = {
   headers: ConstitutionInline[][];
@@ -79,7 +77,6 @@ function parseTableBlock(
   };
 }
 
-
 export function slugifyHeading(title: string): string {
   return title
     .normalize('NFKD')
@@ -151,7 +148,10 @@ function attachNestedList(parent: OpenList, nested: OpenList): void {
   parentItem.children = nested.items;
 }
 
-function parseListBlock(lines: string[], startIndex: number): { block: ConstitutionBlock; nextIndex: number } {
+function parseListBlock(
+  lines: string[],
+  startIndex: number,
+): { block: ConstitutionBlock; nextIndex: number } {
   const stack: OpenList[] = [];
   let index = startIndex;
 

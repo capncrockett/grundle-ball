@@ -99,11 +99,11 @@ export function mergeRostersAndUsersToTeams(
       sleeperRosterId: roster.roster_id,
       sleeperUserId: roster.owner_id,
       divisionId,
-      divisionName: divisionId != null
-        ? (divisionNameById.get(divisionId) ?? `Division ${divisionId.toString()}`)
-        : null,
-      divisionAvatarUrl:
-        divisionId != null ? (divisionAvatarById.get(divisionId) ?? null) : null,
+      divisionName:
+        divisionId != null
+          ? (divisionNameById.get(divisionId) ?? `Division ${divisionId.toString()}`)
+          : null,
+      divisionAvatarUrl: divisionId != null ? (divisionAvatarById.get(divisionId) ?? null) : null,
       record: { wins, losses, ties },
       pointsFor,
       pointsAgainst,
@@ -261,11 +261,7 @@ export function computeSeeds(teams: Team[]): Team[] {
 
   // Seeds 1-3: division winners
   const divisionIds = Array.from(
-    new Set(
-      sortedByRank
-        .map((team) => team.divisionId)
-        .filter((id): id is number => id !== null),
-    ),
+    new Set(sortedByRank.map((team) => team.divisionId).filter((id): id is number => id !== null)),
   );
 
   const divisionWinners: Team[] = [];

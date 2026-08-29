@@ -1,13 +1,11 @@
 import { computeStandingsInsights } from './standingsInsights';
 import { computeSeeds, mergeRostersAndUsersToTeams } from '../utils/sleeperTransforms';
-import {
-  mockSleeperLeague,
-  mockSleeperRosters,
-  mockSleeperUsers,
-} from '../test/fixtures/sleeper';
+import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 
 const buildTeams = () =>
-  computeSeeds(mergeRostersAndUsersToTeams(mockSleeperRosters, mockSleeperUsers, mockSleeperLeague));
+  computeSeeds(
+    mergeRostersAndUsersToTeams(mockSleeperRosters, mockSleeperUsers, mockSleeperLeague),
+  );
 
 describe('computeStandingsInsights', () => {
   it('returns null when no games have been played', () => {
@@ -29,15 +27,14 @@ describe('computeStandingsInsights', () => {
     expect(insights).not.toBeNull();
     if (!insights) return;
 
-    const expectedLeagueAvgPa = mockSleeperRosters.reduce((sum, roster) => {
-      const gamesPlayed = (roster.settings.wins ?? 0) +
-        (roster.settings.losses ?? 0) +
-        (roster.settings.ties ?? 0);
-      const pa =
-        (roster.settings.fpts_against ?? 0) +
-        ((roster.settings.fpts_against_decimal ?? 0) / 100);
-      return sum + (gamesPlayed > 0 ? pa / gamesPlayed : 0);
-    }, 0) / mockSleeperRosters.length;
+    const expectedLeagueAvgPa =
+      mockSleeperRosters.reduce((sum, roster) => {
+        const gamesPlayed =
+          (roster.settings.wins ?? 0) + (roster.settings.losses ?? 0) + (roster.settings.ties ?? 0);
+        const pa =
+          (roster.settings.fpts_against ?? 0) + (roster.settings.fpts_against_decimal ?? 0) / 100;
+        return sum + (gamesPlayed > 0 ? pa / gamesPlayed : 0);
+      }, 0) / mockSleeperRosters.length;
 
     expect(insights.toughestSchedule.teamName).toBe('Team Twelve');
     expect(insights.toughestSchedule.paPerGame).toBeCloseTo(1700 / 13, 2);

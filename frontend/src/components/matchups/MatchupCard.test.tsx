@@ -10,7 +10,7 @@ jest.mock('../common/TeamAvatars', () => ({
 }));
 
 const mockTeamA: Team = {
-  teamName: 'Big Ol\' TDs',
+  teamName: "Big Ol' TDs",
   ownerDisplayName: 'Joe Champion',
   teamAvatarUrl: null,
   userAvatarUrl: 'avatar1',
@@ -55,7 +55,7 @@ describe('MatchupCard', () => {
   it('renders team names and records', () => {
     render(<MatchupCard live={mockLiveMatchData} teamA={mockTeamA} teamB={mockTeamB} />);
 
-    expect(screen.getByText('Big Ol\' TDs')).toBeInTheDocument();
+    expect(screen.getByText("Big Ol' TDs")).toBeInTheDocument();
     expect(screen.getByText('Glaurung & Foes')).toBeInTheDocument();
     expect(screen.getByText('11-2')).toBeInTheDocument();
     expect(screen.getByText('9-4')).toBeInTheDocument();

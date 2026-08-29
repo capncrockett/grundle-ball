@@ -67,12 +67,7 @@ interface BracketMatchShellProps {
   slotId?: BracketSlot['id'];
 }
 
-const BracketMatchShell: FC<BracketMatchShellProps> = ({
-  itemId,
-  children,
-  className,
-  slotId,
-}) => {
+const BracketMatchShell: FC<BracketMatchShellProps> = ({ itemId, children, className, slotId }) => {
   return (
     <div
       className={['relative flex flex-col items-stretch gap-1 min-w-0 w-full', className]
@@ -248,10 +243,7 @@ export const BracketGrid: FC<BracketGridProps> = ({
                   .join(' ')}
               >
                 <div
-                  className={[
-                    'flex-1 flex flex-col gap-2 md:gap-4',
-                    col.itemsContainerClassName,
-                  ]
+                  className={['flex-1 flex flex-col gap-2 md:gap-4', col.itemsContainerClassName]
                     .filter(Boolean)
                     .join(' ')}
                 >

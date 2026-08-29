@@ -39,7 +39,12 @@ function ListItems({ items, ordered }: { items: ConstitutionListItem[]; ordered:
   return (
     <ListTag className={listClass}>
       {items.map((item, index) => (
-        <li key={`item-${String(index)}-${item.inlines.map((part) => part.text).join('').slice(0, 24)}`}>
+        <li
+          key={`item-${String(index)}-${item.inlines
+            .map((part) => part.text)
+            .join('')
+            .slice(0, 24)}`}
+        >
           <span>{renderInlines(item.inlines)}</span>
           {item.children && item.children.length > 0 ? (
             <div className="mt-2">
@@ -117,8 +122,7 @@ function SectionView({ section }: { section: ConstitutionSection }) {
   );
 }
 
-export const CONSTITUTION_PDF_HREF =
-  '/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf';
+export const CONSTITUTION_PDF_HREF = '/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf';
 
 export function ConstitutionPage() {
   const document = constitutionDocument;
@@ -130,7 +134,8 @@ export function ConstitutionPage() {
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold">{document.title}</h1>
           <p className="text-sm text-base-content/60">
-            2026 Edition review draft. In-repo source of truth — update as amendments and votes land.
+            2026 Edition review draft. In-repo source of truth — update as amendments and votes
+            land.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

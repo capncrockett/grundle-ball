@@ -1,7 +1,12 @@
 // frontend/src/utils/sleeperTransforms.test.ts
 
 import { mergeRostersAndUsersToTeams, pairMatchups, computeSeeds } from './sleeperTransforms';
-import { mockSleeperUsers, mockSleeperRosters, mockSleeperMatchupsWeek13 } from '../test/fixtures/sleeper';
+import {
+  mockSleeperLeague,
+  mockSleeperUsers,
+  mockSleeperRosters,
+  mockSleeperMatchupsWeek13,
+} from '../test/fixtures/sleeper';
 
 describe('sleeperTransforms', () => {
   describe('mergeRostersAndUsersToTeams', () => {
@@ -9,7 +14,7 @@ describe('sleeperTransforms', () => {
       const teams = mergeRostersAndUsersToTeams(mockSleeperRosters, mockSleeperUsers);
 
       expect(teams).toHaveLength(12);
-      expect(teams[0].teamName).toBe('Big Ol\' TDs');
+      expect(teams[0].teamName).toBe("Big Ol' TDs");
       expect(teams[0].ownerDisplayName).toBe('Joe Champion');
       expect(teams[0].sleeperRosterId).toBe(1);
       expect(teams[0].record).toEqual({ wins: 11, losses: 2, ties: 0 });
@@ -42,6 +47,30 @@ describe('sleeperTransforms', () => {
 
       // fpts: 1650, fpts_decimal: 50 → 1650.50
       expect(team?.pointsFor).toBe(1650.5);
+    });
+
+    it('reads division assignments from the current Sleeper roster settings shape', () => {
+      const roster = {
+        ...mockSleeperRosters[0],
+        division_id: undefined,
+        settings: {
+          ...mockSleeperRosters[0].settings,
+          division: 3,
+        },
+      };
+      const league = {
+        ...mockSleeperLeague,
+        metadata: {
+          division_3: 'D3',
+          division_3_avatar: 'https://example.com/d3.png',
+        },
+      };
+
+      const [team] = mergeRostersAndUsersToTeams([roster], mockSleeperUsers, league);
+
+      expect(team.divisionId).toBe(3);
+      expect(team.divisionName).toBe('D3');
+      expect(team.divisionAvatarUrl).toBe('https://example.com/d3.png');
     });
   });
 

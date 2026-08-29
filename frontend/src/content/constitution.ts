@@ -9,7 +9,11 @@ export type {
   ConstitutionListItem,
   ConstitutionTable,
 } from './parseConstitutionMarkdown';
-export { parseConstitutionMarkdown, parseInlineMarkdown, slugifyHeading } from './parseConstitutionMarkdown';
+export {
+  parseConstitutionMarkdown,
+  parseInlineMarkdown,
+  slugifyHeading,
+} from './parseConstitutionMarkdown';
 
 export const CONSTITUTION_MARKDOWN = constitutionMarkdown;
 

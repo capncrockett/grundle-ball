@@ -1,8 +1,27 @@
 {
   "name": "grundle-ball",
+  "version": "2.1.0",
   "private": true,
-  "workspaces": ["frontend", "backend"],
+  "engines": {
+    "node": "24.x"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "lint": "npm run lint -w frontend && npm run lint -w backend"
+    "format": "npm run format -w frontend",
+    "format:write": "npm run format:write -w frontend",
+    "lint": "npm run lint -w frontend && npm run lint -w backend",
+    "prepare": "node .husky/install.mjs",
+    "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend"
+  },
+  "lint-staged": {
+    "*.{cjs,css,html,js,json,jsx,md,mjs,ts,tsx,yaml,yml}": "prettier --config frontend/.prettierrc --write"
+  },
+  "devDependencies": {
+    "husky": "9.1.7",
+    "lightningcss": "^1.33.0",
+    "lint-staged": "17.4.1"
   }
 }

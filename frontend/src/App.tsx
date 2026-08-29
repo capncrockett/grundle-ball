@@ -51,7 +51,8 @@ const fallbackBuildInfo: BuildInfo = {
   projectId: null,
 };
 
-const buildInfo: BuildInfo = typeof __BUILD_INFO__ === 'undefined' ? fallbackBuildInfo : __BUILD_INFO__;
+const buildInfo: BuildInfo =
+  typeof __BUILD_INFO__ === 'undefined' ? fallbackBuildInfo : __BUILD_INFO__;
 const buildRef = buildInfo.gitRef ?? 'local';
 const shortSha = buildInfo.gitSha ? buildInfo.gitSha.slice(0, 7) : 'local';
 const envLabel = buildInfo.vercelEnv ?? 'development';
@@ -96,7 +97,9 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-base-200 text-base-content">
       <header className="navbar bg-base-100 shadow-md">
         <div className="navbar-start">
-          <span className="btn btn-ghost normal-case text-sm sm:text-xl font-bold">Grundle Ball</span>
+          <span className="btn btn-ghost normal-case text-sm sm:text-xl font-bold">
+            Grundle Ball
+          </span>
         </div>
         <div className="navbar-center">
           <nav className="flex gap-1 sm:gap-2">
@@ -179,7 +182,10 @@ export default function App() {
           <Route path="/playoffs" element={<PlayoffsPage />} />
           <Route path="/matchups" element={<MatchupsPage />} />
           <Route path="/constitution" element={<ConstitutionPage />} />
-          <Route path="/beta/grundle-bowl" element={<Navigate to="/beta/grundle-bowl/live" replace />} />
+          <Route
+            path="/beta/grundle-bowl"
+            element={<Navigate to="/beta/grundle-bowl/live" replace />}
+          />
           <Route
             path="/beta/grundle-bowl/live"
             element={
@@ -197,8 +203,14 @@ export default function App() {
             }
           />
           {/* Legacy links redirect to their new Beta home */}
-          <Route path="/playoffs/live" element={<Navigate to="/beta/grundle-bowl/live" replace />} />
-          <Route path="/playoffs/if-today" element={<Navigate to="/beta/grundle-bowl/if-today" replace />} />
+          <Route
+            path="/playoffs/live"
+            element={<Navigate to="/beta/grundle-bowl/live" replace />}
+          />
+          <Route
+            path="/playoffs/if-today"
+            element={<Navigate to="/beta/grundle-bowl/if-today" replace />}
+          />
         </Routes>
       </main>
 

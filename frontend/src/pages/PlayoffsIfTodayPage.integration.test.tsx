@@ -37,8 +37,6 @@ describe('PlayoffsIfTodayPage', () => {
 
     render(<PlayoffsIfTodayPage />);
 
-    expect(
-      await screen.findByText(/Failed to load playoff preview/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Failed to load playoff preview/i)).toBeInTheDocument();
   });
 });

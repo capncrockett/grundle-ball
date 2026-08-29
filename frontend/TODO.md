@@ -1,5 +1,9 @@
 # Frontend TODO
 
+## League configuration
+
+- If deployments need runtime-selectable leagues, replace the checked-in configuration deliberately: validate the browser-facing value, define how the Node history updater receives the same default, preserve its `--league` override, and update deployment docs/tests together. The confirmed 2026 default is already centralized in `src/config/league.ts` for current use.
+
 ## Tailwind cleanup (optional)
 
 - Remove unused Vite starter CSS in `frontend/src/App.css` (no imports) or migrate any needed styles to Tailwind classes.

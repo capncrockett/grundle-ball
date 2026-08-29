@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const THEME_KEY = 'keeper-bowl-theme';
+const THEME_KEY = 'grundle-ball-theme';
 
 const getTheme = async (page: import('@playwright/test').Page) =>
   page.evaluate(() => document.documentElement.getAttribute('data-theme'));

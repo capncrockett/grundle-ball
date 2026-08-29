@@ -25,9 +25,7 @@ describe('BracketGrid', () => {
     const columns: BracketLayoutColumn[] = [
       {
         title: 'Round 1',
-        items: [
-          { id: 'champ_bye1', slotId: 'champ_r2_g1', maskOppIndex: 1, titleOverride: 'BYE' },
-        ],
+        items: [{ id: 'champ_bye1', slotId: 'champ_r2_g1', maskOppIndex: 1, titleOverride: 'BYE' }],
       },
     ];
 

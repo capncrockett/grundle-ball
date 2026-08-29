@@ -3,7 +3,7 @@ import { http, HttpResponse, delay } from 'msw';
 import { MatchupsPage } from './MatchupsPage';
 import { server } from '../test/server';
 import { errorHandlers } from '../test/mocks/handlers';
-import { mockSleeperMatchupsWeek13 } from '../test/fixtures/sleeper';
+import { mockNFLState, mockSleeperMatchupsWeek13 } from '../test/fixtures/sleeper';
 
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 const ESPN_BASE = 'https://site.api.espn.com';
@@ -37,9 +37,7 @@ describe('MatchupsPage', () => {
 
     render(<MatchupsPage />);
 
-    expect(
-      await screen.findByText(/Sleeper API error/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Sleeper API error/i)).toBeInTheDocument();
   });
 
   it('surfaces ESPN scoreboard errors', async () => {
@@ -51,31 +49,52 @@ describe('MatchupsPage', () => {
 
     render(<MatchupsPage />);
 
-    expect(
-      await screen.findByText(/ESPN API error/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/ESPN API error/i)).toBeInTheDocument();
   });
 
   it('shows empty state when no matchups found', async () => {
     server.use(
-      http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, () =>
-        HttpResponse.json([]),
+      http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, () => HttpResponse.json([])),
+    );
+
+    render(<MatchupsPage />);
+
+    expect(await screen.findByText(/No matchups found for this week/i)).toBeInTheDocument();
+  });
+
+  it('treats NFL preseason as pre-schedule fantasy Week 1', async () => {
+    server.use(
+      http.get(`${SLEEPER_BASE}/state/nfl`, () =>
+        HttpResponse.json({
+          ...mockNFLState,
+          week: 3,
+          display_week: 3,
+          season: '2026',
+          season_type: 'pre',
+          league_season: '2026',
+        }),
+      ),
+      http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, () => HttpResponse.json([])),
+      http.get(`${SLEEPER_BASE}/players/nfl`, () =>
+        HttpResponse.json({ message: 'should not be called' }, { status: 500 }),
+      ),
+      http.get(`${ESPN_BASE}/apis/site/v2/sports/football/nfl/scoreboard`, () =>
+        HttpResponse.json({ message: 'should not be called' }, { status: 500 }),
       ),
     );
 
     render(<MatchupsPage />);
 
+    expect(await screen.findByText('2026 • Preseason • Fantasy Week 1')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /week/i })).toHaveValue('1');
     expect(
-      await screen.findByText(/No matchups found for this week/i),
+      await screen.findByText(/Sleeper will publish them after the league draft/i),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/API error/i)).not.toBeInTheDocument();
   });
 
   it('falls back when roster data is missing', async () => {
-    server.use(
-      http.get(`${SLEEPER_BASE}/league/:leagueId/rosters`, () =>
-        HttpResponse.json([]),
-      ),
-    );
+    server.use(http.get(`${SLEEPER_BASE}/league/:leagueId/rosters`, () => HttpResponse.json([])));
 
     render(<MatchupsPage />);
 

@@ -47,7 +47,13 @@ describe('playerGameStatus', () => {
 
     it('treats players without teams as finished', () => {
       const playersWithoutTeam = {
-        playerX: { player_id: 'playerX', team: null, position: 'RB', first_name: 'Free', last_name: 'Agent' },
+        playerX: {
+          player_id: 'playerX',
+          team: null,
+          position: 'RB',
+          first_name: 'Free',
+          last_name: 'Agent',
+        },
       };
       const starterIds = ['playerX'];
 

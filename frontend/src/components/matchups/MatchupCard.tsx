@@ -44,9 +44,7 @@ export function MatchupCard({ live, teamA, teamB }: MatchupCardProps) {
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="font-semibold truncate">{teamA?.teamName ?? 'Unknown'}</span>
                 <span className="text-xs text-base-content/60">
-                  {teamA
-                    ? formatRecord(teamA.record)
-                    : '-'}
+                  {teamA ? formatRecord(teamA.record) : '-'}
                 </span>
               </div>
             </div>
@@ -77,9 +75,7 @@ export function MatchupCard({ live, teamA, teamB }: MatchupCardProps) {
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="font-semibold truncate">{teamB?.teamName ?? 'BYE'}</span>
                 <span className="text-xs text-base-content/60">
-                  {teamB
-                    ? formatRecord(teamB.record)
-                    : '-'}
+                  {teamB ? formatRecord(teamB.record) : '-'}
                 </span>
               </div>
             </div>
@@ -94,7 +90,6 @@ export function MatchupCard({ live, teamA, teamB }: MatchupCardProps) {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

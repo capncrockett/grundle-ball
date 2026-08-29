@@ -20,7 +20,12 @@ describe('BracketTile', () => {
     };
 
     const { container } = render(
-      <BracketTile slot={slot} teamsById={teamsById} highlightTeamId={team.sleeperRosterId} mode="score" />,
+      <BracketTile
+        slot={slot}
+        teamsById={teamsById}
+        highlightTeamId={team.sleeperRosterId}
+        mode="score"
+      />,
     );
 
     expect(screen.getByText('Alpha')).toBeInTheDocument();

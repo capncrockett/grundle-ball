@@ -1,170 +1,76 @@
-# Grundle Ball — Roadmap (Active)
+# Grundle Ball — Roadmap
 
-Completed phases 0–6 removed for brevity; reopen if you need historical notes.
+This file tracks work that remains after the Grundle Ball rebrand and the move to a Sleeper-mirrored official playoff page. Completed phase-by-phase implementation notes have been removed; current architecture and supported behavior live in `frontend/WARP.md`.
 
----
+## High priority — stored-history correctness
 
-## Phase 3 — If‑Today Bracket View (Leftovers)
+The 2025 snapshot is labeled with its actual league and season, storage keys are scoped, Standings requests only the active Sleeper league/season, and the CLI validates its arguments and upstream scope before writing.
 
-- [ ] Add tiny flow labels (text only): "Rimmers ->", "Flushed ->", "Floaters", "Splashbacks".
-- Connectors (paused):
-  - [ ] Re‑enable connectors on Champ only.
-  - [ ] Switch from raw `<line>` to elbow/bracket paths.
-  - [ ] Add connection map for Keeper/Toilet.
-  - [ ] Ensure connectors rerender on resize + mode toggle.
+- [x] Add `leagueId` and `season` to stored matchup rows and make them part of SQLite uniqueness/indexing.
+- [x] Stamp fetched rows from the selected league and its resolved season rather than assuming the app's current default.
+- [x] Migrate and explicitly label the existing JSON/SQLite rows as 2025 data.
+- [x] Require Standings history helpers to select the current league and season; if no matching snapshot exists, omit history-dependent stat-correction insight instead of falling back to another season.
+- [x] Add JSON, SQLite, and frontend regression tests with overlapping week numbers across seasons and leagues.
+- [x] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
 
----
+## Release and operations
 
-## Phase 7 — Release / Hosting / QA (Next)
+Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). Every `release/**` push runs the checked-out application locally through both Playwright projects, so protected Vercel staging is an optional environment check rather than a release gate.
 
-- [ ] Smoke test all routes.
-- [ ] Verify Sleeper API errors are surfaced cleanly.
-- [ ] Add stable `data-testid` hooks for e2e selectors (theme toggle, matchups list, etc.).
-- [x] Confirm works on mobile widths.
-- [ ] Add minimal README usage notes.
-- [ ] Deploy to chosen host (Render/Azure/AWS).
+- [x] Run the full local Playwright suite on both projects for every release-branch push in GitHub Actions.
+- [ ] Run a production smoke pass after the next release and verify Sleeper and ESPN requests from the deployed origin.
+- [x] Add CI production-build validation (`npm run build -w frontend`) alongside the frontend and backend tests.
+- [ ] Add automated internal-link and stale-brand checks for maintained Markdown documentation.
 
----
+See `TESTING.md` for the verified automated coverage and remaining test gaps, and `docs/deployment.md` for the current release flow.
 
-## Open Questions / Parking Lot
+## Configuration evolution
 
-- Connectors: SVG vs CSS pseudo‑elements decision after geometry is locked
-- How to represent BYE games in Live mode if Sleeper omits them
-- Whether to cache Sleeper responses for rate limits
+- [ ] Decide whether league configuration remains checked-in source or becomes environment-configurable. If it moves, define one validated boundary for both the Vite browser build and the Node history updater; a `VITE_*` variable alone would not configure both runtimes.
+- [ ] If multiple leagues become a supported product requirement, define how league selection affects cached matchup history, divisions, seeding rules, and URLs before adding a selector.
 
----
+## Coordinated major dependency migrations
 
-## Future Enhancements (Nice-to-Have)
+The compatibility-safe dependency refresh does not mean every package is on its latest major. Treat the remaining toolchain jumps as coordinated migrations, not independent version bumps:
 
-- Backend data store work (cron + DB migration) is tracked in `backend/TODO.md`.
+- [ ] Plan ESLint 10 together with compatible `typescript-eslint`, React Hooks, and React Refresh plugins/config; keep root frontend/backend lint green.
+- [ ] Plan Jest 30 and `jest-environment-jsdom` 30 with a confirmed TypeScript transform strategy. Do not strand Jest on a major that the selected `ts-jest` version does not support.
+- [ ] Plan Vite 8 with its compatible React plugin, Tailwind integration, and Lightning CSS build path.
+- [ ] Plan TypeScript 7 with compatible `typescript-eslint`, Jest transform, `ts-node`, Vite, and backend type declarations.
+- [ ] Upgrade one compatibility cluster at a time and run root lint/typecheck, Jest, the production build, and both Playwright projects before declaring it complete.
+- [ ] Re-run the dependency report after each cluster and record any deliberately deferred majors; patch/minor currency must not be described as “fully up to date.”
 
-### Enhanced Matchup Projections
+## Grundle Bowl Beta polish
 
-**Goal:** Display accurate projected scores and win probabilities on the Matchups page.
+The items in this section apply only to the rejected custom Champ Bowl / Keeper Bowl / Toilet Bowl proposal under `/beta/grundle-bowl`, not the official `/playoffs` bracket.
 
-**Current State:**
+- [ ] Add compact flow labels where they improve comprehension: `Rimmers`, `Flushed`, `Floaters`, and `Splashbacks`.
+- [ ] Decide how to visualize loser and cross-bracket movement. `BracketGrid` currently derives visible winner connectors from `ROUTING_RULES` and supports manual BYE connectors; cross-board and loser routes are not represented consistently.
+- [ ] Recheck connector geometry after any bracket layout change at desktop and mobile widths.
 
-- Matchup cards show current scores only
-- Win probability removed (not available from Sleeper API)
-- Basic `getPlayerProjections()` API client exists but is unused
-- Projection API: `https://api.sleeper.com/projections/nfl/{season}/{week}`
+## Matchup enhancements
 
-**What's Needed:**
+### Projected totals and win probability
 
-1. **Fetch Player Projections**
+The Matchups page currently shows actual points plus finished-starter counts. `getPlayerProjections()` exists in `frontend/src/api/sleeper.ts` but is not consumed.
 
-   - Call `getPlayerProjections(season, week)` for current week
-   - Returns array of projections keyed by `player_id` with scoring formats (std/half_ppr/ppr)
+- [ ] Confirm the projection endpoint and scoring-format mapping before relying on it.
+- [ ] Sum remaining starter projections using the league's scoring settings.
+- [ ] Define a defensible win-probability model; a ratio of projected totals should not be presented as equivalent to Sleeper's proprietary probability.
+- [ ] Add loading, partial-data, and unavailable-projection behavior plus tests before restoring projected totals or probabilities to the UI.
+- [ ] Consider caching because projections change throughout the week and add another large request.
 
-2. **Map to Team Totals**
+Starter completion tracking is already implemented with Sleeper player metadata and ESPN game status; it is no longer a future workstream.
 
-   - For each matchup, get roster's starter player IDs from `SleeperMatchup.starters`
-   - Look up each starter's projection
-   - Sum projected points based on league scoring format (need to detect from league settings)
-   - Add to current points for players who haven't played yet
+## Backend and stored history
 
-3. **Calculate Win Probability**
+The checked-in JSON snapshot remains the UI source until a hosted data layer is deliberately introduced. Detailed implementation notes live in [`backend/TODO.md`](backend/TODO.md).
 
-   - Simple approach: `winProbA = projectedA / (projectedA + projectedB)`
-   - Better approach: Use statistical model considering variance, time remaining, players left to play
-   - Note: Will never match Sleeper's proprietary win probability calculation
+### Hosted data layer
 
-4. **UI Updates**
-   - Show projected totals on MatchupCard
-   - Add win probability percentages back to cards
-   - Add disclaimer: "Projections are estimates and may differ from Sleeper's calculations"
-
-**Technical Notes:**
-
-- Projections API is separate domain: `api.sleeper.com` vs `api.sleeper.app`
-- May require league settings fetch to determine scoring format
-- Additional API calls per week view (consider caching)
-- Player projections change throughout the week as games complete
-
-**Files to Modify:**
-
-- `src/utils/sleeperTransforms.ts` - Enhance `buildLiveMatchData()` to use real projections
-- `src/pages/MatchupsPage.tsx` - Fetch projections alongside matchups
-- `src/components/matchups/MatchupCard.tsx` - Re-enable win probability display
-- `src/models/fantasy.ts` - Potentially add `LeagueSettings` type for scoring format
-
-**Estimated Effort:** Medium (4-6 hours)
-
-- API integration is straightforward
-- Complexity is in mapping player IDs to projections and handling edge cases
-- Testing across different weeks and scoring formats
-
-### Players Yet To Play Tracking
-
-**Goal:** Show how many starters have finished playing vs yet to play on matchup cards.
-
-**Current State:**
-
-- Matchup cards only show current scores
-- No indication of game progress or remaining players
-- `startersA` and `startersB` fields exist in data model but not displayed
-
-**Approach Options:**
-
-1. **Use ESPN's undocumented API** (Recommended - Free)
-
-   - ESPN scoreboard API: `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week={week}`
-   - Returns game status: `STATUS_SCHEDULED`, `STATUS_IN_PROGRESS`, `STATUS_FINAL`, `STATUS_HALFTIME`, etc.
-   - Get all players from Sleeper (`https://api.sleeper.app/v1/players/nfl`)
-   - Cross-reference player team with ESPN game status to determine if game is complete
-   - Count starters whose games are `STATUS_FINAL` vs still in progress
-
-2. **Use Sleeper Stats API**
-
-   - `https://api.sleeper.com/stats/nfl/{season}/{week}?season_type=regular`
-   - Check if player has non-zero stats (indicates they've played)
-   - Less reliable: player could be active but have 0 stats
-
-3. **Use NFL.com GameCenter JSON** (Mentioned in StackOverflow)
-   - `http://www.nfl.com/liveupdate/game-center/{game_id}/{game_id}_gtd.json`
-   - Updates every ~15 seconds during live games
-   - Would need to maintain mapping of game IDs
-
-**Implementation Steps (ESPN Approach):**
-
-1. Add ESPN API client function: `getESPNScoreboard(week)`
-2. Fetch all NFL players once per day (cache in localStorage)
-3. Build map of `player_id -> NFL_team`
-4. Fetch ESPN scoreboard for current week
-5. Create map of `NFL_team -> game_status`
-6. For each starter in matchup:
-   - Look up player's NFL team
-   - Check if team's game is `STATUS_FINAL`
-   - Increment `playersFinished` or `playersYetToPlay` count
-7. Update UI:
-   - Show "X/Y finished" under each team score
-   - Add visual bar showing ratio of finished players
-   - Update as games progress (requires periodic refresh)
-
-**Data Model Changes:**
-
-```typescript
-interface LiveMatchData {
-  // ... existing fields
-  playersFinishedA: number;
-  playersFinishedB: number;
-}
-```
-
-**UI Changes:**
-
-- Add "5/9 finished" text under scores
-- Add progress bar showing completion ratio
-- Consider color coding: green for all done, yellow for in progress
-
-**Estimated Effort:** Medium (6-8 hours)
-
-- ESPN API integration
-- Player data caching and mapping
-- Cross-referencing logic
-- UI updates
-- Testing with live games
-
-### Multi-League Expansion
-
-- Handle leagues without divisions gracefully (skip division insights/cards when no division IDs available).
+- [ ] Define the product and operational trigger for introducing a hosted database, such as multi-season history, multiple leagues, scheduled writes, or administrator workflows; do not add a runtime dependency without a concrete need.
+- [x] Complete league/season scoping and migration coverage for the existing JSON and SQLite stores before selecting hosted infrastructure.
+- [ ] Choose a hosted store behind `MatchupHistoryStore` and record the durable choice in an ADR. Turso/libsql and Postgres are the current candidates.
+- [ ] Design the browser access boundary, authentication/authorization, scheduled ingestion, observability, backups, recovery, and rollback before moving the deployed frontend off the checked-in snapshot.
+- [ ] Define forward and rollback migrations plus explicit backfill validation for every persisted schema change.
+- [ ] Classify database-backed releases under [`docs/versioning.md`](docs/versioning.md): private compatible migrations are normally patches, new capabilities are minors, and operator- or user-breaking migrations may require a major.

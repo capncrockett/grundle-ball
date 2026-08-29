@@ -5,7 +5,7 @@ import type { BracketSlot } from '../bracket/types';
 
 /**
  * Applies matchup scores (current points) to bracket slots.
- * 
+ *
  * For each bracket slot, finds the corresponding matchup data and updates
  * the positions with currentPoints.
  *

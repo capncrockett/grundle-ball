@@ -3,7 +3,9 @@ import { computeSeeds, mergeRostersAndUsersToTeams } from '../utils/sleeperTrans
 import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 
 const buildTeams = () =>
-  computeSeeds(mergeRostersAndUsersToTeams(mockSleeperRosters, mockSleeperUsers, mockSleeperLeague));
+  computeSeeds(
+    mergeRostersAndUsersToTeams(mockSleeperRosters, mockSleeperUsers, mockSleeperLeague),
+  );
 
 describe('computePlayoffRaceInsights', () => {
   it('returns null when no teams', () => {
@@ -21,7 +23,7 @@ describe('computePlayoffRaceInsights', () => {
     expect(insights.bubbleRace?.pfGap).toBeCloseTo(74.5);
 
     expect(insights.byeRace?.holder.teamName).toBe('The Dudes From Cocoon');
-    expect(insights.byeRace?.challenger.teamName).toBe("Glaurung & Foes");
+    expect(insights.byeRace?.challenger.teamName).toBe('Glaurung & Foes');
     expect(Math.abs(insights.byeRace?.gamesBack ?? 0)).toBeCloseTo(1);
 
     expect(insights.divisionRaces.length).toBeGreaterThan(0);

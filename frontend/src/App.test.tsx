@@ -75,7 +75,7 @@ describe('App routing + nav', () => {
     expect(screen.getByText('Live Playoffs Page')).toBeInTheDocument();
   });
 
-it('renders constitution route and highlights constitution nav', () => {
+  it('renders constitution route and highlights constitution nav', () => {
     renderWithRouter(<App />, { route: '/constitution' });
 
     expect(screen.getByText('Constitution Page')).toBeInTheDocument();

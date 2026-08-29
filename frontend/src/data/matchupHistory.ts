@@ -1,20 +1,29 @@
 import matchupHistoryData from './matchupHistoryStore.json';
-import type { MatchupHistory, StoredMatchup } from './matchupHistoryTypes';
+import type { MatchupHistory, MatchupHistoryScope, StoredMatchup } from './matchupHistoryTypes';
 
 export const MATCHUP_HISTORY: MatchupHistory = matchupHistoryData;
 
 export const normalizeTeamName = (name: string): string => name.replace(/’/g, "'").toLowerCase();
 
-export function getStoredMatchups(): MatchupHistory {
-  return MATCHUP_HISTORY;
+export function selectMatchupsForScope(
+  matchups: MatchupHistory,
+  scope: MatchupHistoryScope,
+): MatchupHistory {
+  return matchups.filter(
+    (matchup) => matchup.leagueId === scope.leagueId && matchup.season === scope.season,
+  );
 }
 
-export function getLatestRecordedWeek(matchups: MatchupHistory = MATCHUP_HISTORY): number | null {
+export function getStoredMatchups(scope: MatchupHistoryScope): MatchupHistory {
+  return selectMatchupsForScope(MATCHUP_HISTORY, scope);
+}
+
+export function getLatestRecordedWeek(matchups: MatchupHistory): number | null {
   if (matchups.length === 0) return null;
   return matchups.reduce((max, m) => Math.max(max, m.week), 0);
 }
 
-export function getLatestCompletedWeek(matchups: MatchupHistory = MATCHUP_HISTORY): number | null {
+export function getLatestCompletedWeek(matchups: MatchupHistory): number | null {
   if (matchups.length === 0) return null;
 
   const groupedByWeek = new Map<number, StoredMatchup[]>();
@@ -35,7 +44,7 @@ export function getLatestCompletedWeek(matchups: MatchupHistory = MATCHUP_HISTOR
 
 export function getMatchupMarginsForWeek(
   week: number,
-  matchups: MatchupHistory = MATCHUP_HISTORY,
+  matchups: MatchupHistory,
 ): Map<string, number> {
   const margins = new Map<string, number>();
 
@@ -50,9 +59,9 @@ export function getMatchupMarginsForWeek(
 
 export function findMatchupForTeam(
   teamName: string,
-  options: { week?: number; matchups?: MatchupHistory } = {},
+  options: { week?: number; matchups: MatchupHistory },
 ): StoredMatchup | undefined {
-  const matchups = options.matchups ?? MATCHUP_HISTORY;
+  const { matchups } = options;
   const normalized = normalizeTeamName(teamName);
 
   const choose = (candidates: MatchupHistory): StoredMatchup | undefined => {
@@ -68,8 +77,7 @@ export function findMatchupForTeam(
   if (byWeek.length > 0) return choose(byWeek);
 
   const anyWeek = matchups.filter(
-    (m) =>
-      normalizeTeamName(m.team) === normalized || normalizeTeamName(m.opponent) === normalized,
+    (m) => normalizeTeamName(m.team) === normalized || normalizeTeamName(m.opponent) === normalized,
   );
   if (anyWeek.length > 0) return choose(anyWeek);
 

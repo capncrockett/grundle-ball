@@ -14,12 +14,11 @@ interface TeamAvatarsProps {
   className?: string;
 }
 
-const SIZE_PRESETS: Record<NonNullable<TeamAvatarsProps['size']>, { main: number; sub: number }> =
-  {
-    sm: { main: 24, sub: 12 },
-    md: { main: 32, sub: 14 },
-    lg: { main: 40, sub: 16 },
-  };
+const SIZE_PRESETS: Record<NonNullable<TeamAvatarsProps['size']>, { main: number; sub: number }> = {
+  sm: { main: 24, sub: 12 },
+  md: { main: 32, sub: 14 },
+  lg: { main: 40, sub: 16 },
+};
 
 export const TeamAvatars: FC<TeamAvatarsProps> = ({
   teamName,
