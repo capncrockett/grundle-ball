@@ -13,7 +13,7 @@
     "format": "npm run format -w frontend",
     "format:write": "npm run format:write -w frontend",
     "lint": "npm run lint -w frontend && npm run lint -w backend",
-    "prepare": "husky",
+    "prepare": "node .husky/install.mjs",
     "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend"
   },
   "lint-staged": {
