@@ -43,7 +43,7 @@ test.describe('Matchups page with mocked data', () => {
         body: JSON.stringify(mockSleeperUsers),
       }),
     );
-    await page.route(`**/league/${LEAGUE_ID}/rosters`, (route) =>
+    await page.route(`**/league/${LEAGUE_ID}/rosters**`, (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
