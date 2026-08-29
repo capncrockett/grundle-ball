@@ -5,8 +5,13 @@
   "engines": {
     "node": "24.x"
   },
-  "workspaces": ["frontend", "backend"],
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
+    "format": "npm run format -w frontend",
+    "format:write": "npm run format:write -w frontend",
     "lint": "npm run lint -w frontend && npm run lint -w backend",
     "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend"
   },

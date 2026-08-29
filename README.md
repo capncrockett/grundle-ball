@@ -34,6 +34,9 @@ The development server defaults to `http://localhost:5173`.
 ## Quality checks
 
 ```bash
+# Prettier check
+npm run format
+
 # Frontend and backend lint
 npm run lint
 

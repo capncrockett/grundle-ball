@@ -61,3 +61,4 @@ These skills are based on [mattpocock/skills](https://github.com/mattpocock/skil
 5. Do not commit unless asked. When committing, include:
    `Co-Authored-By: Oz <oz-agent@warp.dev>`
 6. Classify releases by the declared public and operational contract in `docs/versioning.md`. Release branches use `release/MAJOR.MINOR.PATCH`, and the root `package.json` version is canonical.
+7. Before committing maintained frontend code or content, run `npm run format:write`, then verify `npm run format`. CI enforces the formatting check on pull requests and `release/**` pushes.

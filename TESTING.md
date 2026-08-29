@@ -14,6 +14,9 @@ npm run test:ci -w frontend
 # Jest watch mode
 npm run test:watch -w frontend
 
+# Prettier check
+npm run format
+
 # Frontend + backend lint
 npm run lint
 
@@ -89,7 +92,7 @@ Most smoke checks target the configured deployment and therefore exercise its cu
 ## GitHub Actions behavior
 
 - Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
-- `.github/workflows/lint.yml` runs root `npm run lint` and `npm run typecheck` on pull requests and manual dispatch, covering both frontend and backend workspaces.
+- `.github/workflows/lint.yml` runs root formatting, lint, and typechecks on pull requests, `release/**` pushes, and manual dispatch. The lint and typecheck commands cover both frontend and backend workspaces.
 - `.github/workflows/test.yml` runs the frontend Jest CI suite on pull requests, `release/**` pushes, and manual dispatch.
 - The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It targets `https://grundle-ball-staging.vercel.app` and installs Chromium and WebKit.
 
