@@ -7,7 +7,6 @@ import {
   getLeagueMatchupsForWeek,
   getNFLState,
   getAllPlayers,
-  type SleeperPlayer,
 } from '../api/sleeper';
 import { getESPNScoreboard, buildTeamGameStatusMap } from '../api/espn';
 import {
@@ -16,7 +15,7 @@ import {
   buildLiveMatchData,
   mapNFLStateToSeasonState,
 } from '../utils/sleeperTransforms';
-import type { Team, LiveMatchData } from '../models/fantasy';
+import type { Team, LiveMatchData, SeasonState } from '../models/fantasy';
 import { MatchupCard } from '../components/matchups/MatchupCard';
 import { LEAGUE_ID } from '../config/league';
 
@@ -24,26 +23,25 @@ export function MatchupsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [liveMatchups, setLiveMatchups] = useState<LiveMatchData[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
-  const [seasonLabel, setSeasonLabel] = useState<string>('');
-  const [season, setSeason] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [seasonState, setSeasonState] = useState<SeasonState | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [playersById, setPlayersById] = useState<Record<string, SleeperPlayer> | null>(null);
 
-  // 1) Load NFL state and player data once
+  // 1) Load the NFL calendar once. NFL preseason weeks are not fantasy matchup weeks.
   useEffect(() => {
     async function loadSeasonState() {
       try {
-        const [nflState, players] = await Promise.all([getNFLState(), getAllPlayers()]);
-
+        const nflState = await getNFLState();
         const seasonState = mapNFLStateToSeasonState(nflState);
-        setPlayersById(players);
-        setSelectedWeek(seasonState.displayWeek);
-        setSeason(seasonState.season);
-        setSeasonLabel(`${seasonState.season} • Week ${seasonState.displayWeek.toString()}`);
+        const defaultFantasyWeek =
+          seasonState.seasonType === 'pre' ? 1 : Math.min(Math.max(seasonState.displayWeek, 1), 18);
+
+        setSeasonState(seasonState);
+        setSelectedWeek(defaultFantasyWeek);
       } catch (err) {
         console.error(err);
         setError(err instanceof Error ? err.message : 'Failed to load NFL state');
+        setIsLoading(false);
       }
     }
 
@@ -52,28 +50,38 @@ export function MatchupsPage() {
 
   // 2) Whenever selectedWeek changes, fetch league data for that week
   useEffect(() => {
-    if (selectedWeek == null || !playersById) return;
+    if (selectedWeek == null || !seasonState) return;
 
     async function loadWeekData(week: number) {
       try {
         setIsLoading(true);
         setError(null);
 
-        const [users, rosters, matchups, espnScoreboard] = await Promise.all([
+        const [users, rosters, matchups] = await Promise.all([
           getLeagueUsers(LEAGUE_ID),
           getLeagueRosters(LEAGUE_ID),
           getLeagueMatchupsForWeek(LEAGUE_ID, week),
-          getESPNScoreboard(week),
         ]);
 
         const mergedTeams = mergeRostersAndUsersToTeams(rosters, users);
         setTeams(mergedTeams);
 
+        if (matchups.length === 0) {
+          setLiveMatchups([]);
+          return;
+        }
+
+        // Player metadata and ESPN status are only needed for populated matchup cards.
+        const [playersById, espnScoreboard] = await Promise.all([
+          getAllPlayers(),
+          getESPNScoreboard(week),
+        ]);
+
         // Build team game status map from ESPN data
         const teamGameStatus = buildTeamGameStatusMap(espnScoreboard);
 
         // Pass player and game status data to pairMatchups
-        const paired = pairMatchups(week, matchups, playersById ?? undefined, teamGameStatus);
+        const paired = pairMatchups(week, matchups, playersById, teamGameStatus);
         const live = paired.map((p) => buildLiveMatchData(p));
         setLiveMatchups(live);
       } catch (err) {
@@ -84,14 +92,16 @@ export function MatchupsPage() {
       } finally {
         setIsLoading(false);
       }
-
-      if (season) {
-        setSeasonLabel(`${season} • Week ${week.toString()}`);
-      }
     }
 
     void loadWeekData(selectedWeek);
-  }, [selectedWeek, playersById, season]);
+  }, [selectedWeek, seasonState]);
+
+  const seasonLabel = seasonState
+    ? seasonState.seasonType === 'pre'
+      ? `${seasonState.season} • Preseason • Fantasy Week ${String(selectedWeek ?? 1)}`
+      : `${seasonState.season} • Week ${String(selectedWeek ?? seasonState.displayWeek)}`
+    : '';
 
   const teamsByRosterId = useMemo(
     () => new Map<number, Team>(teams.map((t) => [t.sleeperRosterId, t])),
@@ -117,6 +127,7 @@ export function MatchupsPage() {
             className="select select-bordered select-sm"
             value={selectedWeek ?? ''}
             onChange={(e) => {
+              setIsLoading(true);
               setSelectedWeek(Number(e.target.value));
             }}
             aria-label="Week"
@@ -150,7 +161,11 @@ export function MatchupsPage() {
       )}
 
       {!isLoading && !error && liveMatchups.length === 0 && (
-        <p className="text-sm text-base-content/60">No matchups found for this week.</p>
+        <p className="text-sm text-base-content/60">
+          {seasonState?.seasonType === 'pre'
+            ? 'Fantasy matchups are not available yet. Sleeper will publish them after the league draft and schedule are set.'
+            : 'No matchups found for this week.'}
+        </p>
       )}
 
       <div>
