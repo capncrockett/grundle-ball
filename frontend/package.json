@@ -10,9 +10,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:ci": "jest --runInBand --ci",
-    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
-    "test:e2e:local": "E2E_BASE_URL=http://localhost:5173 PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
-    "test:e2e:headed": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed",
+    "test:e2e": "cross-env PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
+    "test:e2e:local": "cross-env E2E_BASE_URL=http://localhost:5173 PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
+    "test:e2e:headed": "cross-env PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit --project tsconfig.app.json && tsc --noEmit --project tsconfig.node.json",
     "format": "prettier . --check",
@@ -23,7 +23,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.6"
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -39,8 +39,9 @@
     "@types/whatwg-fetch": "^0.0.33",
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.4.22",
+    "cross-env": "^10.1.0",
     "daisyui": "^5.5.5",
-    "dotenv": "^16.6.1",
+    "dotenv": "^17.4.2",
     "eslint": "^10.9.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.5",
