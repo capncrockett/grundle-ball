@@ -12,7 +12,6 @@ const tsProjects = [
   path.join(tsconfigRootDir, 'tsconfig.app.json'),
   path.join(tsconfigRootDir, 'tsconfig.node.json'),
 ];
-const backendTsconfig = path.resolve(tsconfigRootDir, '../backend/tsconfig.json');
 const frontendFiles = ['**/src/**/*.{ts,tsx}'];
 const backendFiles = ['**/backend/**/*.ts'];
 

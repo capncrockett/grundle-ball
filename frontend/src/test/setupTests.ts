@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 import { TextDecoder, TextEncoder } from 'util';
 import { TransformStream, WritableStream, ReadableStream } from 'stream/web';
-import type { SetupServerApi } from 'msw/node';
 
 // Silence expected console noise from error-state tests
 const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -80,7 +79,7 @@ type TestGlobal = Omit<
   };
 
 const globalScope = globalThis as TestGlobal;
-const polyfillTextEncoder = TextEncoder as unknown as typeof globalThis.TextEncoder;
+const polyfillTextEncoder = TextEncoder;
 const polyfillTextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
 const polyfillTransformStream = TransformStream as unknown as typeof globalThis.TransformStream;
 const polyfillReadableStream = ReadableStream as unknown as typeof globalThis.ReadableStream;
@@ -132,7 +131,7 @@ if (!globalScope.BroadcastChannel) {
 
 // Load MSW server only after fetch/Response are defined
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { server } = require('./server') as { server: SetupServerApi };
+const { server } = require('./server') as typeof import('./server');
 
 // MSW: start/stop per test lifecycle
 beforeAll(() => {

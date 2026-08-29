@@ -3,6 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "cd .. && node ./frontend/node_modules/.bin/eslint \"backend/**/*.ts\" --config ./frontend/eslint.config.js --no-warn-ignored"
+    "lint": "cd .. && eslint \"backend/**/*.ts\" --config ./frontend/eslint.config.js --no-warn-ignored",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "~5.9.3"
   }
 }

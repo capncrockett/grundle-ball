@@ -96,7 +96,9 @@ type BetterSqliteStatement = {
 type BetterSqliteDatabase = {
   exec: (sql: string) => unknown;
   prepare: (sql: string) => BetterSqliteStatement;
-  transaction: <T extends (...args: unknown[]) => unknown>(fn: T) => T;
+  transaction: <Args extends unknown[], Result>(
+    fn: (...args: Args) => Result,
+  ) => (...args: Args) => Result;
 };
 
 type BetterSqliteCtor = new (path: string) => BetterSqliteDatabase;
