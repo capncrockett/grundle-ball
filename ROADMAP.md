@@ -63,4 +63,13 @@ Starter completion tracking is already implemented with Sleeper player metadata 
 
 ## Backend and stored history
 
-Hosted persistence, migrations, a scheduled history refresh, and the frontend consumption decision are tracked in `backend/TODO.md`. The checked-in JSON snapshot remains the UI source until that work is deliberately changed.
+The checked-in JSON snapshot remains the UI source until a hosted data layer is deliberately introduced. Detailed implementation notes live in [`backend/TODO.md`](backend/TODO.md).
+
+### Hosted data layer
+
+- [ ] Define the product and operational trigger for introducing a hosted database, such as multi-season history, multiple leagues, scheduled writes, or administrator workflows; do not add a runtime dependency without a concrete need.
+- [ ] Complete league/season scoping and migration coverage for the existing JSON and SQLite stores before selecting hosted infrastructure.
+- [ ] Choose a hosted store behind `MatchupHistoryStore` and record the durable choice in an ADR. Turso/libsql and Postgres are the current candidates.
+- [ ] Design the browser access boundary, authentication/authorization, scheduled ingestion, observability, backups, recovery, and rollback before moving the deployed frontend off the checked-in snapshot.
+- [ ] Define forward and rollback migrations plus explicit backfill validation for every persisted schema change.
+- [ ] Classify database-backed releases under [`docs/versioning.md`](docs/versioning.md): private compatible migrations are normally patches, new capabilities are minors, and operator- or user-breaking migrations may require a major.

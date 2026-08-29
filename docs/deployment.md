@@ -44,7 +44,9 @@ Current environment variables are test/deployment controls rather than app confi
 
 ## GitHub Actions and release flow
 
-1. Open or update a release branch.
+Classify the release and select its version using [`versioning.md`](versioning.md). The root `package.json` version is canonical.
+
+1. Branch from `main` as `release/MAJOR.MINOR.PATCH`, then set the same version in the root package and lockfile.
 2. GitHub Actions uses Node 24.x to run root frontend/backend lint and typecheck plus the frontend Jest suite for pull requests. The test workflow also runs on `release/**` pushes.
 3. Playwright runs against Grundle Ball staging for `release/**` pushes, pull requests targeting `main`, and manual dispatches.
 4. Before merging to `main`, record a successful staging run of the full Playwright suite.

@@ -10,6 +10,7 @@ Guidance for coding agents working in this repository.
 | Repo-level agent conventions + skills index             | `AGENTS.md` (this file)                                                                      |
 | Domain glossary (ubiquitous language)                   | `CONTEXT.md` (created when terminology work starts)                                          |
 | Architecture Decision Records                           | `docs/adr/` (created lazily)                                                                 |
+| Versioning and release policy                           | `docs/versioning.md`                                                                         |
 | Installed agent skills                                  | `.agents/skills/`                                                                            |
 | League constitution source of truth                     | `frontend/src/content/constitution.md`                                                       |
 | Current constitution archive (2026 review draft)        | `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`                                  |
@@ -59,3 +60,4 @@ These skills are based on [mattpocock/skills](https://github.com/mattpocock/skil
 4. When terminology is being decided or renamed, use **grill-with-docs** / **domain-modeling** and update `CONTEXT.md` as terms resolve.
 5. Do not commit unless asked. When committing, include:
    `Co-Authored-By: Oz <oz-agent@warp.dev>`
+6. Classify releases by the declared public and operational contract in `docs/versioning.md`. Release branches use `release/MAJOR.MINOR.PATCH`, and the root `package.json` version is canonical.

@@ -88,5 +88,6 @@ Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the correspon
 - [`docs/architecture.md`](docs/architecture.md): system boundaries and data flows
 - [`docs/data-model.md`](docs/data-model.md): current TypeScript domain models
 - [`docs/deployment.md`](docs/deployment.md): Vercel and release operations
+- [`docs/versioning.md`](docs/versioning.md): semantic-versioning and release-branch policy
 - [`docs/sleeper-api.md`](docs/sleeper-api.md): external API calls used by the app
 - [`ROADMAP.md`](ROADMAP.md): active and deferred work
