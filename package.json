@@ -10,6 +10,7 @@
     "backend"
   ],
   "scripts": {
+    "docs:check": "node scripts/check-docs.mjs",
     "format": "npm run format -w frontend",
     "format:write": "npm run format:write -w frontend",
     "lint": "npm run lint -w frontend && npm run lint -w backend",

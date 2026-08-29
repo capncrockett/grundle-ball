@@ -20,7 +20,7 @@ Production root availability is verified at `https://grundle-ball.vercel.app` (H
 - [x] Run the full local Playwright suite on both projects for every release-branch push in GitHub Actions.
 - [ ] Run a production smoke pass after the next release and verify Sleeper and ESPN requests from the deployed origin.
 - [x] Add CI production-build validation (`npm run build -w frontend`) alongside the frontend and backend tests.
-- [ ] Add automated internal-link and stale-brand checks for maintained Markdown documentation.
+- [x] Add automated internal-link and stale-brand checks for maintained Markdown documentation.
 
 See `TESTING.md` for the verified automated coverage and remaining test gaps, and `docs/deployment.md` for the current release flow.
 
