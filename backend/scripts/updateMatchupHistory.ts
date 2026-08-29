@@ -1,4 +1,5 @@
 import {
+  getLeague,
   getLeagueMatchupsForWeek,
   getLeagueRosters,
   getLeagueUsers,
@@ -12,7 +13,10 @@ import {
   type MatchupHistoryStore,
   type StoreConfig,
 } from '../matchupHistoryStore';
-import type { StoredMatchup } from '../../frontend/src/data/matchupHistoryTypes';
+import type {
+  MatchupHistoryScope,
+  StoredMatchup,
+} from '../../frontend/src/data/matchupHistoryTypes';
 
 type CliOptions = {
   weeks: number[];
@@ -59,9 +63,7 @@ function parseArgs(): CliOptions {
   uniqueWeeks.sort((a, b) => a - b);
 
   if (uniqueWeeks.length === 0 || uniqueWeeks.some((week) => Number.isNaN(week))) {
-    throw new Error(
-      'Pass target weeks with --week={number}, --weeks=1,2,3, or --range=start-end',
-    );
+    throw new Error('Pass target weeks with --week={number}, --weeks=1,2,3, or --range=start-end');
   }
 
   return { weeks: uniqueWeeks, leagueId, markFinished };
@@ -76,8 +78,7 @@ function rosterIdToTeamName(users: SleeperUser[], rosters: SleeperRoster[]): Map
 
   const map = new Map<number, string>();
   rosters.forEach((roster) => {
-    const name =
-      userNameById.get(roster.owner_id) ?? `Roster ${roster.roster_id.toString()}`;
+    const name = userNameById.get(roster.owner_id) ?? `Roster ${roster.roster_id.toString()}`;
     map.set(roster.roster_id, name);
   });
   return map;
@@ -92,6 +93,7 @@ const resolveTeamName = (nameMap: Map<number, string>, rosterId: number): string
 };
 
 function buildMatchups(
+  scope: MatchupHistoryScope,
   week: number,
   matchups: SleeperMatchup[],
   nameMap: Map<number, string>,
@@ -123,6 +125,7 @@ function buildMatchups(
     const teamB = resolveTeamName(nameMap, b.roster_id);
 
     entries.push({
+      ...scope,
       week,
       team: teamA,
       opponent: teamB,
@@ -132,6 +135,7 @@ function buildMatchups(
       finished,
     });
     entries.push({
+      ...scope,
       week,
       team: teamB,
       opponent: teamA,
@@ -152,10 +156,23 @@ async function main(storeConfig: StoreConfig = {}) {
   const store: MatchupHistoryStore = await getMatchupStore(storeConfig);
   console.log(`Using matchup store: ${store.describe()}`);
 
-  const [users, rosters] = await Promise.all([
+  const [league, users, rosters] = await Promise.all([
+    getLeague(options.leagueId),
     getLeagueUsers(options.leagueId),
     getLeagueRosters(options.leagueId),
   ]);
+  const scope: MatchupHistoryScope = {
+    leagueId: league.league_id,
+    season: league.season,
+  };
+
+  if (scope.leagueId !== options.leagueId) {
+    throw new Error(
+      `Sleeper returned league ${scope.leagueId} for requested league ${options.leagueId}`,
+    );
+  }
+
+  console.log(`Resolved matchup scope: league ${scope.leagueId}, season ${scope.season}`);
 
   const nameMap = rosterIdToTeamName(users, rosters);
 
@@ -164,16 +181,24 @@ async function main(storeConfig: StoreConfig = {}) {
 
   for (const week of options.weeks) {
     const matchups = await getLeagueMatchupsForWeek(options.leagueId, week);
-    const entries = buildMatchups(week, matchups, nameMap, options.markFinished);
+    const entries = buildMatchups(scope, week, matchups, nameMap, options.markFinished);
     if (entries.length === 0) {
       console.warn(`No matchup entries created for week ${week.toString()}; skipping write.`);
       continue;
     }
 
-    const updated = await store.appendWeek(week, entries);
+    const updated = await store.appendWeek(scope, week, entries);
     touchedWeeks.add(week);
     totalWritten += entries.length;
-    const weeks = Array.from(new Set(updated.map((m) => m.week))).sort((a, b) => a - b);
+    const weeks = Array.from(
+      new Set(
+        updated
+          .filter(
+            (matchup) => matchup.leagueId === scope.leagueId && matchup.season === scope.season,
+          )
+          .map((matchup) => matchup.week),
+      ),
+    ).sort((a, b) => a - b);
     console.log(
       `Wrote ${entries.length.toString()} rows for week ${week.toString()} to ${store.describe()}`,
     );
@@ -182,7 +207,9 @@ async function main(storeConfig: StoreConfig = {}) {
 
   if (touchedWeeks.size > 0) {
     console.log(
-      `Completed update for weeks [${Array.from(touchedWeeks).sort((a, b) => a - b).join(', ')}]; total rows written: ${totalWritten.toString()}`,
+      `Completed update for weeks [${Array.from(touchedWeeks)
+        .sort((a, b) => a - b)
+        .join(', ')}]; total rows written: ${totalWritten.toString()}`,
     );
   }
 }

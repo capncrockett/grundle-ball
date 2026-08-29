@@ -11,6 +11,9 @@ npm run test -w frontend
 # Jest as CI runs it
 npm run test:ci -w frontend
 
+# Matchup-history JSON/SQLite tests
+npm run test -w backend
+
 # Jest watch mode
 npm run test:watch -w frontend
 
@@ -74,10 +77,16 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 
 Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `frontend/tests/e2e/` through `frontend/jest.config.ts`.
 
+### Node test runner
+
+- Scoped JSON and SQLite matchup-history replacement across overlapping league/season/week values.
+- Automatic migration of the known unscoped SQLite shape to the 2025 league/season identity.
+
 ### Playwright
 
 - `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
+- `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
 - `theme.spec.ts`: theme selection and persistence across reloads.
 - Both Chromium desktop and the iPhone 12 device profile run for every Playwright invocation.
 
@@ -87,7 +96,7 @@ Most smoke checks target the configured deployment and therefore exercise its cu
 
 - Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
 - `.github/workflows/lint.yml` runs root formatting, lint, and typechecks on pull requests, `release/**` pushes, and manual dispatch. The lint and typecheck commands cover both frontend and backend workspaces.
-- `.github/workflows/test.yml` runs the frontend Jest CI suite on pull requests, `release/**` pushes, and manual dispatch.
+- `.github/workflows/test.yml` runs the frontend Jest CI suite and backend matchup-history store tests on pull requests, `release/**` pushes, and manual dispatch.
 - The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It starts the checked-out app locally and runs Chromium desktop and iPhone 12 coverage against that exact commit.
 
 For a release, separately run the full Playwright suite against the deployed staging URL and record the result before merging to `main`; after deployment, repeat the smoke suite against the production URL.
@@ -95,7 +104,7 @@ For a release, separately run the full Playwright suite against the deployed sta
 ## Known gaps
 
 - [ ] No Jest coverage thresholds or coverage-report artifact are configured.
-- [ ] Backend store and history-update scripts have no automated tests; the high-priority league/season scoping migration needs overlapping-week regression coverage across JSON, SQLite, CLI, and Standings selectors.
+- [ ] The history CLI still needs argument and mocked-upstream tests, including alternate-league season resolution and malformed payloads.
 - [ ] GitHub Actions do not currently run the production Vite build.
 - [ ] The deployment smoke suite does not mock every external request, so it is useful for environment verification but is not fully hermetic.
 - [ ] There is no automated link checker or stale-brand scanner for maintained documentation.

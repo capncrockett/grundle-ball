@@ -81,13 +81,13 @@ Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the correspon
 
 - The browser calls Sleeper's public API directly. The Matchups page also calls ESPN's public NFL scoreboard endpoint to determine whether starters' games are complete.
 - League targeting is code-configured. `frontend/src/config/league.ts` exports the confirmed 2026 Sleeper league ID (`1385053148233621511`) used by every frontend page, the Playwright Matchups test, and the backend history updater's default. The updater can still target another league explicitly with `--league=<id>`.
-- `frontend/src/data/matchupHistoryStore.json` is a checked-in snapshot used by standings insights. Its current rows came from the 2025 season, but the stored model has no league or season field yet. Until the high-priority scoping work in `ROADMAP.md` and `backend/TODO.md` is complete, those rows can incorrectly influence 2026 stat-correction insights. The existing maintenance syntax is:
+- `frontend/src/data/matchupHistoryStore.json` is a checked-in snapshot used by standings insights. Every row carries a Sleeper league ID and season; the current rows are explicitly labeled as 2025 history, and Standings selects only the active league/season. The maintenance syntax is:
 
   ```bash
   npm run fetch:matchups -w frontend -- --week=14
   ```
 
-  The maintenance script defaults to the JSON store; set `MATCHUP_STORE=sqlite` to use its local SQLite adapter. Do not mix 2026 updates into an unscoped 2025 store without the planned migration or an explicit full-store replacement. Hosted persistence and scheduling remain tracked in [`backend/TODO.md`](backend/TODO.md).
+  The maintenance script resolves the selected league's season, defaults to the JSON store, and replaces only the matching league/season/week. Set `MATCHUP_STORE=sqlite` to use its local SQLite adapter. Hosted persistence and scheduling remain tracked in [`backend/TODO.md`](backend/TODO.md).
 
 ## Documentation
 

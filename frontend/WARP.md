@@ -125,11 +125,12 @@ The top navigation has five items: Standings, Playoffs, Matchups, Constitution, 
 
 1. Fetch league, users, and rosters from Sleeper.
 2. `mergeRostersAndUsersToTeams()` resolves names, separate team/manager avatars, divisions, records, and points.
-3. `computeSeeds()` applies the league-specific six-team playoff seeding rules.
-4. Standings and playoff-race helpers derive displayed insights.
-5. The checked-in `src/data/matchupHistoryStore.json` supplies latest stored margins used by best/worst and stat-correction insight logic.
+3. Before any completed games, render the Sleeper division assignments as preseason cards without ranks, seeds, ranges, or performance claims.
+4. Once completed records exist, `computeSeeds()` applies the league-specific six-team playoff seeding rules.
+5. Standings and playoff-race helpers derive displayed insights.
+6. The checked-in `src/data/matchupHistoryStore.json` supplies latest stored margins used by best/worst and stat-correction insight logic only when its league and season match the active Sleeper league.
 
-Standings does not query SQLite or a runtime backend. The current stored rows are from 2025 and have no league/season fields, so they can be mistaken for 2026 history. Treat the scoping and migration work in root `ROADMAP.md` as a high-priority correctness gap, not as completed caching infrastructure.
+Standings does not query SQLite or a runtime backend. The checked-in rows are explicitly scoped to the 2025 league, so the 2026 page receives no history-derived stat-correction signal until a matching 2026 snapshot exists.
 
 ### Matchups
 
@@ -264,7 +265,7 @@ The current suite includes:
 - Unit tests for bracket seeding, transforms, official bracket resolution, stored history, player status, insights, and constitution parsing.
 - Component tests for Beta bracket grid/tiles and matchup cards.
 - Page integration tests for Standings, Matchups, official Playoffs, both Beta views, and Constitution, including representative loading/error paths.
-- App routing/navigation tests and Playwright desktop/mobile smoke, matchup, and theme flows.
+- App routing/navigation tests and Playwright desktop/mobile smoke, preseason standings, matchup, and theme flows.
 
 Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke intentionally checks a live environment, while its dedicated Matchups flow uses route fixtures. Root `TESTING.md` is the authoritative command/CI/gap guide.
 
@@ -273,8 +274,8 @@ Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke 
 - `src/config/league.ts` exports the confirmed 2026 league ID (`1385053148233621511`) for every frontend page and the Playwright Matchups test, plus Weeks 15–17 for the Beta playoff pages.
 - `backend/scripts/updateMatchupHistory.ts` imports that same `LEAGUE_ID` as its default and retains `--league=<id>` as an explicit override.
 - `VITE_LEAGUE_ID` is not supported. If league selection becomes environment-configurable, design the Vite and Node configuration boundary together rather than creating two independent defaults.
-- The browser imports the checked-in JSON matchup history. Its current model is keyed only by week/team and does not distinguish the 2025 rows from 2026; see the high-priority history-scoping TODOs before relying on it for current-season insight.
-- The backend script defaults to rewriting selected weeks in that JSON file.
+- The browser imports the checked-in JSON matchup history and filters it by the active Sleeper league ID and season.
+- The backend script resolves the selected league's season and defaults to replacing that scoped week in the JSON file.
 - `MATCHUP_STORE=sqlite` selects an optional local SQLite store for the maintenance script; it does not change frontend reads.
 - Hosted persistence, scheduling, and runtime API decisions live in `backend/TODO.md`.
 

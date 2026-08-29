@@ -5,19 +5,15 @@
 - JSON store at `frontend/src/data/matchupHistoryStore.json` is the source for the UI.
 - Backend adapter in `backend/matchupHistoryStore.ts` defaults to JSON and supports local SQLite via `MATCHUP_STORE=sqlite`; `MATCHUP_SQLITE_PATH` optionally overrides the local database path.
 - Fetch CLI lives at `backend/scripts/updateMatchupHistory.ts` and requires `--week`, `--weeks`, or `--range`. Run it through the frontend workspace, for example `npm run fetch:matchups -w frontend -- --week=14`.
-- The CLI imports the confirmed 2026 `LEAGUE_ID` from `frontend/src/config/league.ts` as its default and accepts `--league=<id>` as an explicit override.
+- The CLI imports the confirmed 2026 `LEAGUE_ID` from `frontend/src/config/league.ts` as its default, accepts `--league=<id>` as an explicit override, and resolves the selected league's season before writing.
+- Stored rows, JSON replacement, and SQLite uniqueness/deletes are scoped by `(leagueId, season, week)`; the existing snapshot and automatic legacy SQLite migration label known rows as league `1251950356187840512`, season `2025`.
+- `npm run test -w backend` covers scoped JSON/SQLite replacement and the legacy SQLite migration.
 - The backend workspace is maintenance tooling only. No backend service or SQLite database is queried by the deployed frontend.
 
-## High priority — scope history by league and season
+## Remaining correctness coverage
 
-The current JSON rows are 2025 data, but `StoredMatchup` and both store implementations identify rows only by week and team. Repeated NFL week numbers collide across seasons, and Standings can consume a prior-season margin as current 2026 evidence.
-
-- Add required `leagueId` and `season` fields to `StoredMatchup` and all store APIs.
-- Resolve/stamp the season for the CLI's selected `--league` value; do not silently stamp an override with the default league's season.
-- Migrate existing JSON rows with their actual 2025 league/season identity and add an explicit SQLite migration for existing local databases.
-- Change JSON week replacement and SQLite keys/deletes to scope by `(leagueId, season, week)`.
-- Update Standings consumers to request only the active league/season and return no history-derived insight when no matching rows exist.
-- Test two leagues and two seasons with overlapping week/team values across JSON, SQLite, CLI, and frontend selectors.
+- Add CLI argument and mocked-upstream tests, including an alternate `--league` whose resolved season differs from the app default.
+- Add malformed Sleeper payload coverage before scheduling unattended writes.
 
 ## Next steps (DB / hosting)
 
@@ -42,12 +38,12 @@ The current JSON rows are 2025 data, but `StoredMatchup` and both store implemen
   );
   CREATE INDEX idx_matchups_scope_week ON matchups(league_id, season, week);
   ```
-- Migration script: create the scoped table, migrate existing local rows with explicit league/season identity, and optionally backfill the hosted store from the migrated JSON snapshot.
+- Hosted migration: create the scoped table and optionally backfill it from the migrated JSON snapshot.
 - Decide consumption path for the frontend:
   1. Mirror DB writes back to JSON so UI stays file-based, or
   2. Add a tiny API route/serverless function to serve matchup history from DB and point the UI at it.
 - Deploy/run the fetcher on a schedule (GitHub Actions/Vercel Cron) between MNF end and Wednesday stat corrections.
-- Add automated tests for JSON/SQLite parity, week replacement, CLI argument validation, and malformed upstream data before scheduling unattended writes.
+- Extend the existing JSON/SQLite tests with hosted-adapter parity once an adapter is selected.
 - If league configuration moves to environment variables or a neutral shared module, keep the updater and browser build on one validated default while preserving the CLI override.
 
 ## Nice-to-haves

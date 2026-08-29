@@ -120,6 +120,8 @@ The custom Beta engine uses `bracket/types.ts`:
 
 ```typescript
 type StoredMatchup = {
+  leagueId: string;
+  season: string;
   week: number;
   team: string;
   opponent: string;
@@ -134,16 +136,6 @@ type MatchupHistory = StoredMatchup[];
 
 The deployed frontend imports `data/matchupHistoryStore.json`. `backend/matchupHistoryStore.ts` implements the same logical shape through the default JSON store and an optional local SQLite store.
 
-### Known scoping defect
+The JSON snapshot, store APIs, and SQLite schema use `(leagueId, season, week, team)` identity. The checked-in rows and automatic legacy SQLite migration use the verified 2025 league ID (`1251950356187840512`) and season (`2025`). The updater resolves the selected Sleeper league before stamping new rows, and Standings returns no history-derived current insight when a matching league/season snapshot is unavailable.
 
-`StoredMatchup` currently has no `leagueId` or `season`. The JSON rows were recorded for 2025, and the SQLite primary key is currently `(week, team)`. Because NFL week numbers repeat every season, the 2026 Standings path can select a 2025 margin as though it were current.
-
-This is not fixed. The high-priority migration tracked in `ROADMAP.md` and `backend/TODO.md` must:
-
-- Add required league and season identity to the TypeScript/JSON/SQLite models.
-- Migrate existing rows with their actual 2025 identity.
-- Scope replacement, uniqueness, reads, and Standings selectors by league plus season.
-- Return no history-derived current insight when a matching snapshot is unavailable.
-- Cover overlapping week numbers across seasons/leagues in tests.
-
-The intended target uniqueness is `(leagueId, season, week, team)`; documenting that target does not change the current runtime schema.
+JSON, SQLite, and frontend selectors have overlapping-week regression coverage across league/season scopes. CLI argument and mocked-upstream coverage remains tracked in `ROADMAP.md` and `backend/TODO.md`.

@@ -4,13 +4,14 @@ This file tracks work that remains after the Grundle Ball rebrand and the move t
 
 ## High priority — stored-history correctness
 
-The checked-in matchup-history rows are from 2025, while `StoredMatchup`, the JSON store, and the SQLite schema have no league or season identity. The 2026 Standings page can therefore consult a prior-season Week 14 margin as if it belonged to the current league season.
+The 2025 snapshot is now labeled with its actual league and season, storage keys are scoped, and Standings requests only the active Sleeper league/season. The remaining work is to close the CLI-specific automated coverage gap.
 
-- [ ] Add `leagueId` and `season` to stored matchup rows and make them part of SQLite uniqueness/indexing.
-- [ ] Stamp fetched rows from the selected league and its resolved season rather than assuming the app's current default.
-- [ ] Migrate and explicitly label the existing JSON/SQLite rows as 2025 data.
-- [ ] Require Standings history helpers to select the current league and season; if no matching snapshot exists, omit history-dependent stat-correction insight instead of falling back to another season.
-- [ ] Add JSON/SQLite/CLI/frontend regression tests with overlapping week numbers across two seasons and leagues.
+- [x] Add `leagueId` and `season` to stored matchup rows and make them part of SQLite uniqueness/indexing.
+- [x] Stamp fetched rows from the selected league and its resolved season rather than assuming the app's current default.
+- [x] Migrate and explicitly label the existing JSON/SQLite rows as 2025 data.
+- [x] Require Standings history helpers to select the current league and season; if no matching snapshot exists, omit history-dependent stat-correction insight instead of falling back to another season.
+- [x] Add JSON, SQLite, and frontend regression tests with overlapping week numbers across seasons and leagues.
+- [ ] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
 
 ## Release and operations
 

@@ -24,11 +24,23 @@ describe('StandingsPage', () => {
   it('renders standings table with seeds', async () => {
     render(<StandingsPage />);
 
-    expect(await screen.findByRole('heading', { name: /standings/i })).toBeInTheDocument();
+    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
     const rows = await screen.findAllByRole('row');
     const row = rows.find((candidate) => within(candidate).queryByText(/Big Ol' TDs/i));
     expect(row).toBeInTheDocument();
     expect(row).toHaveTextContent(/\b1\b/);
+  });
+
+  it('requests stored history for the active Sleeper league and season', async () => {
+    const historySpy = jest.spyOn(matchupHistory, 'getStoredMatchups');
+
+    render(<StandingsPage />);
+
+    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
+    expect(historySpy).toHaveBeenCalledWith({
+      leagueId: mockSleeperLeague.league_id,
+      season: mockSleeperLeague.season,
+    });
   });
 
   it('renders insights cards with fixture data', async () => {
@@ -57,6 +69,8 @@ describe('StandingsPage', () => {
   it('flags stat-correction risk when a small margin flip changes seeding', async () => {
     const closeMatchups: StoredMatchup[] = [
       {
+        leagueId: 'test_league',
+        season: '2025',
         week: 1,
         team: "Big Ol' TDs",
         opponent: 'Kitchen Chubbards',
@@ -66,6 +80,8 @@ describe('StandingsPage', () => {
         finished: true,
       },
       {
+        leagueId: 'test_league',
+        season: '2025',
         week: 1,
         team: 'Kitchen Chubbards',
         opponent: "Big Ol' TDs",
@@ -208,21 +224,16 @@ describe('StandingsPage', () => {
 
     render(<StandingsPage />);
 
-    expect(await screen.findByTestId('division-preseason')).toHaveTextContent(
-      /Divisions are loaded from Sleeper/i,
-    );
+    const preseason = await screen.findByTestId('division-preseason');
+    expect(preseason).toHaveTextContent(/2026 Preseason Divisions/i);
+    expect(preseason).toHaveTextContent(/Division assignments are live/i);
     expect(screen.queryByText(/Toughest Schedule/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Easiest Schedule/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
-
-    const standingsTable = screen
-      .getAllByRole('table')
-      .find((table) => within(table).queryByRole('columnheader', { name: /^Seed$/i }));
-    expect(standingsTable).toBeDefined();
-    if (standingsTable) {
-      expect(within(standingsTable).getAllByText('D1')).not.toHaveLength(0);
-      expect(within(standingsTable).getAllByText('D2')).not.toHaveLength(0);
-      expect(within(standingsTable).getAllByText('D3')).not.toHaveLength(0);
-    }
+    expect(within(preseason).getByRole('heading', { name: 'D1' })).toBeInTheDocument();
+    expect(within(preseason).getByRole('heading', { name: 'D2' })).toBeInTheDocument();
+    expect(within(preseason).getByRole('heading', { name: 'D3' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: /^Seed$/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Standings Glossary/i)).not.toBeInTheDocument();
   });
 });

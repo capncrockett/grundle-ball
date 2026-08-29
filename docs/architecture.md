@@ -30,7 +30,7 @@ Sleeper league + users + rosters
   + checked-in matchupHistoryStore.json for latest stored margins
 ```
 
-Known correctness gap: the snapshot currently contains 2025 rows without league/season identity, while the 2026 Standings path selects by week only. Until the high-priority migration and filtering work in `ROADMAP.md` is complete, prior-season margins can influence current stat-correction insight.
+Stored-history rows carry league and season identity. Standings filters the checked-in snapshot to the league and season returned by Sleeper, so the scoped 2025 rows cannot influence 2026 stat-correction insight.
 
 ### Matchups
 

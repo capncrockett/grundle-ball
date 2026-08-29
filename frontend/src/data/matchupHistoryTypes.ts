@@ -1,4 +1,6 @@
 export type StoredMatchup = {
+  leagueId: string;
+  season: string;
   week: number;
   team: string;
   opponent: string;
@@ -9,3 +11,5 @@ export type StoredMatchup = {
 };
 
 export type MatchupHistory = StoredMatchup[];
+
+export type MatchupHistoryScope = Pick<StoredMatchup, 'leagueId' | 'season'>;
