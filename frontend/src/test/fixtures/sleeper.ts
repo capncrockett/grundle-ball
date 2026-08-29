@@ -870,10 +870,12 @@ export const mockPlayoffWinnersBracket: SleeperPlayoffMatchup[] = [
   { r: 1, m: 1, t1: 3, t2: 6, w: null, l: null, p: null },
   { r: 1, m: 2, t1: 4, t2: 5, w: null, l: null, p: null },
   // Round 2 (Week 16) - seeds 1 and 2 have byes
-  { r: 2, m: 1, t1: 1, t2_from: { w: 1 }, w: null, l: null, p: null },
-  { r: 2, m: 2, t1: 2, t2_from: { w: 2 }, w: null, l: null, p: null },
+  { r: 2, m: 3, t1: 1, t2_from: { w: 1 }, w: null, l: null, p: null },
+  { r: 2, m: 4, t1: 2, t2_from: { w: 2 }, w: null, l: null, p: null },
+  { r: 2, m: 5, t1_from: { l: 1 }, t2_from: { l: 2 }, w: null, l: null, p: 5 },
   // Finals (Week 17)
-  { r: 3, m: 1, t1_from: { w: 1 }, t2_from: { w: 2 }, w: null, l: null, p: null },
+  { r: 3, m: 6, t1_from: { w: 3 }, t2_from: { w: 4 }, w: null, l: null, p: 1 },
+  { r: 3, m: 7, t1_from: { l: 3 }, t2_from: { l: 4 }, w: null, l: null, p: 3 },
 ];
 
 export const mockPlayoffLosersBracket: SleeperPlayoffMatchup[] = [
@@ -881,10 +883,12 @@ export const mockPlayoffLosersBracket: SleeperPlayoffMatchup[] = [
   { r: 1, m: 1, t1: 8, t2: 9, w: null, l: null, p: null },
   { r: 1, m: 2, t1: 7, t2: 10, w: null, l: null, p: null },
   // Round 2 (Week 16) - seeds 11 and 12 "punished" with byes
-  { r: 2, m: 1, t1: 12, t2_from: { l: 1 }, w: null, l: null, p: null },
-  { r: 2, m: 2, t1: 11, t2_from: { l: 2 }, w: null, l: null, p: null },
+  { r: 2, m: 3, t1: 12, t2_from: { w: 1 }, w: null, l: null, p: null },
+  { r: 2, m: 4, t1: 11, t2_from: { w: 2 }, w: null, l: null, p: null },
+  { r: 2, m: 5, t1_from: { l: 1 }, t2_from: { l: 2 }, w: null, l: null, p: 5 },
   // Finals (Week 17)
-  { r: 3, m: 1, t1_from: { w: 1 }, t2_from: { w: 2 }, w: null, l: null, p: null },
+  { r: 3, m: 6, t1_from: { w: 3 }, t2_from: { w: 4 }, w: null, l: null, p: 1 },
+  { r: 3, m: 7, t1_from: { l: 3 }, t2_from: { l: 4 }, w: null, l: null, p: 3 },
 ];
 
 export const mockSleeperPlayers: Record<string, SleeperPlayer> = {

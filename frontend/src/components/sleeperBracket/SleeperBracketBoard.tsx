@@ -19,6 +19,7 @@ interface SleeperBracketBoardProps {
   subtitle?: string;
   matchups: ResolvedBracketMatchup[];
   teamsById: Map<number, Team>;
+  placementOffset?: number;
 }
 
 interface SideRowProps {
@@ -55,6 +56,7 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
   subtitle,
   matchups,
   teamsById,
+  placementOffset = 0,
 }) => {
   const rounds = groupMatchupsByRound(matchups);
 
@@ -69,7 +71,7 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
               Round {round}
             </div>
             {roundMatchups.map((matchup) => {
-              const placementLabel = describePlacementLabel(matchup.placement);
+              const placementLabel = describePlacementLabel(matchup.placement, placementOffset);
               const winnerIsSideA =
                 matchup.winnerRosterId != null &&
                 matchup.sideA.kind === 'team' &&

@@ -7,11 +7,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  getLeague,
   getLeagueRosters,
   getLeagueUsers,
   getLosersBracket,
   getWinnersBracket,
 } from '../api/sleeper';
+import type { SleeperLeague } from '../api/sleeper';
 import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
 import { resolveBracketMatchups } from '../sleeperBracket/resolveBracket';
 import type { ResolvedBracketMatchup } from '../sleeperBracket/types';
@@ -21,6 +23,7 @@ import { LEAGUE_ID } from '../config/league';
 
 export default function PlayoffsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [league, setLeague] = useState<SleeperLeague | null>(null);
   const [winners, setWinners] = useState<ResolvedBracketMatchup[]>([]);
   const [losers, setLosers] = useState<ResolvedBracketMatchup[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -32,14 +35,16 @@ export default function PlayoffsPage() {
         setIsLoading(true);
         setError(null);
 
-        const [users, rosters, winnersBracket, losersBracket] = await Promise.all([
+        const [leagueData, users, rosters, winnersBracket, losersBracket] = await Promise.all([
+          getLeague(LEAGUE_ID),
           getLeagueUsers(LEAGUE_ID),
           getLeagueRosters(LEAGUE_ID),
           getWinnersBracket(LEAGUE_ID),
           getLosersBracket(LEAGUE_ID),
         ]);
 
-        const merged = mergeRostersAndUsersToTeams(rosters, users);
+        const merged = mergeRostersAndUsersToTeams(rosters, users, leagueData);
+        setLeague(leagueData);
         setTeams(computeSeeds(merged));
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
@@ -61,13 +66,28 @@ export default function PlayoffsPage() {
   }, [teams]);
 
   const hasBracket = winners.length > 0 || losers.length > 0;
+  const hasCompletedGame = teams.some(
+    (team) => team.record.wins + team.record.losses + team.record.ties > 0,
+  );
+  const hasBracketResult = [...winners, ...losers].some(
+    (matchup) => matchup.winnerRosterId !== null || matchup.loserRosterId !== null,
+  );
+  const isProvisional = hasBracket && !hasCompletedGame && !hasBracketResult;
+  const playoffWeekStart =
+    typeof league?.settings.playoff_week_start === 'number'
+      ? league.settings.playoff_week_start
+      : 15;
+  const playoffTeams =
+    typeof league?.settings.playoff_teams === 'number' ? league.settings.playoff_teams : 6;
+  const totalRosters = league?.total_rosters ?? teams.length;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Playoffs</h1>
         <p className="text-sm text-base-content/60">
-          The official bracket, mirrored directly from Sleeper &mdash; no house rules.
+          {league ? `${league.season} official bracket` : 'The official bracket'}, mirrored directly
+          from Sleeper &mdash; no house rules.
         </p>
       </div>
 
@@ -86,12 +106,21 @@ export default function PlayoffsPage() {
       {!isLoading && !error && !hasBracket && (
         <div className="alert" data-testid="playoffs-not-started">
           <span>
-            Playoffs haven&apos;t been seeded yet. Check back once the bracket locks (around Week
-            15), or see the current{' '}
+            Playoffs haven&apos;t been seeded yet. Sleeper is configured to begin the bracket in
+            Week {playoffWeekStart}, or see the current{' '}
             <Link to="/standings" className="link">
               standings
             </Link>
             .
+          </span>
+        </div>
+      )}
+
+      {!isLoading && !error && isProvisional && (
+        <div className="alert alert-info" data-testid="playoffs-provisional">
+          <span>
+            Sleeper has published the {league?.season ?? 'current'} bracket structure, but these
+            preseason seeds are provisional. They will change as the standings take shape.
           </span>
         </div>
       )}
@@ -101,7 +130,7 @@ export default function PlayoffsPage() {
           {winners.length > 0 && (
             <SleeperBracketBoard
               title="Championship Bracket"
-              subtitle="Places 1-6"
+              subtitle={`Places 1-${String(playoffTeams)}`}
               matchups={winners}
               teamsById={teamsById}
             />
@@ -109,9 +138,10 @@ export default function PlayoffsPage() {
           {losers.length > 0 && (
             <SleeperBracketBoard
               title="Consolation Bracket"
-              subtitle="Places 7-12"
+              subtitle={`Places ${String(playoffTeams + 1)}-${String(totalRosters)}`}
               matchups={losers}
               teamsById={teamsById}
+              placementOffset={playoffTeams}
             />
           )}
         </div>

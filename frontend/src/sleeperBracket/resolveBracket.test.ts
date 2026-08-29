@@ -87,6 +87,11 @@ describe('describePlacementLabel', () => {
     expect(describePlacementLabel(11)).toBe('Decides 11th / 12th');
   });
 
+  it('offsets consolation placements into overall league standings', () => {
+    expect(describePlacementLabel(1, 6)).toBe('Decides 7th / 8th');
+    expect(describePlacementLabel(5, 6)).toBe('Decides 11th / 12th');
+  });
+
   it('returns null when there is no placement', () => {
     expect(describePlacementLabel(null)).toBeNull();
   });

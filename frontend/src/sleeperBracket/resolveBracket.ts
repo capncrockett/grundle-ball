@@ -82,8 +82,9 @@ function ordinalSuffix(n: number): string {
 }
 
 /** Human label for what a matchup decides, when Sleeper marks a placement. */
-export function describePlacementLabel(placement: number | null): string | null {
+export function describePlacementLabel(placement: number | null, offset = 0): string | null {
   if (placement == null) return null;
-  const next = placement + 1;
-  return `Decides ${String(placement)}${ordinalSuffix(placement)} / ${String(next)}${ordinalSuffix(next)}`;
+  const winnerPlacement = placement + offset;
+  const loserPlacement = winnerPlacement + 1;
+  return `Decides ${String(winnerPlacement)}${ordinalSuffix(winnerPlacement)} / ${String(loserPlacement)}${ordinalSuffix(loserPlacement)}`;
 }

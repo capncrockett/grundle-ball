@@ -19,9 +19,9 @@ export interface ResolvedBracketMatchup {
   winnerRosterId: number | null;
   loserRosterId: number | null;
   /**
-   * When Sleeper marks a matchup with a placement (e.g. `p: 1` for the
-   * championship), the winner earns that placement and the loser earns
-   * `placement + 1`.
+   * Placement within the bracket reported by Sleeper. The winner earns this
+   * placement and the loser earns `placement + 1`; a consolation bracket
+   * needs an offset to express overall league places.
    */
   placement: number | null;
   raw: SleeperPlayoffMatchup;
