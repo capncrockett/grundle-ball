@@ -31,6 +31,8 @@ npm run dev -w frontend
 
 The development server defaults to `http://localhost:5173`.
 
+`npm install` also activates the repository's Husky hooks. Before each commit, lint-staged runs Prettier on supported staged text files and stages the formatted result without touching unrelated unstaged files.
+
 ## Quality checks
 
 ```bash
