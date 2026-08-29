@@ -565,7 +565,7 @@ export function StandingsPage() {
                   <ul className="text-sm leading-snug space-y-1">
                     {STANDINGS_GLOSSARY.map((entry) => (
                       <li key={entry.code}>
-                        <span className="font-semibold">{entry.code}</span> – {entry.description}
+                        <span className="font-semibold">{entry.code}</span> - {entry.description}
                       </li>
                     ))}
                   </ul>

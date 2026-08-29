@@ -271,7 +271,7 @@ Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke 
 
 ## Configuration and backend notes
 
-- `src/config/league.ts` exports the confirmed 2026 league ID (`1385053148233621511`) for every frontend page and the Playwright Matchups test, plus Weeks 15–17 for the Beta playoff pages.
+- `src/config/league.ts` exports the confirmed 2026 league ID (`1385053148233621511`) for every frontend page and the Playwright Matchups test, plus Weeks 15-17 for the Beta playoff pages.
 - `backend/scripts/updateMatchupHistory.ts` imports that same `LEAGUE_ID` as its default and retains `--league=<id>` as an explicit override.
 - `VITE_LEAGUE_ID` is not supported. If league selection becomes environment-configurable, design the Vite and Node configuration boundary together rather than creating two independent defaults.
 - The browser imports the checked-in JSON matchup history and filters it by the active Sleeper league ID and season.
