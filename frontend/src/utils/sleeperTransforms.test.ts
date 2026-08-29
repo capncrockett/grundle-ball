@@ -2,6 +2,7 @@
 
 import { mergeRostersAndUsersToTeams, pairMatchups, computeSeeds } from './sleeperTransforms';
 import {
+  mockSleeperLeague,
   mockSleeperUsers,
   mockSleeperRosters,
   mockSleeperMatchupsWeek13,
@@ -46,6 +47,30 @@ describe('sleeperTransforms', () => {
 
       // fpts: 1650, fpts_decimal: 50 → 1650.50
       expect(team?.pointsFor).toBe(1650.5);
+    });
+
+    it('reads division assignments from the current Sleeper roster settings shape', () => {
+      const roster = {
+        ...mockSleeperRosters[0],
+        division_id: undefined,
+        settings: {
+          ...mockSleeperRosters[0].settings,
+          division: 3,
+        },
+      };
+      const league = {
+        ...mockSleeperLeague,
+        metadata: {
+          division_3: 'D3',
+          division_3_avatar: 'https://example.com/d3.png',
+        },
+      };
+
+      const [team] = mergeRostersAndUsersToTeams([roster], mockSleeperUsers, league);
+
+      expect(team.divisionId).toBe(3);
+      expect(team.divisionName).toBe('D3');
+      expect(team.divisionAvatarUrl).toBe('https://example.com/d3.png');
     });
   });
 

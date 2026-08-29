@@ -178,10 +178,12 @@ describe('StandingsPage', () => {
   });
 
   it('hides insights before any games are played', async () => {
-    const zeroed = mockSleeperRosters.map((roster) => ({
+    const zeroed = mockSleeperRosters.map((roster, index) => ({
       ...roster,
+      division_id: undefined,
       settings: {
         ...roster.settings,
+        division: (index % 3) + 1,
         wins: 0,
         losses: 0,
         ties: 0,
@@ -191,12 +193,36 @@ describe('StandingsPage', () => {
         fpts_against_decimal: 0,
       },
     }));
+    leagueSpy.mockResolvedValueOnce({
+      ...mockSleeperLeague,
+      status: 'pre_draft',
+      season: '2026',
+      season_type: 'pre',
+      metadata: {
+        division_1: 'D1',
+        division_2: 'D2',
+        division_3: 'D3',
+      },
+    });
     rostersSpy.mockResolvedValueOnce(zeroed);
 
     render(<StandingsPage />);
 
-    expect(await screen.findByRole('heading', { name: /standings/i })).toBeInTheDocument();
+    expect(await screen.findByTestId('division-preseason')).toHaveTextContent(
+      /Divisions are loaded from Sleeper/i,
+    );
     expect(screen.queryByText(/Toughest Schedule/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Easiest Schedule/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
+
+    const standingsTable = screen
+      .getAllByRole('table')
+      .find((table) => within(table).queryByRole('columnheader', { name: /^Seed$/i }));
+    expect(standingsTable).toBeDefined();
+    if (standingsTable) {
+      expect(within(standingsTable).getAllByText('D1')).not.toHaveLength(0);
+      expect(within(standingsTable).getAllByText('D2')).not.toHaveLength(0);
+      expect(within(standingsTable).getAllByText('D3')).not.toHaveLength(0);
+    }
   });
 });

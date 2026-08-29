@@ -204,6 +204,7 @@ export function StandingsPage() {
   }, [latestCompletedWeek, storedMatchups]);
 
   const insights = computeStandingsInsights(teams);
+  const hasDivisionData = teams.some((team) => team.divisionId !== null);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -274,80 +275,90 @@ export function StandingsPage() {
               </div>
             </div>
           )}
-          {insights?.hasDivisionData ? (
+          {hasDivisionData ? (
             <>
-              <div className="grid gap-3 md:grid-cols-2 mb-4">
-                <div className="card bg-base-200">
-                  <div className="card-body p-4">
-                    <h3 className="card-title text-sm">Highest-Scoring Division</h3>
-                    <div className="text-sm inline-flex items-center gap-2">
-                      <span>
-                        {insights.highestAvgPfDivision?.divisionName ?? 'Division unknown'} is
-                        averaging {insights.highestAvgPfDivision?.avgPfPerGame.toFixed(1) ?? '—'} PF
-                        per week; top seed is{' '}
-                        {insights.highestAvgPfDivision?.topSeed.teamName ?? '—'}.
-                      </span>
+              {insights ? (
+                <>
+                  <div className="grid gap-3 md:grid-cols-2 mb-4">
+                    <div className="card bg-base-200">
+                      <div className="card-body p-4">
+                        <h3 className="card-title text-sm">Highest-Scoring Division</h3>
+                        <div className="text-sm inline-flex items-center gap-2">
+                          <span>
+                            {insights.highestAvgPfDivision?.divisionName ?? 'Division unknown'} is
+                            averaging{' '}
+                            {insights.highestAvgPfDivision?.avgPfPerGame.toFixed(1) ?? '—'} PF per
+                            week; top seed is{' '}
+                            {insights.highestAvgPfDivision?.topSeed.teamName ?? '—'}.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="card bg-base-200">
+                      <div className="card-body p-4">
+                        <h3 className="card-title text-sm">Softest Division (PA)</h3>
+                        <div className="text-sm inline-flex items-center gap-2">
+                          <span>
+                            {insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'} is
+                            seeing only{' '}
+                            {insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '—'} PA per
+                            week.
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="card bg-base-200">
-                  <div className="card-body p-4">
-                    <h3 className="card-title text-sm">Softest Division (PA)</h3>
-                    <div className="text-sm inline-flex items-center gap-2">
-                      <span>
-                        {insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'} is seeing
-                        only {insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '—'} PA per
-                        week.
-                      </span>
-                    </div>
+                  <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[60vh] mb-6 border border-base-300 rounded-lg">
+                    <table className="table table-compact w-full">
+                      <thead className="sticky top-0 z-10 bg-base-200">
+                        <tr>
+                          <th>Avatar</th>
+                          <th>Division</th>
+                          <th>Teams</th>
+                          <th>Avg PF/Week</th>
+                          <th>Avg PA/Week</th>
+                          <th>Top Seed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {insights.divisionStats.map((div) => (
+                          <tr key={div.divisionId}>
+                            <td>
+                              {div.divisionAvatarUrl ? (
+                                <div className="avatar">
+                                  <div className="w-8 rounded">
+                                    <img src={div.divisionAvatarUrl} alt={div.divisionName} />
+                                  </div>
+                                </div>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td>{div.divisionName}</td>
+                            <td className="text-center">{div.members.length}</td>
+                            <td>{div.avgPfPerGame.toFixed(1)}</td>
+                            <td>{div.avgPaPerGame.toFixed(1)}</td>
+                            <td>
+                              ({div.topSeed.standingRank}) {div.topSeed.teamName}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
+                </>
+              ) : (
+                <div className="alert alert-info mb-4" data-testid="division-preseason">
+                  <span>
+                    Divisions are loaded from Sleeper. Division performance summaries will appear
+                    after Week 1.
+                  </span>
                 </div>
-              </div>
-              <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[60vh] mb-6 border border-base-300 rounded-lg">
-                <table className="table table-compact w-full">
-                  <thead className="sticky top-0 z-10 bg-base-200">
-                    <tr>
-                      <th>Avatar</th>
-                      <th>Division</th>
-                      <th>Teams</th>
-                      <th>Avg PF/Week</th>
-                      <th>Avg PA/Week</th>
-                      <th>Top Seed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {insights.divisionStats.map((div) => (
-                      <tr key={div.divisionId}>
-                        <td>
-                          {div.divisionAvatarUrl ? (
-                            <div className="avatar">
-                              <div className="w-8 rounded">
-                                <img src={div.divisionAvatarUrl} alt={div.divisionName} />
-                              </div>
-                            </div>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td>{div.divisionName}</td>
-                        <td className="text-center">{div.members.length}</td>
-                        <td>{div.avgPfPerGame.toFixed(1)}</td>
-                        <td>{div.avgPaPerGame.toFixed(1)}</td>
-                        <td>
-                          ({div.topSeed.standingRank}) {div.topSeed.teamName}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              )}
             </>
           ) : (
             <div className="alert alert-warning mb-4">
-              <span>
-                Division data unavailable from Sleeper for this league (no division IDs/names
-                found).
-              </span>
+              <span>Sleeper did not return division assignments for any roster.</span>
             </div>
           )}
           <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[70vh]">
@@ -356,6 +367,7 @@ export function StandingsPage() {
                 <tr>
                   <th>Seed</th>
                   <th>Team</th>
+                  <th>Division</th>
                   <th>B/W</th>
                   <th>Owner</th>
                   <th>Record</th>
@@ -403,6 +415,7 @@ export function StandingsPage() {
                           </span>
                         </div>
                       </td>
+                      <td>{team.divisionName ?? 'Unassigned'}</td>
                       <td className="text-sm text-base-content/80">
                         {bw.label}
                         {bw.statCorrectionRisk && (

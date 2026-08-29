@@ -145,11 +145,11 @@ async function sleeperFetch<T>(path: string, bustCache = false): Promise<T> {
 // --- Public client functions ---
 
 export async function getLeague(leagueId: string): Promise<SleeperLeague> {
-  return sleeperFetch<SleeperLeague>(`/league/${leagueId}`);
+  return sleeperFetch<SleeperLeague>(`/league/${leagueId}`, true);
 }
 
 export async function getLeagueUsers(leagueId: string): Promise<SleeperUser[]> {
-  return sleeperFetch<SleeperUser[]>(`/league/${leagueId}/users`);
+  return sleeperFetch<SleeperUser[]>(`/league/${leagueId}/users`, true);
 }
 
 export async function getLeagueRosters(leagueId: string): Promise<SleeperRoster[]> {
