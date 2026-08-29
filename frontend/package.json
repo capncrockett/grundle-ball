@@ -11,7 +11,7 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --runInBand --ci",
     "test:e2e": "playwright test",
-    "test:e2e:local": "E2E_BASE_URL=http://localhost:5173 PLAYWRIGHT_BROWSERS_PATH=node_modules/playwright-core/.local-browsers playwright test",
+    "test:e2e:local": "E2E_BASE_URL=http://localhost:5173 PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:e2e:headed": "playwright test --headed",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit --project tsconfig.app.json && tsc --noEmit --project tsconfig.node.json",

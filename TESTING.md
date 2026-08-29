@@ -30,7 +30,7 @@ Install the browsers once in the cache used by the local script:
 
 ```bash
 cd frontend
-PLAYWRIGHT_BROWSERS_PATH=node_modules/playwright-core/.local-browsers npx playwright install chromium webkit
+PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium webkit
 cd ..
 ```
 
