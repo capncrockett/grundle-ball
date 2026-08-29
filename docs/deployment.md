@@ -48,8 +48,8 @@ Classify the release and select its version using [`versioning.md`](versioning.m
 
 1. Branch from `main` as `release/MAJOR.MINOR.PATCH`, then set the same version in the root package and lockfile.
 2. GitHub Actions uses Node 24.x to run formatting, root frontend/backend lint and typecheck, plus the frontend Jest suite. These checks run for pull requests and `release/**` pushes.
-3. Playwright runs against Grundle Ball staging for `release/**` pushes, pull requests targeting `main`, and manual dispatches.
-4. Before merging to `main`, record a successful staging run of the full Playwright suite.
+3. Playwright starts and tests the checked-out app for `release/**` pushes, pull requests targeting `main`, and manual dispatches.
+4. After the release candidate is deployed, run the full Playwright suite separately against staging and record a successful result before merging to `main`.
 5. Merge to `main` and allow the configured Vercel production deployment to build.
 6. Run the Playwright smoke suite against the production URL by setting `E2E_BASE_URL` explicitly.
 7. Verify the build metadata footer reports the expected repository, branch/release, and commit SHA.

@@ -37,19 +37,13 @@ PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium webkit
 cd ..
 ```
 
-Start Vite in one terminal:
-
-```bash
-npm run dev -w frontend
-```
-
-Then run Playwright in another:
+Run Playwright:
 
 ```bash
 npm run test:e2e:local -w frontend
 ```
 
-The local script sets `E2E_BASE_URL=http://localhost:5173` and runs the configured Chromium desktop and iPhone 12 projects.
+The local script sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects.
 
 ### Playwright against a deployment
 
@@ -94,9 +88,9 @@ Most smoke checks target the configured deployment and therefore exercise its cu
 - Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
 - `.github/workflows/lint.yml` runs root formatting, lint, and typechecks on pull requests, `release/**` pushes, and manual dispatch. The lint and typecheck commands cover both frontend and backend workspaces.
 - `.github/workflows/test.yml` runs the frontend Jest CI suite on pull requests, `release/**` pushes, and manual dispatch.
-- The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It targets `https://grundle-ball-staging.vercel.app` and installs Chromium and WebKit.
+- The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It starts the checked-out app locally and runs Chromium desktop and iPhone 12 coverage against that exact commit.
 
-For a release, run the full Playwright suite against staging and record the result before merging to `main`; after deployment, repeat the smoke suite against the production URL.
+For a release, separately run the full Playwright suite against the deployed staging URL and record the result before merging to `main`; after deployment, repeat the smoke suite against the production URL.
 
 ## Known gaps
 

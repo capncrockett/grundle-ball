@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'release/**'
+      - "release/**"
   workflow_dispatch:
 
 jobs:
@@ -27,8 +27,8 @@ jobs:
       - name: Run tests
         run: npm run test:ci -w frontend
 
-  e2e-smoke:
-    # Run on release branch pushes, PRs targeting main, or when manually dispatched.
+  e2e:
+    # Test the checked-out commit on release pushes, PRs targeting main, or manual runs.
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')) ||
@@ -49,12 +49,12 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: "0"
         run: npx playwright install --with-deps chromium webkit
         working-directory: frontend
 
-      - name: Run Playwright smoke against staging
+      - name: Run Playwright against current commit
         env:
-          E2E_BASE_URL: https://grundle-ball-staging.vercel.app
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-          CI: '1'
-        run: npm run test:e2e -w frontend
+          CI: "1"
+        run: npm run test:e2e:local -w frontend

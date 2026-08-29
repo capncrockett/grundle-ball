@@ -50,11 +50,13 @@ npm run test:ci -w frontend
 npm run build -w frontend
 ```
 
-For local end-to-end testing, start the dev server in one terminal and run this in another:
+For local end-to-end testing, run:
 
 ```bash
 npm run test:e2e:local -w frontend
 ```
+
+Playwright starts Vite automatically for this command, or reuses an existing local server.
 
 Playwright's default non-local target is the Grundle Ball staging deployment. Set `E2E_BASE_URL` to test a different deployment. See [`TESTING.md`](TESTING.md) for browser setup, CI behavior, coverage, and known gaps.
 
