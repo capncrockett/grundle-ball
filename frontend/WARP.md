@@ -18,11 +18,11 @@ The 2026 vote is documented in `src/content/constitution.md` under “Rule & Vot
 
 ## Current stack
 
-- React 19.2, Vite 7.2, and TypeScript 5.9
-- React Router 7.9
-- Tailwind CSS 4.1 and DaisyUI 5.5
-- ESLint 9 and Prettier 3.6
-- Jest 29, React Testing Library 16, MSW 2.12, and Playwright 1.49
+- React 19.2, Vite 8.2, and TypeScript 5.9
+- React Router 7.18
+- Tailwind CSS 4.3 and DaisyUI 5.7
+- ESLint 10 and Prettier 3.9
+- Jest 30, React Testing Library 16, MSW 2.12, and Playwright 1.62
 - Checked-in JSON matchup history with an optional local `better-sqlite3` maintenance adapter
 
 ## Commands

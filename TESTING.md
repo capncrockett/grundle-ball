@@ -106,7 +106,7 @@ For a release, require the release-branch CI run against the checked-out local a
 
 - [ ] No Jest coverage thresholds or coverage-report artifact are configured.
 - [ ] The deployment smoke suite does not mock every external request, so it is useful for environment verification but is not fully hermetic.
-- [ ] There is no automated link checker or stale-brand scanner for maintained documentation.
+- [x] Maintained Markdown has automated internal-link and stale-brand checks through `npm run docs:check`.
 - [ ] Production-route smoke results are operational steps, not a current CI job.
 
 Track implementation work for these gaps in `ROADMAP.md` or the relevant frontend/backend TODO file rather than marking them complete here without test evidence.
