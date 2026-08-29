@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "lint": "cd .. && eslint \"backend/**/*.ts\" --config ./frontend/eslint.config.js --no-warn-ignored",
-    "test": "node --test ./matchupHistoryStore.test.ts",
+    "test": "node --test ./*.test.ts ./scripts/*.test.ts",
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {

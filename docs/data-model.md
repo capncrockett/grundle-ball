@@ -138,4 +138,4 @@ The deployed frontend imports `data/matchupHistoryStore.json`. `backend/matchupH
 
 The JSON snapshot, store APIs, and SQLite schema use `(leagueId, season, week, team)` identity. The checked-in rows and automatic legacy SQLite migration use the verified 2025 league ID (`1251950356187840512`) and season (`2025`). The updater resolves the selected Sleeper league before stamping new rows, and Standings returns no history-derived current insight when a matching league/season snapshot is unavailable.
 
-JSON, SQLite, and frontend selectors have overlapping-week regression coverage across league/season scopes. CLI argument and mocked-upstream coverage remains tracked in `ROADMAP.md` and `backend/TODO.md`.
+JSON, SQLite, frontend selectors, and the update CLI have regression coverage across league/season scopes. The CLI also rejects malformed selectors, mismatched or seasonless league responses, and invalid matchup scores before writing.

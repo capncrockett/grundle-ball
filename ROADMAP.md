@@ -4,22 +4,22 @@ This file tracks work that remains after the Grundle Ball rebrand and the move t
 
 ## High priority — stored-history correctness
 
-The 2025 snapshot is now labeled with its actual league and season, storage keys are scoped, and Standings requests only the active Sleeper league/season. The remaining work is to close the CLI-specific automated coverage gap.
+The 2025 snapshot is labeled with its actual league and season, storage keys are scoped, Standings requests only the active Sleeper league/season, and the CLI validates its arguments and upstream scope before writing.
 
 - [x] Add `leagueId` and `season` to stored matchup rows and make them part of SQLite uniqueness/indexing.
 - [x] Stamp fetched rows from the selected league and its resolved season rather than assuming the app's current default.
 - [x] Migrate and explicitly label the existing JSON/SQLite rows as 2025 data.
 - [x] Require Standings history helpers to select the current league and season; if no matching snapshot exists, omit history-dependent stat-correction insight instead of falling back to another season.
 - [x] Add JSON, SQLite, and frontend regression tests with overlapping week numbers across seasons and leagues.
-- [ ] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
+- [x] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
 
 ## Release and operations
 
-Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). The new staging hostname exists behind Vercel protection; neither result substitutes for the route-level smoke work below.
+Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). The staging hostname redirects unauthenticated Playwright runs to Vercel login; configure `VERCEL_AUTOMATION_BYPASS_SECRET` before the route-level staging smoke can be recorded.
 
 - [ ] Run and record a full staging smoke pass for every current route on both Playwright projects.
 - [ ] Run a production smoke pass after the next release and verify Sleeper and ESPN requests from the deployed origin.
-- [ ] Add a CI production-build job (`npm run build -w frontend`); the current GitHub Actions workflows run lint and tests but do not independently verify a production build.
+- [x] Add CI production-build validation (`npm run build -w frontend`) alongside the frontend and backend tests.
 - [ ] Add automated internal-link and stale-brand checks for maintained Markdown documentation.
 
 See `TESTING.md` for the verified automated coverage and remaining test gaps, and `docs/deployment.md` for the current release flow.
@@ -69,7 +69,7 @@ The checked-in JSON snapshot remains the UI source until a hosted data layer is 
 ### Hosted data layer
 
 - [ ] Define the product and operational trigger for introducing a hosted database, such as multi-season history, multiple leagues, scheduled writes, or administrator workflows; do not add a runtime dependency without a concrete need.
-- [ ] Complete league/season scoping and migration coverage for the existing JSON and SQLite stores before selecting hosted infrastructure.
+- [x] Complete league/season scoping and migration coverage for the existing JSON and SQLite stores before selecting hosted infrastructure.
 - [ ] Choose a hosted store behind `MatchupHistoryStore` and record the durable choice in an ADR. Turso/libsql and Postgres are the current candidates.
 - [ ] Design the browser access boundary, authentication/authorization, scheduled ingestion, observability, backups, recovery, and rollback before moving the deployed frontend off the checked-in snapshot.
 - [ ] Define forward and rollback migrations plus explicit backfill validation for every persisted schema change.

@@ -46,7 +46,7 @@ Run Playwright:
 npm run test:e2e:local -w frontend
 ```
 
-The local script sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects.
+All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects.
 
 ### Playwright against a deployment
 
@@ -81,6 +81,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 
 - Scoped JSON and SQLite matchup-history replacement across overlapping league/season/week values.
 - Automatic migration of the known unscoped SQLite shape to the 2025 league/season identity.
+- CLI selector validation, alternate-league season resolution, and malformed upstream matchup rejection before writes.
 
 ### Playwright
 
@@ -90,13 +91,13 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 - `theme.spec.ts`: theme selection and persistence across reloads.
 - Both Chromium desktop and the iPhone 12 device profile run for every Playwright invocation.
 
-Most smoke checks target the configured deployment and therefore exercise its current API environment. The dedicated Matchups flow intercepts external API calls with fixtures for deterministic assertions.
+Most smoke checks target the configured deployment and therefore exercise its current API environment. The dedicated Matchups flow and ESPN error-path smoke intercept external API calls with fixtures for deterministic assertions.
 
 ## GitHub Actions behavior
 
 - Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
 - `.github/workflows/lint.yml` runs root formatting, lint, and typechecks on pull requests, `release/**` pushes, and manual dispatch. The lint and typecheck commands cover both frontend and backend workspaces.
-- `.github/workflows/test.yml` runs the frontend Jest CI suite and backend matchup-history store tests on pull requests, `release/**` pushes, and manual dispatch.
+- `.github/workflows/test.yml` runs the frontend Jest CI suite, backend matchup-history store tests, and the production Vite build on pull requests, `release/**` pushes, and manual dispatch.
 - The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It starts the checked-out app locally and runs Chromium desktop and iPhone 12 coverage against that exact commit.
 
 For a release, separately run the full Playwright suite against the deployed staging URL and record the result before merging to `main`; after deployment, repeat the smoke suite against the production URL.
@@ -104,8 +105,6 @@ For a release, separately run the full Playwright suite against the deployed sta
 ## Known gaps
 
 - [ ] No Jest coverage thresholds or coverage-report artifact are configured.
-- [ ] The history CLI still needs argument and mocked-upstream tests, including alternate-league season resolution and malformed payloads.
-- [ ] GitHub Actions do not currently run the production Vite build.
 - [ ] The deployment smoke suite does not mock every external request, so it is useful for environment verification but is not fully hermetic.
 - [ ] There is no automated link checker or stale-brand scanner for maintained documentation.
 - [ ] Production-route smoke results are operational steps, not a current CI job.

@@ -1,4 +1,12 @@
 import { expect, test } from '@playwright/test';
+import {
+  mockNFLState,
+  mockSleeperMatchupsWeek13,
+  mockSleeperPlayers,
+  mockSleeperRosters,
+  mockSleeperUsers,
+} from '../../src/test/fixtures/sleeper';
+import { LEAGUE_ID } from '../../src/config/league';
 
 const routes = [
   { path: '/', heading: /^standings$/i },
@@ -71,9 +79,44 @@ test.describe('Happy path smoke', () => {
     await expect(page.locator('#keepers')).toBeVisible();
   });
 
-  test('surfaces API errors as overlays', async ({ page }) => {
+  test('surfaces ESPN API errors', async ({ page }) => {
+    await page.route('**/state/nfl**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockNFLState),
+      }),
+    );
+    await page.route(`**/league/${LEAGUE_ID}/users**`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperUsers),
+      }),
+    );
+    await page.route(`**/league/${LEAGUE_ID}/rosters**`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperRosters),
+      }),
+    );
+    await page.route(`**/league/${LEAGUE_ID}/matchups/**`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperMatchupsWeek13),
+      }),
+    );
+    await page.route('**/players/nfl**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockSleeperPlayers),
+      }),
+    );
     await page.route('**/apis/site/v2/sports/football/nfl/scoreboard**', (route) =>
-      route.fulfill({ status: 500, body: 'forced failure' }),
+      route.fulfill({ status: 500, statusText: 'Internal Server Error' }),
     );
 
     await page.goto('/matchups');

@@ -30,6 +30,9 @@ jobs:
       - name: Run matchup-history store tests
         run: npm run test -w backend
 
+      - name: Build production frontend
+        run: npm run build -w frontend
+
   e2e:
     # Test the checked-out commit on release pushes, PRs targeting main, or manual runs.
     if: >

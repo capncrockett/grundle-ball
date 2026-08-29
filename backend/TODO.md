@@ -7,13 +7,8 @@
 - Fetch CLI lives at `backend/scripts/updateMatchupHistory.ts` and requires `--week`, `--weeks`, or `--range`. Run it through the frontend workspace, for example `npm run fetch:matchups -w frontend -- --week=14`.
 - The CLI imports the confirmed 2026 `LEAGUE_ID` from `frontend/src/config/league.ts` as its default, accepts `--league=<id>` as an explicit override, and resolves the selected league's season before writing.
 - Stored rows, JSON replacement, and SQLite uniqueness/deletes are scoped by `(leagueId, season, week)`; the existing snapshot and automatic legacy SQLite migration label known rows as league `1251950356187840512`, season `2025`.
-- `npm run test -w backend` covers scoped JSON/SQLite replacement and the legacy SQLite migration.
+- `npm run test -w backend` covers scoped JSON/SQLite replacement, the legacy SQLite migration, CLI argument validation, alternate-league season resolution, and malformed upstream matchup data.
 - The backend workspace is maintenance tooling only. No backend service or SQLite database is queried by the deployed frontend.
-
-## Remaining correctness coverage
-
-- Add CLI argument and mocked-upstream tests, including an alternate `--league` whose resolved season differs from the app default.
-- Add malformed Sleeper payload coverage before scheduling unattended writes.
 
 ## Next steps (DB / hosting)
 

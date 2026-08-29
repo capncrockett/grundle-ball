@@ -80,7 +80,7 @@ Repository-backed items:
 - [x] Staging Playwright target uses the Grundle Ball hostname.
 - [x] Production root responds at `https://grundle-ball.vercel.app` with the Grundle Ball title.
 - [x] New staging hostname exists behind Vercel protection; legacy Keeper Bowl hosts return 404.
-- [x] GitHub Actions run lint, Jest, and conditional staging Playwright jobs.
+- [x] GitHub Actions run Jest, backend Node tests, the production Vite build, and conditional local Playwright jobs.
 - [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 24.x.
 - [x] Vite embeds Vercel/git build metadata and the app renders Vercel Speed Insights.
 - [x] The hosted constitution PDF is present at `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`.
@@ -93,7 +93,6 @@ Items requiring live operational verification:
 - [ ] Run every route on staging and production at desktop and mobile widths.
 - [ ] Verify Sleeper and ESPN requests succeed from the deployed origins and failures remain user-visible.
 - [ ] If desired, add a Grundle Ball custom domain and update tests/docs after DNS and TLS are live.
-- [ ] Add a GitHub Actions production-build job so build validation does not depend only on Vercel.
 
 ## Troubleshooting
 
