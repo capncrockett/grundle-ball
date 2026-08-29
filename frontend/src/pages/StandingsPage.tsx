@@ -403,9 +403,9 @@ export function StandingsPage() {
                     <div className="text-sm inline-flex items-center gap-2">
                       <span>
                         {insights.highestAvgPfDivision?.divisionName ?? 'Division unknown'} is
-                        averaging {insights.highestAvgPfDivision?.avgPfPerGame.toFixed(1) ?? '—'} PF
+                        averaging {insights.highestAvgPfDivision?.avgPfPerGame.toFixed(1) ?? '-'} PF
                         per week; top seed is{' '}
-                        {insights.highestAvgPfDivision?.topSeed.teamName ?? '—'}.
+                        {insights.highestAvgPfDivision?.topSeed.teamName ?? '-'}.
                       </span>
                     </div>
                   </div>
@@ -416,7 +416,7 @@ export function StandingsPage() {
                     <div className="text-sm inline-flex items-center gap-2">
                       <span>
                         {insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'} is seeing
-                        only {insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '—'} PA per
+                        only {insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '-'} PA per
                         week.
                       </span>
                     </div>
@@ -446,7 +446,7 @@ export function StandingsPage() {
                               </div>
                             </div>
                           ) : (
-                            '—'
+                            '-'
                           )}
                         </td>
                         <td>{div.divisionName}</td>
@@ -552,7 +552,7 @@ export function StandingsPage() {
                           <td>{team.pointsFor.toFixed(2)}</td>
                           <td>{team.pointsAgainst.toFixed(2)}</td>
                           <td>{avgPoints.toFixed(2)}</td>
-                          <td>{paPfRatio !== null ? paPfRatio.toFixed(2) : '—'}</td>
+                          <td>{paPfRatio !== null ? paPfRatio.toFixed(2) : '-'}</td>
                         </tr>
                       );
                     })}

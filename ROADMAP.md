@@ -1,8 +1,8 @@
-# Grundle Ball — Roadmap
+# Grundle Ball - Roadmap
 
 This file tracks work that remains after the Grundle Ball rebrand and the move to a Sleeper-mirrored official playoff page. Completed phase-by-phase implementation notes have been removed; current architecture and supported behavior live in `frontend/WARP.md`.
 
-## High priority — stored-history correctness
+## High priority - stored-history correctness
 
 The 2025 snapshot is labeled with its actual league and season, storage keys are scoped, Standings requests only the active Sleeper league/season, and the CLI validates its arguments and upstream scope before writing.
 
