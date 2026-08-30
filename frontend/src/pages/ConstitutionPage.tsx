@@ -134,8 +134,8 @@ export function ConstitutionPage() {
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold">{document.title}</h1>
           <p className="text-sm text-base-content/60">
-            2026 Edition review draft. In-repo source of truth - update as amendments and votes
-            land.
+            2026 Edition. This page is the current source of truth; the linked PDF is an archived
+            review draft.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -146,10 +146,10 @@ export function ConstitutionPage() {
             className="btn btn-outline btn-sm"
             data-testid="constitution-pdf-link"
           >
-            Open PDF
+            Open archived PDF
           </a>
           <a href={CONSTITUTION_PDF_HREF} download className="btn btn-ghost btn-sm">
-            Download PDF
+            Download archived PDF
           </a>
         </div>
       </div>

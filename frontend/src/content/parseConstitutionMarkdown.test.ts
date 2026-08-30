@@ -168,5 +168,13 @@ describe('constitution source content', () => {
       (section) => section.id === 'league-at-a-glance',
     );
     expect(glance?.blocks.some((block) => block.type === 'table')).toBe(true);
+
+    const keepers = constitutionDocument.sections.find((section) => section.id === 'keepers');
+    const serializedKeepers = JSON.stringify(keepers);
+    expect(serializedKeepers).toContain('exactly 1 week (7 days)');
+    expect(serializedKeepers).toContain('no more than 2 keepers');
+    expect(serializedKeepers).toContain(
+      'Owning or acquiring additional draft picks does not increase the cap',
+    );
   });
 });

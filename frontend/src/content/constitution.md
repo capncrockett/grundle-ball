@@ -1,8 +1,6 @@
 # Grundle League Constitution
 
-**2026 Edition** · Effective for the 2026 season · **Review Draft**
-
-This review draft contains one unresolved item in the Keeper section: the 2026 vote on whether a team may exceed two keepers by acquiring keeper packages after the keeper lock.
+**2026 Edition** · Effective for the 2026 season
 
 ## 1. League at a Glance
 
@@ -15,8 +13,8 @@ This review draft contains one unresolved item in the Keeper section: the 2026 v
 | IDP            | 1 IDP FLEX (DL/LB/DB), scored at 50% of Sleeper default IDP values                    |
 | Bench / IR     | 6 bench / 2 IR                                                                        |
 | FAAB           | $100 starting seasonal budget; no carryover                                           |
-| Keepers        | 2 designated per team                                                                 |
-| Keeper lock    | 72 hours before the scheduled Sleeper draft start                                     |
+| Keepers        | Maximum 2 per team, including keeper packages acquired by trade                       |
+| Keeper lock    | 1 week before the scheduled Sleeper draft start                                       |
 | Trade deadline | Week 12, exact timestamp per Sleeper                                                  |
 | Auto Subs      | Maximum 1 per matchup                                                                 |
 | Playoffs       | 6-team championship bracket, Weeks 15-17                                              |
@@ -121,9 +119,9 @@ Future dues remain with the team, are nonrefundable, and are inherited by any re
 
 ## 8. Keepers
 
-**PENDING 2026 VOTE:** Each team may designate no more than 2 keepers at the 72-hour lock. The league is separately voting on whether a team may end up with more than 2 keepers by acquiring keeper packages after the lock. The result of that vote will replace this notice in the final edition.
+**Maximum keepers.** A team may have no more than 2 keepers for a draft. The cap includes keeper packages acquired by trade. Owning or acquiring additional draft picks does not increase the cap, and a trade or series of trades may not be used to exceed it.
 
-**Keeper lock.** Keeper designations lock exactly 72 hours before the scheduled Sleeper draft start. The deadline is strict. A team that fails to designate its keepers by the deadline has no keepers for that draft.
+**Keeper lock.** Keeper designations lock exactly 1 week (7 days) before the scheduled Sleeper draft start. The deadline is strict. A team that fails to designate its keepers by the deadline has no keepers for that draft.
 
 If the draft is rescheduled before the keeper lock occurs, the lock moves with the new draft time. Once the lock has passed, a later draft reschedule does not reopen or move the keeper deadline.
 
@@ -147,7 +145,7 @@ If a player was drafted and later dropped, that player retains the original draf
 
 **Picks are spent at lock.** At the keeper lock, the team must possess every pick required to pay for its designated keepers. Those picks are considered spent and attach to the corresponding keeper.
 
-**Post-lock keeper packages.** During the 72 hours before the draft, and during the draft where Sleeper permits, a designated keeper may be traded together with the already-spent pick. The receiving team inherits the keeper designation and the attached pick cost. No new keeper designation may be created after the lock.
+**Post-lock keeper packages.** After the keeper lock, and before or during the draft where Sleeper permits, a designated keeper may be traded together with the already-spent pick. The receiving team inherits the keeper designation and the attached pick cost. The trade may be completed only if the receiving team will have no more than 2 keepers after the transaction. No new keeper designation may be created after the lock.
 
 A keeper-package trade does not reset the receiving team's keeper clock. If that team has already used two keeper seasons on the player, it cannot receive the player as a keeper. If it has used one keeper season, the transferred package may count as its second and final keeper season at the package's already-spent pick cost.
 
@@ -332,6 +330,20 @@ Doubtful designation was added to the league's IR eligibility.
 - **Status:** Active
 - **Vote:** Passed 9-3
 
+**Keeper deadline extended to 1 week**
+
+The keeper deadline was extended from 72 hours to exactly 1 week (7 days) before the scheduled Sleeper draft start.
+
+- **Status:** Active
+- **Vote:** Passed
+
+**Two-keeper cap confirmed**
+
+Each team is limited to 2 keepers for a draft, including keeper packages acquired by trade. Additional draft picks do not increase the cap.
+
+- **Status:** Active
+- **Vote:** Passed
+
 **Abandon IDP experiment**
 
 Proposal to remove the IDP position.
@@ -390,7 +402,7 @@ The keeper deadline was set at 24 hours before the draft.
 
 The keeper deadline was later extended to 72 hours before the draft.
 
-- **Status:** Active
+- **Status:** Superseded
 
 **Same-round keeper pricing**
 
@@ -443,5 +455,3 @@ Follow-up drafts were established as snake drafts in reverse order of final stan
 The Grundle began play in 2017. The first two seasons were hosted on ESPN; detailed ESPN-era data is no longer available.
 
 - **Status:** Historical Only
-
-Pending: The 2026 post-lock keeper-cap vote will be added to this history once the result is final.
