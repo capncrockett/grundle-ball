@@ -98,9 +98,21 @@ describe('HistoryPage', () => {
     render(<HistoryPage initialHistory={history} refreshLive={false} />);
 
     const currentBoard = screen.getByRole('region', { name: '2026 draftboard' });
-    expect(currentBoard).toHaveClass('overflow-x-auto');
+    const headerScroll = currentBoard.querySelector('[data-draftboard-scroll="header"]');
+    const bodyScroll = currentBoard.querySelector('[data-draftboard-scroll="body"]');
+    expect(headerScroll).toHaveClass('sticky', 'top-0', 'overflow-x-auto');
+    expect(bodyScroll).toHaveClass('overflow-x-auto');
     expect(currentBoard).not.toHaveClass('max-h-[68vh]');
     expect(currentBoard).not.toHaveClass('overflow-auto');
+    if (!(headerScroll instanceof HTMLDivElement) || !(bodyScroll instanceof HTMLDivElement)) {
+      throw new Error('Draftboard scroll regions are missing');
+    }
+    bodyScroll.scrollLeft = 48;
+    fireEvent.scroll(bodyScroll);
+    expect(headerScroll.scrollLeft).toBe(48);
+    headerScroll.scrollLeft = 24;
+    fireEvent.scroll(headerScroll);
+    expect(bodyScroll.scrollLeft).toBe(24);
     expect(within(currentBoard).getByText('A. Player')).toHaveAttribute('title', 'Alpha Player');
     expect(within(currentBoard).getByLabelText('Keeper')).toHaveClass('draft-keeper-badge');
     const wrPick = currentBoard.querySelector('[data-position="WR"]');

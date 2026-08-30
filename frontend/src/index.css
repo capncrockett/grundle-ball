@@ -45,6 +45,21 @@ body {
     min-height: clamp(4.25rem, 5.25vw, 4.75rem);
   }
 
+  .draft-board-header-scroll {
+    border-start-start-radius: var(--radius-box);
+    border-start-end-radius: var(--radius-box);
+    scrollbar-width: none;
+  }
+
+  .draft-board-header-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .draft-board-body-scroll {
+    border-end-start-radius: var(--radius-box);
+    border-end-end-radius: var(--radius-box);
+  }
+
   .draft-position-cell {
     border-color: color-mix(in oklab, var(--draft-position-ink) 22%, transparent);
     background-color: color-mix(

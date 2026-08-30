@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { getDraftPickNumber, getTeamForRoster } from '../../data/draftHistoryTransforms';
 import type {
   DraftHistoryPick,
@@ -43,6 +43,10 @@ const abbreviatePlayerName = (playerName: string): string => {
   const parts = playerName.trim().split(/\s+/);
   if (parts.length < 2 || !parts[0]) return playerName;
   return `${parts[0].charAt(0).toUpperCase()}. ${parts.slice(1).join(' ')}`;
+};
+
+const syncHorizontalScroll = (source: HTMLDivElement, target: HTMLDivElement | null): void => {
+  if (target && target.scrollLeft !== source.scrollLeft) target.scrollLeft = source.scrollLeft;
 };
 
 type DraftPickCellProps = {
@@ -106,6 +110,8 @@ function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: Draf
 export function DraftBoard({ season }: DraftBoardProps) {
   const [highlightedRosterId, setHighlightedRosterId] = useState<number | null>(null);
   const [keepersOnly, setKeepersOnly] = useState(false);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
 
   const picksByCell = useMemo(
     () =>
@@ -124,6 +130,10 @@ export function DraftBoard({ season }: DraftBoardProps) {
       }
     );
   });
+  const draftGridStyle = {
+    gridTemplateColumns: `3rem repeat(${season.teamCount.toString()}, minmax(6.25rem, 1fr))`,
+    minWidth: `${(3 + season.teamCount * 6.25).toString()}rem`,
+  };
 
   return (
     <section aria-labelledby="draftboard-heading">
@@ -204,89 +214,105 @@ export function DraftBoard({ season }: DraftBoardProps) {
       </div>
 
       <div
-        className="overflow-x-auto rounded-box border border-base-300 bg-base-200 shadow-sm"
+        className="rounded-box border border-base-300 bg-base-200 shadow-sm"
         role="region"
         aria-label={`${season.season} draftboard`}
-        tabIndex={0}
       >
         <div
-          className="grid w-full"
-          style={{
-            gridTemplateColumns: `3rem repeat(${season.teamCount.toString()}, minmax(6.25rem, 1fr))`,
-            minWidth: `${(3 + season.teamCount * 6.25).toString()}rem`,
+          ref={headerScrollRef}
+          className="draft-board-header-scroll sticky top-0 z-30 overflow-x-auto bg-base-300"
+          data-draftboard-scroll="header"
+          onScroll={(event) => {
+            syncHorizontalScroll(event.currentTarget, bodyScrollRef.current);
           }}
         >
-          <div className="draft-board-tile sticky left-0 top-0 z-30 flex items-center justify-center border-r border-b border-base-300 bg-base-300 px-1 text-[0.65rem] font-bold uppercase tracking-wide">
-            Rd
-          </div>
-          {draftSlots.map((slot) => {
-            const team = getTeamForRoster(season, slot.rosterId);
-            const selected = highlightedRosterId === slot.rosterId;
-            return (
-              <div
-                key={slot.draftSlot}
-                className={`draft-board-tile sticky top-0 z-20 border-r border-b border-base-300 p-1 ${
-                  selected ? 'bg-primary text-primary-content' : 'bg-base-300'
-                }`}
-                title={
-                  team && team.managerName !== team.teamName
-                    ? `${team.teamName} - ${team.managerName}`
-                    : team?.teamName
-                }
-              >
-                <div className="mb-1 flex items-center gap-1.5">
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold ${
-                      selected ? 'bg-primary-content/20' : 'bg-base-100'
-                    }`}
+          <div className="grid w-full" style={draftGridStyle}>
+            <div className="draft-board-tile sticky left-0 z-30 flex items-center justify-center border-r border-b border-base-300 bg-base-300 px-1 text-[0.65rem] font-bold uppercase tracking-wide">
+              Rd
+            </div>
+            {draftSlots.map((slot) => {
+              const team = getTeamForRoster(season, slot.rosterId);
+              const selected = highlightedRosterId === slot.rosterId;
+              return (
+                <div
+                  key={slot.draftSlot}
+                  className={`draft-board-tile border-r border-b border-base-300 p-1 ${
+                    selected ? 'bg-primary text-primary-content' : 'bg-base-300'
+                  }`}
+                  title={
+                    team && team.managerName !== team.teamName
+                      ? `${team.teamName} - ${team.managerName}`
+                      : team?.teamName
+                  }
+                >
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold ${
+                        selected ? 'bg-primary-content/20' : 'bg-base-100'
+                      }`}
+                    >
+                      {abbreviation(team, slot.draftSlot)}
+                    </span>
+                    <span className="text-[0.6rem] font-mono opacity-60">
+                      {slot.draftSlot.toString()}
+                    </span>
+                  </div>
+                  <div
+                    className="line-clamp-2 text-[0.7rem] font-bold leading-tight"
+                    title={team?.teamName}
                   >
-                    {abbreviation(team, slot.draftSlot)}
-                  </span>
-                  <span className="text-[0.6rem] font-mono opacity-60">
-                    {slot.draftSlot.toString()}
-                  </span>
-                </div>
-                <div
-                  className="line-clamp-2 text-[0.7rem] font-bold leading-tight"
-                  title={team?.teamName}
-                >
-                  {team?.teamName ?? `Roster ${slot.rosterId.toString()}`}
-                </div>
-              </div>
-            );
-          })}
-
-          {Array.from({ length: season.rounds }, (_, roundIndex) => roundIndex + 1).flatMap(
-            (round) => {
-              const roundLabel = (
-                <div
-                  key={`round-${round.toString()}`}
-                  className="draft-board-tile sticky left-0 z-10 flex items-center justify-center border-r border-b border-base-300 bg-base-300 text-base font-black"
-                >
-                  {round.toString()}
+                    {team?.teamName ?? `Roster ${slot.rosterId.toString()}`}
+                  </div>
                 </div>
               );
-              const cells = draftSlots.map((slot) => {
-                const pick = picksByCell.get(`${round.toString()}:${slot.draftSlot.toString()}`);
-                const slotTeam = getTeamForRoster(season, slot.rosterId);
-                const destinationTeam = pick ? getTeamForRoster(season, pick.rosterId) : undefined;
-                const dimmed =
-                  (highlightedRosterId !== null && pick?.rosterId !== highlightedRosterId) ||
-                  (keepersOnly && pick?.isKeeper !== true);
-                return (
-                  <DraftPickCell
-                    key={`${round.toString()}:${slot.draftSlot.toString()}`}
-                    pick={pick}
-                    pickNo={getDraftPickNumber(round, slot.draftSlot, season.teamCount)}
-                    slotTeam={slotTeam}
-                    destinationTeam={destinationTeam}
-                    dimmed={dimmed}
-                  />
+            })}
+          </div>
+        </div>
+
+        <div
+          ref={bodyScrollRef}
+          className="draft-board-body-scroll overflow-x-auto"
+          data-draftboard-scroll="body"
+          tabIndex={0}
+          onScroll={(event) => {
+            syncHorizontalScroll(event.currentTarget, headerScrollRef.current);
+          }}
+        >
+          <div className="grid w-full" style={draftGridStyle}>
+            {Array.from({ length: season.rounds }, (_, roundIndex) => roundIndex + 1).flatMap(
+              (round) => {
+                const roundLabel = (
+                  <div
+                    key={`round-${round.toString()}`}
+                    className="draft-board-tile sticky left-0 z-10 flex items-center justify-center border-r border-b border-base-300 bg-base-300 text-base font-black"
+                  >
+                    {round.toString()}
+                  </div>
                 );
-              });
-              return [roundLabel, ...cells];
-            },
-          )}
+                const cells = draftSlots.map((slot) => {
+                  const pick = picksByCell.get(`${round.toString()}:${slot.draftSlot.toString()}`);
+                  const slotTeam = getTeamForRoster(season, slot.rosterId);
+                  const destinationTeam = pick
+                    ? getTeamForRoster(season, pick.rosterId)
+                    : undefined;
+                  const dimmed =
+                    (highlightedRosterId !== null && pick?.rosterId !== highlightedRosterId) ||
+                    (keepersOnly && pick?.isKeeper !== true);
+                  return (
+                    <DraftPickCell
+                      key={`${round.toString()}:${slot.draftSlot.toString()}`}
+                      pick={pick}
+                      pickNo={getDraftPickNumber(round, slot.draftSlot, season.teamCount)}
+                      slotTeam={slotTeam}
+                      destinationTeam={destinationTeam}
+                      dimmed={dimmed}
+                    />
+                  );
+                });
+                return [roundLabel, ...cells];
+              },
+            )}
+          </div>
         </div>
       </div>
     </section>
