@@ -65,5 +65,8 @@ describe('ConstitutionPage', () => {
     expect(screen.getByText(/King \(Last Place\)/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Rumble in the Grundle/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Highest Points Against/i).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByRole('region', { name: 'Undrafted keeper ADP calculator' }),
+    ).toBeInTheDocument();
   });
 });

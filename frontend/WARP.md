@@ -277,6 +277,7 @@ Do not encode the Beta bracket's custom destinations into this path.
 - Edit `src/content/constitution.md`; it is the current rules source of truth and is PR-reviewed.
 - Keep implementation details out of the constitution.
 - Update parser/content/page tests when changing supported Markdown structures or anchors.
+- `KeeperAdpCalculator` is inserted immediately after the bold `Undrafted players.` rule label; its 12-team, 16-round calculation lives in `utils/keeperAdp.ts`.
 - The current review-draft PDF is `public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`; root `docs/` holds the archival copies.
 
 ### Style UI

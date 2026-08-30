@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
+import { KeeperAdpCalculator } from '../components/constitution/KeeperAdpCalculator';
 import {
   constitutionDocument,
   getConstitutionToc,
@@ -94,6 +95,11 @@ function BlockView({ block }: { block: ConstitutionBlock }) {
   return <ListItems items={block.items} ordered={block.ordered} />;
 }
 
+const isUndraftedPlayersRule = (section: ConstitutionSection, block: ConstitutionBlock): boolean =>
+  section.id === 'keepers' &&
+  block.type === 'paragraph' &&
+  block.inlines.some((inline) => inline.type === 'strong' && inline.text === 'Undrafted players.');
+
 function SectionView({ section }: { section: ConstitutionSection }) {
   const HeadingTag = section.level === 2 ? 'h2' : 'h3';
   const headingClass =
@@ -107,9 +113,15 @@ function SectionView({ section }: { section: ConstitutionSection }) {
         {section.title}
       </HeadingTag>
       <div className="space-y-4">
-        {section.blocks.map((block, index) => (
-          <BlockView key={`${section.id}-block-${String(index)}`} block={block} />
-        ))}
+        {section.blocks.map((block, index) => {
+          const key = `${section.id}-block-${String(index)}`;
+          return (
+            <Fragment key={key}>
+              <BlockView block={block} />
+              {isUndraftedPlayersRule(section, block) && <KeeperAdpCalculator />}
+            </Fragment>
+          );
+        })}
       </div>
       {section.children.length > 0 ? (
         <div className="space-y-6 pt-2">
