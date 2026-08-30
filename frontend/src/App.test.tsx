@@ -22,6 +22,18 @@ jest.mock('./pages/StandingsPage', () => ({
   StandingsPage: () => <div>Standings Page</div>,
 }));
 
+jest.mock('./pages/HistoryPage', () => ({
+  __esModule: true,
+  default: () => <div>History Page</div>,
+  HistoryPage: () => <div>History Page</div>,
+}));
+
+jest.mock('./pages/DraftIntelPage', () => ({
+  __esModule: true,
+  default: () => <div>Draft Intel Page</div>,
+  DraftIntelPage: () => <div>Draft Intel Page</div>,
+}));
+
 jest.mock('./pages/ConstitutionPage', () => ({
   ConstitutionPage: () => <div>Constitution Page</div>,
 }));
@@ -84,5 +96,40 @@ describe('App routing + nav', () => {
     const constitutionLink = within(banner).getByRole('link', { name: /constitution/i });
     expect(constitutionLink).toHaveClass('btn-active');
     expect(constitutionLink).toHaveAttribute('href', '/constitution');
+  });
+
+  it('renders league history and highlights its nav item', async () => {
+    renderWithRouter(<App />, { route: '/history' });
+
+    expect(await screen.findByText('History Page')).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const historyLink = within(banner).getByRole('link', { name: /history/i });
+    expect(historyLink).toHaveClass('btn-active');
+    expect(historyLink).toHaveAttribute('href', '/history');
+  });
+
+  it('renders Draft Intel only through its local route', async () => {
+    renderWithRouter(<App />, { route: '/local/draft-intel' });
+
+    expect(await screen.findByText('Draft Intel Page')).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const draftIntelLink = within(banner).getByRole('link', { name: /draft intel/i });
+    expect(draftIntelLink).toHaveClass('btn-active');
+    expect(draftIntelLink).toHaveAttribute('href', '/local/draft-intel');
+  });
+
+  it('shows only the useful deployment details in the footer', () => {
+    renderWithRouter(<App />, { route: '/standings' });
+
+    const footer = screen.getByRole('contentinfo');
+    expect(footer).toHaveTextContent('Branch: local');
+    expect(footer).toHaveTextContent('Environment: development');
+    expect(within(footer).getByRole('link', { name: /Repository:/ })).toHaveAttribute(
+      'href',
+      'https://github.com/capncrockett/grundle-ball',
+    );
+    expect(footer).not.toHaveTextContent(/SHA:|Built:|Author:|Message:|Deploy:|Project:/);
   });
 });

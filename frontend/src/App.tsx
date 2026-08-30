@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { GrundleBowlBetaLayout } from './components/GrundleBowlBetaLayout';
@@ -8,6 +9,13 @@ import PlayoffsIfTodayPage from './pages/PlayoffsIfTodayPage';
 import PlayoffsLivePage from './pages/PlayoffsLivePage';
 import PlayoffsPage from './pages/PlayoffsPage';
 import { StandingsPage } from './pages/StandingsPage';
+import { isLocalToolsHost } from './localTools';
+
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const localToolsBuildEnabled =
+  typeof __LOCAL_TOOLS_BUILD__ === 'undefined' || __LOCAL_TOOLS_BUILD__;
+const localToolsEnabled = localToolsBuildEnabled && isLocalToolsHost();
+const DraftIntelPage = localToolsEnabled ? lazy(() => import('./pages/DraftIntelPage')) : null;
 
 type NavLinkProps = {
   to: string;
@@ -22,11 +30,12 @@ function NavLink({ to, label, icon }: NavLinkProps) {
   return (
     <Link
       to={to}
+      aria-label={label}
       className={`btn btn-ghost btn-sm ${isActive ? 'btn-active font-semibold' : 'opacity-80'}`}
     >
       <span className="flex items-center gap-1">
         {icon}
-        <span className="hidden sm:inline">{label}</span>
+        <span className="hidden lg:inline">{label}</span>
       </span>
     </Link>
   );
@@ -35,62 +44,15 @@ function NavLink({ to, label, icon }: NavLinkProps) {
 type BuildInfo = typeof __BUILD_INFO__;
 
 const fallbackBuildInfo: BuildInfo = {
-  buildAt: 'local',
-  gitSha: null,
   gitRef: null,
-  gitRepo: null,
-  gitOwner: null,
-  gitCommitMessage: null,
-  gitCommitAuthor: null,
-  gitPullRequestId: null,
-  gitPullRequestTitle: null,
   vercelEnv: null,
-  vercelRegion: null,
-  vercelUrl: null,
-  deploymentId: null,
-  projectId: null,
 };
 
 const buildInfo: BuildInfo =
   typeof __BUILD_INFO__ === 'undefined' ? fallbackBuildInfo : __BUILD_INFO__;
 const buildRef = buildInfo.gitRef ?? 'local';
-const shortSha = buildInfo.gitSha ? buildInfo.gitSha.slice(0, 7) : 'local';
 const envLabel = buildInfo.vercelEnv ?? 'development';
-const releaseTag = buildRef.startsWith('release/') ? buildRef.slice('release/'.length) : null;
-const repoLabel =
-  buildInfo.gitOwner && buildInfo.gitRepo
-    ? `${buildInfo.gitOwner}/${buildInfo.gitRepo}`
-    : buildInfo.gitRepo;
-const commitMessage = buildInfo.gitCommitMessage
-  ? buildInfo.gitCommitMessage.length > 60
-    ? `${buildInfo.gitCommitMessage.slice(0, 57)}...`
-    : buildInfo.gitCommitMessage
-  : null;
-const prTitle = buildInfo.gitPullRequestTitle
-  ? buildInfo.gitPullRequestTitle.length > 50
-    ? `${buildInfo.gitPullRequestTitle.slice(0, 47)}...`
-    : buildInfo.gitPullRequestTitle
-  : null;
-const prLabel = buildInfo.gitPullRequestId
-  ? `#${buildInfo.gitPullRequestId}${prTitle ? ` ${prTitle}` : ''}`
-  : null;
-const deploymentLabel = buildInfo.deploymentId ? buildInfo.deploymentId.slice(0, 8) : null;
-const projectLabel = buildInfo.projectId ? buildInfo.projectId.slice(0, 8) : null;
-const buildMetaItems = [
-  { label: 'App', value: 'Grundle Ball' },
-  { label: 'Env', value: envLabel },
-  { label: releaseTag ? 'Release' : 'Branch', value: releaseTag ?? buildRef },
-  { label: 'SHA', value: shortSha },
-  { label: 'Built', value: buildInfo.buildAt },
-  { label: 'Region', value: buildInfo.vercelRegion },
-  { label: 'URL', value: buildInfo.vercelUrl },
-  { label: 'Repo', value: repoLabel },
-  { label: 'Author', value: buildInfo.gitCommitAuthor },
-  { label: 'Message', value: commitMessage },
-  { label: 'PR', value: prLabel },
-  { label: 'Deploy', value: deploymentLabel },
-  { label: 'Project', value: projectLabel },
-].filter((item): item is { label: string; value: string } => Boolean(item.value));
+const repoUrl = 'https://github.com/capncrockett/grundle-ball';
 
 export default function App() {
   return (
@@ -98,7 +60,8 @@ export default function App() {
       <header className="navbar bg-base-100 shadow-md">
         <div className="navbar-start">
           <span className="btn btn-ghost normal-case text-sm sm:text-xl font-bold">
-            Grundle Ball
+            <span className="sm:hidden">GB</span>
+            <span className="hidden sm:inline">Grundle Ball</span>
           </span>
         </div>
         <div className="navbar-center">
@@ -146,6 +109,28 @@ export default function App() {
               }
             />
             <NavLink
+              to="/history"
+              label="History"
+              icon={
+                <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[0.6rem] font-black">
+                  H
+                </span>
+              }
+            />
+            {localToolsEnabled && (
+              <span className="hidden sm:contents">
+                <NavLink
+                  to="/local/draft-intel"
+                  label="Draft Intel"
+                  icon={
+                    <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-secondary/20 text-[0.5rem] font-black text-secondary">
+                      DI
+                    </span>
+                  }
+                />
+              </span>
+            )}
+            <NavLink
               to="/constitution"
               label="Constitution"
               icon={
@@ -181,6 +166,36 @@ export default function App() {
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/playoffs" element={<PlayoffsPage />} />
           <Route path="/matchups" element={<MatchupsPage />} />
+          <Route
+            path="/history"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-16">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
+                }
+              >
+                <HistoryPage />
+              </Suspense>
+            }
+          />
+          {localToolsEnabled && DraftIntelPage && (
+            <Route
+              path="/local/draft-intel"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="flex justify-center py-16">
+                      <span className="loading loading-spinner loading-lg" />
+                    </div>
+                  }
+                >
+                  <DraftIntelPage />
+                </Suspense>
+              }
+            />
+          )}
           <Route path="/constitution" element={<ConstitutionPage />} />
           <Route
             path="/beta/grundle-bowl"
@@ -214,13 +229,22 @@ export default function App() {
         </Routes>
       </main>
 
-      <footer className="p-4 mt-24 bg-base-100 text-xs opacity-70">
-        <div className="w-full grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-4 gap-y-1">
-          {buildMetaItems.map((item) => (
-            <span key={`${item.label}:${item.value}`}>
-              {item.label}: {item.value}
-            </span>
-          ))}
+      <footer className="mt-24 border-t border-base-300/50 bg-base-100/60 px-4 py-3 text-[0.7rem] text-base-content/55">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-5 gap-y-1">
+          <span>
+            <span className="font-semibold text-base-content/70">Branch:</span> {buildRef}
+          </span>
+          <span>
+            <span className="font-semibold text-base-content/70">Environment:</span> {envLabel}
+          </span>
+          <a
+            className="link-hover link text-base-content/65"
+            href={repoUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Repository: {repoUrl}
+          </a>
         </div>
       </footer>
       <SpeedInsights />

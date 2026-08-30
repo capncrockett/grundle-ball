@@ -8,13 +8,14 @@ Grundle Ball is a client-rendered React application with a small set of Node mai
 - React Router owns client-side routes. Vercel rewrites non-`/docs/` requests to `index.html`; static constitution files under `/docs/` bypass that rewrite.
 - Pages use React hooks and local component state. No global state library is installed.
 - DaisyUI/Tailwind provide the component and layout system.
-- Vite injects build/deployment metadata into the footer at build time.
+- Vite injects the deployment branch and environment into the footer at build time; the footer also links to the public repository.
 
 ## Routes and feature boundaries
 
 - `/standings` is the default route and combines live Sleeper standings data with the checked-in matchup-history snapshot for selected insights.
 - `/playoffs` renders Sleeper's official `winners_bracket` and `losers_bracket` responses directly. `sleeperBracket/resolveBracket.ts` resolves participants and placement labels without applying house routing.
 - `/matchups` combines Sleeper league/matchup/player data with ESPN NFL game status to show scores and finished-starter counts.
+- `/history` renders canonical annual draftboards and Team-specific keeper history. Completed seasons come from a checked-in snapshot; the active season is refreshed from Sleeper in the browser.
 - `/constitution` renders `frontend/src/content/constitution.md`; the review-draft PDF is served as a static file.
 - `/beta/grundle-bowl/*` contains the custom Champ Bowl / Keeper Bowl / Toilet Bowl proposal. This Beta feature has its own immutable bracket template and routing engine and must not be confused with the official playoff route.
 
@@ -50,6 +51,17 @@ Sleeper users + rosters + winners_bracket + losers_bracket
   -> SleeperBracketBoard
 ```
 
+### Draft and keeper history
+
+```text
+checked-in draftHistoryStore.json
+  + active Sleeper league + canonical draft + picks + users + rosters
+  -> buildDraftHistorySeason()
+  -> DraftBoard and KeeperHistory
+```
+
+The season chain follows `previous_league_id`, while each season uses the league record's `draft_id`. This excludes abandoned or setup-only Sleeper draftboards. Keeper ledger identity is `(rosterId, playerId)` across seasons because keeper history belongs to the persistent Team rather than the current Manager.
+
 ### Grundle Bowl Beta
 
 ```text
@@ -65,13 +77,15 @@ Sleeper data
 ## Maintenance tooling and stored history
 
 - `backend/scripts/updateMatchupHistory.ts` is a CLI that fetches selected Sleeper weeks.
-- `backend/matchupHistoryStore.ts` provides a `MatchupHistoryStore` interface with a checked-in JSON implementation (default) and an optional local `better-sqlite3` implementation. Both current schemas lack league/season identity.
+- `backend/scripts/updateDraftHistory.ts` follows the linked Sleeper league seasons and rewrites the checked-in canonical draft archive.
+- `backend/matchupHistoryStore.ts` provides a `MatchupHistoryStore` interface with a checked-in JSON implementation (default) and an optional local `better-sqlite3` implementation. Both schemas include league/season identity.
 - The deployed frontend imports `frontend/src/data/matchupHistoryStore.json`; it does not query SQLite or a backend service.
+- The deployed frontend imports `frontend/src/data/draftHistoryStore.json` and overlays the active draft with a live browser fetch.
 - Hosted storage, scheduling, and any future API boundary are intentionally deferred in `backend/TODO.md`.
 
 ## External boundaries
 
-- Sleeper public APIs provide league, roster, user, matchup, player, NFL-state, and playoff-bracket data.
+- Sleeper public APIs provide league, roster, user, matchup, draft, draft-pick, player, NFL-state, and playoff-bracket data.
 - ESPN's public NFL scoreboard endpoint provides game completion status for the Matchups page.
 - Neither current browser flow requires a private application API key.
 

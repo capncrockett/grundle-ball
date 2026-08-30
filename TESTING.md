@@ -46,7 +46,7 @@ Run Playwright:
 npm run test:e2e:local -w frontend
 ```
 
-All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects.
+All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects. It also builds and serves the production app for the production-boundary project, which verifies that local-only tools are absent.
 
 ### Playwright against a deployment
 
@@ -71,6 +71,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Official Sleeper playoff rendering and its loading, empty, and error states.
 - Grundle Bowl Beta Live and If-Today pages, including API failures.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
+- Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.
@@ -82,10 +83,12 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 - Scoped JSON and SQLite matchup-history replacement across overlapping league/season/week values.
 - Automatic migration of the known unscoped SQLite shape to the 2025 league/season identity.
 - CLI selector validation, alternate-league season resolution, and malformed upstream matchup rejection before writes.
+- Canonical draft-history traversal, alternate current-league selection, and league-chain cycle rejection.
 
 ### Playwright
 
 - `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
+- `production-boundary.spec.ts`: the production build has no Draft Intel navigation or route, while local development retains the tool.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
 - `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
 - `theme.spec.ts`: theme selection and persistence across reloads.
