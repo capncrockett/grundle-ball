@@ -44,11 +44,18 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium-desktop',
+      testIgnore: /production-boundary\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'iphone-12',
+      testIgnore: /production-boundary\.spec\.ts/,
       use: { ...devices['iPhone 12'] },
+    },
+    {
+      name: 'production-boundary',
+      testMatch: /production-boundary\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });

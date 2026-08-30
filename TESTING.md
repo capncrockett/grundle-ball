@@ -46,7 +46,7 @@ Run Playwright:
 npm run test:e2e:local -w frontend
 ```
 
-All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects.
+All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects. It also builds and serves the production app for the production-boundary project, which verifies that local-only tools are absent.
 
 ### Playwright against a deployment
 
@@ -88,6 +88,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 ### Playwright
 
 - `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
+- `production-boundary.spec.ts`: the production build has no Draft Intel navigation or route, while local development retains the tool.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
 - `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
 - `theme.spec.ts`: theme selection and persistence across reloads.

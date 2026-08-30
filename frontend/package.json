@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --runInBand --ci",
     "test:e2e": "cross-env PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
+    "pretest:e2e:local": "npm run build",
     "test:e2e:local": "cross-env E2E_BASE_URL=http://localhost:5173 PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:e2e:headed": "cross-env PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed",
     "lint": "eslint src --ext .ts,.tsx",

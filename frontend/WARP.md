@@ -295,6 +295,7 @@ The current suite includes:
 - Page integration tests for Standings, Matchups, official Playoffs, both Beta views, and Constitution, including representative loading/error paths.
 - History page integration tests for season switching, draftboard keeper markers, current Team designation cards, and the keeper ledger.
 - App routing/navigation tests and Playwright desktop/mobile smoke, preseason standings, matchup, and theme flows.
+- A Playwright production-boundary project that builds and serves the app, then verifies Draft Intel is absent.
 
 Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke intentionally checks a live environment, while its dedicated Matchups flow uses route fixtures. Root `TESTING.md` is the authoritative command/CI/gap guide.
 
