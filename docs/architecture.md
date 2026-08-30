@@ -8,7 +8,7 @@ Grundle Ball is a client-rendered React application with a small set of Node mai
 - React Router owns client-side routes. Vercel rewrites non-`/docs/` requests to `index.html`; static constitution files under `/docs/` bypass that rewrite.
 - Pages use React hooks and local component state. No global state library is installed.
 - DaisyUI/Tailwind provide the component and layout system.
-- Vite injects build/deployment metadata into the footer at build time.
+- Vite injects the deployment branch and environment into the footer at build time; the footer also links to the public repository.
 
 ## Routes and feature boundaries
 

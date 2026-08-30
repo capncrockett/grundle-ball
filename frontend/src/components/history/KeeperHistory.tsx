@@ -57,7 +57,7 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
       <div className="stats stats-vertical mb-6 w-full border border-base-300 bg-base-100 shadow-sm sm:stats-horizontal">
         <div className="stat py-4">
           <div className="stat-title">{currentSeason.season} designations</div>
-          <div className="stat-value text-warning">{currentKeepers.length.toString()}</div>
+          <div className="stat-value">{currentKeepers.length.toString()}</div>
           <div className="stat-desc">
             Across {teamsWithCurrentKeepers.toString()} of {currentSeason.teamCount.toString()}{' '}
             Teams
@@ -88,7 +88,7 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                 <article
                   key={team.rosterId}
                   className={`card border bg-base-100 shadow-sm ${
-                    picks.length > 0 ? 'border-warning/50' : 'border-base-300'
+                    picks.length > 0 ? 'border-base-content/20' : 'border-base-300'
                   }`}
                 >
                   <div className="card-body gap-2 p-4">
@@ -115,7 +115,10 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                               entry.rosterId === pick.rosterId && entry.playerId === pick.playerId,
                           );
                           return (
-                            <li key={pick.playerId} className="rounded-box bg-warning/10 px-3 py-2">
+                            <li
+                              key={pick.playerId}
+                              className="rounded-box border-l-2 border-base-content/25 bg-base-content/5 px-3 py-2"
+                            >
                               <div className="flex items-center justify-between gap-2">
                                 <span className="truncate text-sm font-semibold">
                                   {pick.playerName}
@@ -208,7 +211,9 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                   <td>
                     <div className="font-semibold">{entry.playerName}</div>
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-base-content/50">
-                      <span className={`badge badge-xs ${positionStyle.badgeClassName}`}>
+                      <span
+                        className={`draft-position-badge badge badge-xs text-base-content/70 ${positionStyle.colorClassName}`}
+                      >
                         {positionStyle.label}
                       </span>
                       {entry.nflTeam && <span>{entry.nflTeam}</span>}

@@ -19,6 +19,56 @@ body {
 }
 
 @layer components {
+  .draft-position-cell {
+    border-left-color: color-mix(in oklab, var(--draft-position-color) 40%, var(--color-base-300));
+    background-color: color-mix(in oklab, var(--draft-position-color) 5%, var(--color-base-100));
+  }
+
+  .draft-position-badge {
+    border-color: color-mix(in oklab, var(--draft-position-color) 25%, var(--color-base-300));
+    background-color: color-mix(in oklab, var(--draft-position-color) 10%, var(--color-base-100));
+  }
+
+  .draft-position-qb {
+    --draft-position-color: var(--color-primary);
+  }
+
+  .draft-position-rb {
+    --draft-position-color: var(--color-success);
+  }
+
+  .draft-position-wr {
+    --draft-position-color: var(--color-info);
+  }
+
+  .draft-position-te {
+    --draft-position-color: var(--color-warning);
+  }
+
+  .draft-position-k {
+    --draft-position-color: var(--color-secondary);
+  }
+
+  .draft-position-def {
+    --draft-position-color: var(--color-error);
+  }
+
+  .draft-position-dl {
+    --draft-position-color: color-mix(in oklab, var(--color-error) 65%, var(--color-warning));
+  }
+
+  .draft-position-lb {
+    --draft-position-color: var(--color-accent);
+  }
+
+  .draft-position-db {
+    --draft-position-color: color-mix(in oklab, var(--color-info) 55%, var(--color-secondary));
+  }
+
+  .draft-position-unknown {
+    --draft-position-color: var(--color-base-content);
+  }
+
   /* Force long team names to ellipsis within available card width */
   .bracket-team-name {
     display: block;

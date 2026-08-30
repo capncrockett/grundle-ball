@@ -38,7 +38,7 @@ Current environment variables are test/deployment controls rather than app confi
 
 - `E2E_BASE_URL`: overrides Playwright's target URL.
 - `VERCEL_AUTOMATION_BYPASS_SECRET`: lets Playwright access a protected Vercel deployment.
-- Vercel-provided build variables populate the footer's build metadata through `frontend/vite.config.ts`.
+- Vercel-provided build variables populate the footer's branch and environment through `frontend/vite.config.ts`; the repository link uses the canonical public GitHub URL.
 
 `VITE_LEAGUE_ID` is not implemented. The confirmed 2026 league ID is centralized in `frontend/src/config/league.ts`; all frontend pages use it, and the Node history updater imports it as its default. Before adding a Vercel variable, define how both the Vite build and the Node updater will receive and validate the same configuration instead of creating separate defaults; see `frontend/TODO.md`.
 
@@ -52,7 +52,7 @@ Classify the release and select its version using [`versioning.md`](versioning.m
 4. Require the release-branch workflows to pass, then merge to `main`.
 5. Allow the configured Vercel production deployment to build.
 6. Run the Playwright smoke suite against the production URL by setting `E2E_BASE_URL` explicitly.
-7. Verify the build metadata footer reports the expected repository, branch/release, and commit SHA.
+7. Verify the deployment footer reports the expected branch and environment and links to the public repository.
 
 The protected staging deployment is an optional environment check, not a release gate. When `VERCEL_AUTOMATION_BYPASS_SECRET` is available, `npm run test:e2e -w frontend` exercises it before merge; otherwise the required release-branch Playwright job still tests the exact commit locally.
 
@@ -84,7 +84,7 @@ Repository-backed items:
 - [x] New staging hostname exists behind Vercel protection; legacy Keeper Bowl hosts return 404.
 - [x] GitHub Actions run Jest, backend Node tests, the production Vite build, and conditional local Playwright jobs.
 - [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 24.x.
-- [x] Vite embeds Vercel/git build metadata and the app renders Vercel Speed Insights.
+- [x] Vite embeds the Vercel environment and Git branch, the footer links to the public repository, and the app renders Vercel Speed Insights.
 - [x] The hosted constitution PDF is present at `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`.
 
 Items requiring live operational verification:
@@ -108,7 +108,7 @@ Match import casing exactly and run `npm run build -w frontend` before release; 
 
 ### Stale application shell
 
-Verify the cache headers from `vercel.json` are active for `/` and `/index.html`, then confirm the deployment footer points at the expected commit.
+Verify the cache headers from `vercel.json` are active for `/` and `/index.html`, then confirm the deployment footer reports the expected branch and environment.
 
 ### Browser API failures
 

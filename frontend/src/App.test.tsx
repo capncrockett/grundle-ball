@@ -102,4 +102,17 @@ describe('App routing + nav', () => {
     expect(historyLink).toHaveClass('btn-active');
     expect(historyLink).toHaveAttribute('href', '/history');
   });
+
+  it('shows only the useful deployment details in the footer', () => {
+    renderWithRouter(<App />, { route: '/standings' });
+
+    const footer = screen.getByRole('contentinfo');
+    expect(footer).toHaveTextContent('Branch: local');
+    expect(footer).toHaveTextContent('Environment: development');
+    expect(within(footer).getByRole('link', { name: /Repository:/ })).toHaveAttribute(
+      'href',
+      'https://github.com/capncrockett/grundle-ball',
+    );
+    expect(footer).not.toHaveTextContent(/SHA:|Built:|Author:|Message:|Deploy:|Project:/);
+  });
 });

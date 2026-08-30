@@ -39,62 +39,15 @@ function NavLink({ to, label, icon }: NavLinkProps) {
 type BuildInfo = typeof __BUILD_INFO__;
 
 const fallbackBuildInfo: BuildInfo = {
-  buildAt: 'local',
-  gitSha: null,
   gitRef: null,
-  gitRepo: null,
-  gitOwner: null,
-  gitCommitMessage: null,
-  gitCommitAuthor: null,
-  gitPullRequestId: null,
-  gitPullRequestTitle: null,
   vercelEnv: null,
-  vercelRegion: null,
-  vercelUrl: null,
-  deploymentId: null,
-  projectId: null,
 };
 
 const buildInfo: BuildInfo =
   typeof __BUILD_INFO__ === 'undefined' ? fallbackBuildInfo : __BUILD_INFO__;
 const buildRef = buildInfo.gitRef ?? 'local';
-const shortSha = buildInfo.gitSha ? buildInfo.gitSha.slice(0, 7) : 'local';
 const envLabel = buildInfo.vercelEnv ?? 'development';
-const releaseTag = buildRef.startsWith('release/') ? buildRef.slice('release/'.length) : null;
-const repoLabel =
-  buildInfo.gitOwner && buildInfo.gitRepo
-    ? `${buildInfo.gitOwner}/${buildInfo.gitRepo}`
-    : buildInfo.gitRepo;
-const commitMessage = buildInfo.gitCommitMessage
-  ? buildInfo.gitCommitMessage.length > 60
-    ? `${buildInfo.gitCommitMessage.slice(0, 57)}...`
-    : buildInfo.gitCommitMessage
-  : null;
-const prTitle = buildInfo.gitPullRequestTitle
-  ? buildInfo.gitPullRequestTitle.length > 50
-    ? `${buildInfo.gitPullRequestTitle.slice(0, 47)}...`
-    : buildInfo.gitPullRequestTitle
-  : null;
-const prLabel = buildInfo.gitPullRequestId
-  ? `#${buildInfo.gitPullRequestId}${prTitle ? ` ${prTitle}` : ''}`
-  : null;
-const deploymentLabel = buildInfo.deploymentId ? buildInfo.deploymentId.slice(0, 8) : null;
-const projectLabel = buildInfo.projectId ? buildInfo.projectId.slice(0, 8) : null;
-const buildMetaItems = [
-  { label: 'App', value: 'Grundle Ball' },
-  { label: 'Env', value: envLabel },
-  { label: releaseTag ? 'Release' : 'Branch', value: releaseTag ?? buildRef },
-  { label: 'SHA', value: shortSha },
-  { label: 'Built', value: buildInfo.buildAt },
-  { label: 'Region', value: buildInfo.vercelRegion },
-  { label: 'URL', value: buildInfo.vercelUrl },
-  { label: 'Repo', value: repoLabel },
-  { label: 'Author', value: buildInfo.gitCommitAuthor },
-  { label: 'Message', value: commitMessage },
-  { label: 'PR', value: prLabel },
-  { label: 'Deploy', value: deploymentLabel },
-  { label: 'Project', value: projectLabel },
-].filter((item): item is { label: string; value: string } => Boolean(item.value));
+const repoUrl = 'https://github.com/capncrockett/grundle-ball';
 
 export default function App() {
   return (
@@ -241,13 +194,22 @@ export default function App() {
         </Routes>
       </main>
 
-      <footer className="p-4 mt-24 bg-base-100 text-xs opacity-70">
-        <div className="w-full grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-4 gap-y-1">
-          {buildMetaItems.map((item) => (
-            <span key={`${item.label}:${item.value}`}>
-              {item.label}: {item.value}
-            </span>
-          ))}
+      <footer className="mt-24 border-t border-base-300/50 bg-base-100/60 px-4 py-3 text-[0.7rem] text-base-content/55">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-5 gap-y-1">
+          <span>
+            <span className="font-semibold text-base-content/70">Branch:</span> {buildRef}
+          </span>
+          <span>
+            <span className="font-semibold text-base-content/70">Environment:</span> {envLabel}
+          </span>
+          <a
+            className="link-hover link text-base-content/65"
+            href={repoUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Repository: {repoUrl}
+          </a>
         </div>
       </footer>
       <SpeedInsights />

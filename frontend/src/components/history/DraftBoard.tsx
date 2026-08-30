@@ -39,6 +39,12 @@ const abbreviation = (team: DraftHistoryTeam | undefined, draftSlot: number): st
     .join('');
 };
 
+const abbreviatePlayerName = (playerName: string): string => {
+  const parts = playerName.trim().split(/\s+/);
+  if (parts.length < 2 || !parts[0]) return playerName;
+  return `${parts[0].charAt(0).toUpperCase()}. ${parts.slice(1).join(' ')}`;
+};
+
 type DraftPickCellProps = {
   pick: DraftHistoryPick | undefined;
   pickNo: number;
@@ -58,24 +64,34 @@ function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: Draf
 
   const traded = destinationTeam && slotTeam?.rosterId !== destinationTeam.rosterId;
   const positionStyle = getPlayerPositionStyle(pick.position);
+  const playerName =
+    positionStyle.label === 'DEF' ? pick.playerName : abbreviatePlayerName(pick.playerName);
 
   return (
     <div
-      className={`min-h-[4.75rem] border-r border-b border-l-4 border-r-base-300/70 border-b-base-300/70 p-1.5 transition-opacity ${positionStyle.cellClassName} ${
-        pick.isKeeper ? 'ring-1 ring-inset ring-warning/70' : ''
+      className={`draft-position-cell min-h-[4.75rem] border-r border-b border-l-[3px] border-r-base-300/70 border-b-base-300/70 p-1.5 transition-opacity ${positionStyle.colorClassName} ${
+        pick.isKeeper ? 'ring-1 ring-inset ring-base-content/25' : ''
       } ${dimmed ? 'opacity-25' : ''}`}
       data-keeper={pick.isKeeper ? 'true' : 'false'}
       data-position={positionStyle.label}
     >
       <div className="mb-0.5 flex items-center justify-between gap-1 text-[0.6rem] text-base-content/55">
         <span className="font-mono">#{pick.pickNo.toString()}</span>
-        {pick.isKeeper && <span className="badge badge-warning badge-xs">Keeper</span>}
+        {pick.isKeeper && (
+          <span className="badge badge-xs border-base-content/20 bg-base-content/5 text-base-content/65">
+            Keeper
+          </span>
+        )}
       </div>
       <div className="line-clamp-2 text-xs font-semibold leading-tight" title={pick.playerName}>
-        {pick.playerName}
+        <abbr className="no-underline" aria-label={pick.playerName} title={pick.playerName}>
+          {playerName}
+        </abbr>
       </div>
       <div className="mt-1 flex items-center gap-1">
-        <span className={`badge badge-xs ${positionStyle.badgeClassName}`}>
+        <span
+          className={`draft-position-badge badge badge-xs text-base-content/70 ${positionStyle.colorClassName}`}
+        >
           {positionStyle.label}
         </span>
         {pick.nflTeam && (
@@ -160,7 +176,7 @@ export function DraftBoard({ season }: DraftBoardProps) {
         <label className="label cursor-pointer justify-start gap-3 rounded-box border border-base-300 bg-base-100 px-3 py-2">
           <input
             type="checkbox"
-            className="toggle toggle-warning toggle-sm"
+            className="toggle toggle-neutral toggle-sm"
             checked={keepersOnly}
             onChange={(event) => {
               setKeepersOnly(event.target.checked);
@@ -175,14 +191,17 @@ export function DraftBoard({ season }: DraftBoardProps) {
         {DRAFT_POSITION_LEGEND.map((position) => {
           const style = getLegendPositionStyle(position);
           return (
-            <span key={position} className={`badge badge-xs ${style.badgeClassName}`}>
+            <span
+              key={position}
+              className={`draft-position-badge badge badge-xs text-base-content/70 ${style.colorClassName}`}
+            >
               {position}
             </span>
           );
         })}
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm ring-1 ring-inset ring-warning/70" /> Keeper
-          designation
+          <span className="h-3 w-3 rounded-sm bg-base-content/5 ring-1 ring-inset ring-base-content/25" />{' '}
+          Keeper designation
         </span>
         <span>Traded picks show their destination Team.</span>
         {season.draftStatus !== 'complete' && <span>Empty slots have not been drafted.</span>}

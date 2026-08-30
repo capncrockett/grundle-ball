@@ -1,53 +1,76 @@
 export type PlayerPositionStyle = {
   label: string;
-  cellClassName: string;
-  badgeClassName: string;
+  colorClassName: string;
 };
 
-export const DRAFT_POSITION_LEGEND = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'] as const;
+export const DRAFT_POSITION_LEGEND = [
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'K',
+  'DEF',
+  'DL',
+  'LB',
+  'DB',
+] as const;
 
 const POSITION_STYLES: Record<(typeof DRAFT_POSITION_LEGEND)[number], PlayerPositionStyle> = {
   QB: {
     label: 'QB',
-    cellClassName: 'border-l-primary bg-primary/10',
-    badgeClassName: 'badge-primary',
+    colorClassName: 'draft-position-qb',
   },
   RB: {
     label: 'RB',
-    cellClassName: 'border-l-success bg-success/10',
-    badgeClassName: 'badge-success',
+    colorClassName: 'draft-position-rb',
   },
   WR: {
     label: 'WR',
-    cellClassName: 'border-l-info bg-info/10',
-    badgeClassName: 'badge-info',
+    colorClassName: 'draft-position-wr',
   },
   TE: {
     label: 'TE',
-    cellClassName: 'border-l-warning bg-warning/10',
-    badgeClassName: 'badge-warning',
+    colorClassName: 'draft-position-te',
   },
   K: {
     label: 'K',
-    cellClassName: 'border-l-secondary bg-secondary/10',
-    badgeClassName: 'badge-secondary',
+    colorClassName: 'draft-position-k',
   },
   DEF: {
     label: 'DEF',
-    cellClassName: 'border-l-error bg-error/10',
-    badgeClassName: 'badge-error',
+    colorClassName: 'draft-position-def',
+  },
+  DL: {
+    label: 'DL',
+    colorClassName: 'draft-position-dl',
+  },
+  LB: {
+    label: 'LB',
+    colorClassName: 'draft-position-lb',
+  },
+  DB: {
+    label: 'DB',
+    colorClassName: 'draft-position-db',
   },
 };
 
 const UNKNOWN_POSITION_STYLE: PlayerPositionStyle = {
   label: 'N/A',
-  cellClassName: 'border-l-base-content/25 bg-base-100',
-  badgeClassName: 'badge-ghost',
+  colorClassName: 'draft-position-unknown',
 };
 
 export const getPlayerPositionStyle = (position: string | null): PlayerPositionStyle => {
   const normalized = position?.trim().toUpperCase();
-  const canonicalPosition = normalized === 'DST' || normalized === 'D/ST' ? 'DEF' : normalized;
+  const canonicalPosition =
+    normalized === 'DST' || normalized === 'D/ST'
+      ? 'DEF'
+      : normalized === 'DE' || normalized === 'DT'
+        ? 'DL'
+        : normalized === 'CB' || normalized === 'S'
+          ? 'DB'
+          : normalized === 'ILB' || normalized === 'OLB'
+            ? 'LB'
+            : normalized;
 
   if (canonicalPosition && canonicalPosition in POSITION_STYLES) {
     return POSITION_STYLES[canonicalPosition as keyof typeof POSITION_STYLES];

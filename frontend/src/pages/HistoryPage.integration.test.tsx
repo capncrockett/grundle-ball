@@ -98,21 +98,18 @@ describe('HistoryPage', () => {
     render(<HistoryPage initialHistory={history} refreshLive={false} />);
 
     const currentBoard = screen.getByRole('region', { name: '2026 draftboard' });
-    expect(within(currentBoard).getByText('Alpha Player')).toBeInTheDocument();
-    expect(within(currentBoard).getByText('Keeper')).toBeInTheDocument();
-    expect(currentBoard.querySelector('[data-position="WR"]')).toHaveClass(
-      'border-l-info',
-      'bg-info/10',
+    expect(within(currentBoard).getByText('A. Player')).toHaveAttribute('title', 'Alpha Player');
+    expect(within(currentBoard).getByText('Keeper')).toHaveClass(
+      'border-base-content/20',
+      'bg-base-content/5',
     );
+    expect(currentBoard.querySelector('[data-position="WR"]')).toHaveClass('draft-position-wr');
 
     fireEvent.click(screen.getByRole('button', { name: '2025' }));
 
     const priorBoard = screen.getByRole('region', { name: '2025 draftboard' });
-    expect(within(priorBoard).getByText('Beta Runner')).toBeInTheDocument();
-    expect(priorBoard.querySelector('[data-position="RB"]')).toHaveClass(
-      'border-l-success',
-      'bg-success/10',
-    );
+    expect(within(priorBoard).getByText('B. Runner')).toHaveAttribute('title', 'Beta Runner');
+    expect(priorBoard.querySelector('[data-position="RB"]')).toHaveClass('draft-position-rb');
     expect(screen.getByText('2025 Draftboard')).toBeInTheDocument();
   });
 

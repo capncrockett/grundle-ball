@@ -12,7 +12,7 @@ The official `/playoffs` page renders Sleeper's `winners_bracket` and `losers_br
 - Canonical Sleeper draftboards from 2019 onward with Team-specific keeper history.
 - In-repo Grundle League constitution with a table of contents and downloadable review-draft PDF.
 - Grundle Bowl Beta with Live and If-Today views of the rejected custom bracket proposal.
-- Responsive DaisyUI interface, selectable themes, and Vercel build metadata.
+- Responsive DaisyUI interface, selectable themes, and a compact deployment footer linking to the public repository.
 
 ## Tech stack
 

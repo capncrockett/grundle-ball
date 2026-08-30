@@ -32,7 +32,11 @@ test.describe('Happy path smoke', () => {
     await expect(page).toHaveTitle('Grundle Ball');
     await expect(page.getByRole('heading', { name: /^standings$/i })).toBeVisible();
     await expect(page.getByRole('banner')).toBeVisible();
-    await expect(page.getByRole('contentinfo')).toContainText(/grundle ball/i);
+    await expect(page.getByRole('contentinfo')).toContainText(/Branch:/i);
+    await expect(page.getByRole('contentinfo')).toContainText(/Environment:/i);
+    await expect(
+      page.getByRole('contentinfo').getByRole('link', { name: /Repository:/i }),
+    ).toHaveAttribute('href', 'https://github.com/capncrockett/grundle-ball');
   });
 
   routes.forEach(({ path, heading }) => {
