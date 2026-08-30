@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { GrundleBowlBetaLayout } from './components/GrundleBowlBetaLayout';
@@ -8,6 +9,8 @@ import PlayoffsIfTodayPage from './pages/PlayoffsIfTodayPage';
 import PlayoffsLivePage from './pages/PlayoffsLivePage';
 import PlayoffsPage from './pages/PlayoffsPage';
 import { StandingsPage } from './pages/StandingsPage';
+
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 
 type NavLinkProps = {
   to: string;
@@ -22,11 +25,12 @@ function NavLink({ to, label, icon }: NavLinkProps) {
   return (
     <Link
       to={to}
+      aria-label={label}
       className={`btn btn-ghost btn-sm ${isActive ? 'btn-active font-semibold' : 'opacity-80'}`}
     >
       <span className="flex items-center gap-1">
         {icon}
-        <span className="hidden sm:inline">{label}</span>
+        <span className="hidden lg:inline">{label}</span>
       </span>
     </Link>
   );
@@ -146,6 +150,15 @@ export default function App() {
               }
             />
             <NavLink
+              to="/history"
+              label="History"
+              icon={
+                <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[0.6rem] font-black">
+                  H
+                </span>
+              }
+            />
+            <NavLink
               to="/constitution"
               label="Constitution"
               icon={
@@ -181,6 +194,20 @@ export default function App() {
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/playoffs" element={<PlayoffsPage />} />
           <Route path="/matchups" element={<MatchupsPage />} />
+          <Route
+            path="/history"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-16">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
+                }
+              >
+                <HistoryPage />
+              </Suspense>
+            }
+          />
           <Route path="/constitution" element={<ConstitutionPage />} />
           <Route
             path="/beta/grundle-bowl"

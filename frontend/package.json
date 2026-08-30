@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit --project tsconfig.app.json && tsc --noEmit --project tsconfig.node.json",
     "format": "prettier . --check",
     "format:write": "prettier . --write",
-    "fetch:matchups": "ts-node --project ../backend/tsconfig.json --esm ../backend/scripts/updateMatchupHistory.ts"
+    "fetch:matchups": "ts-node --project ../backend/tsconfig.json --esm ../backend/scripts/updateMatchupHistory.ts",
+    "fetch:drafts": "ts-node --project ../backend/tsconfig.json --esm ../backend/scripts/updateDraftHistory.ts"
   },
   "dependencies": {
     "@vercel/speed-insights": "^2.0.0",

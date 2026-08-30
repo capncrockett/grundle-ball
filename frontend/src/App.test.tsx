@@ -22,6 +22,12 @@ jest.mock('./pages/StandingsPage', () => ({
   StandingsPage: () => <div>Standings Page</div>,
 }));
 
+jest.mock('./pages/HistoryPage', () => ({
+  __esModule: true,
+  default: () => <div>History Page</div>,
+  HistoryPage: () => <div>History Page</div>,
+}));
+
 jest.mock('./pages/ConstitutionPage', () => ({
   ConstitutionPage: () => <div>Constitution Page</div>,
 }));
@@ -84,5 +90,16 @@ describe('App routing + nav', () => {
     const constitutionLink = within(banner).getByRole('link', { name: /constitution/i });
     expect(constitutionLink).toHaveClass('btn-active');
     expect(constitutionLink).toHaveAttribute('href', '/constitution');
+  });
+
+  it('renders league history and highlights its nav item', async () => {
+    renderWithRouter(<App />, { route: '/history' });
+
+    expect(await screen.findByText('History Page')).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const historyLink = within(banner).getByRole('link', { name: /history/i });
+    expect(historyLink).toHaveClass('btn-active');
+    expect(historyLink).toHaveAttribute('href', '/history');
   });
 });

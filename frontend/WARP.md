@@ -65,6 +65,9 @@ npm run test:e2e:headed -w frontend
 # Refresh selected matchup-history weeks
 npm run fetch:matchups -w frontend -- --week=14
 npm run fetch:matchups -w frontend -- --range=1-14
+
+# Refresh canonical draft and keeper history
+npm run fetch:drafts -w frontend
 ```
 
 Matchup-history rows and replacement keys are scoped by league, season, and week. The checked-in snapshot contains labeled 2025 history; fetch commands can add 2026 weeks without overwriting the prior season.
@@ -89,13 +92,14 @@ frontend/
 │   ├── components/
 │   │   ├── bracket/                   # Beta board/grid/tile components
 │   │   ├── common/                    # Shared toggles, selectors, avatars
+│   │   ├── history/                   # Historical draftboard and keeper ledger
 │   │   ├── matchups/                  # Weekly matchup cards
 │   │   ├── sleeperBracket/            # Official Sleeper bracket board
 │   │   ├── GrundleBowlBetaLayout.tsx
 │   │   └── ThemeSelector.tsx
 │   ├── config/league.ts               # Shared 2026 league ID and playoff weeks
 │   ├── content/                        # Constitution Markdown + parser
-│   ├── data/                           # Checked-in matchup history + helpers
+│   ├── data/                           # Checked-in matchup/draft history + helpers
 │   ├── models/fantasy.ts              # Internal team/matchup/season models
 │   ├── pages/                          # Route components and insight logic
 │   ├── sleeperBracket/                 # Official bracket resolution/types
@@ -113,13 +117,14 @@ frontend/
 - `/standings` shows ranked teams, league-specific seeds, division summaries, and playoff-race insights.
 - `/playoffs` shows Sleeper's official winners and consolation brackets.
 - `/matchups` shows a selectable week of scores and finished-starter counts.
+- `/history` shows canonical annual draftboards and Team-specific keeper history.
 - `/constitution` renders the current Markdown constitution and links the hosted review-draft PDF.
 - `/beta/grundle-bowl` redirects to `/beta/grundle-bowl/live`.
 - `/beta/grundle-bowl/live` applies real playoff outcomes to the custom Beta bracket.
 - `/beta/grundle-bowl/if-today` seeds the custom Beta bracket from current standings.
 - Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the corresponding Beta routes.
 
-The top navigation has five items: Standings, Playoffs, Matchups, Constitution, and Grundle Bowl (Beta).
+The top navigation has six items: Standings, Playoffs, Matchups, History, Constitution, and Grundle Bowl (Beta).
 
 ## Runtime data flows
 
@@ -152,6 +157,15 @@ Projected totals and win probability are not currently part of `LiveMatchData`. 
 4. `SleeperBracketBoard` uses the Beta boards' proven three-column sizing, vertical distribution, card geometry, and responsive SVG winner connectors while leaving Sleeper's matchup graph untouched. Loser-fed placement games remain explicit without adding crossing connector clutter.
 
 Do not feed official bracket data through the custom `bracket/` routing engine.
+
+### Draft and keeper history
+
+1. Import completed seasons from `src/data/draftHistoryStore.json`.
+2. Refresh the active league's canonical `draft_id`, picks, users, and rosters from Sleeper.
+3. Normalize both paths with `buildDraftHistorySeason()`.
+4. Render the selected season through `DraftBoard` and group `is_keeper` picks by Team/player through `KeeperHistory`.
+
+The archive follows `previous_league_id` and uses each league record's `draft_id`, which excludes abandoned draft setup records. Current keeper designations remain labeled provisional until the draft is complete. Keeper history uses Sleeper roster ID as the persistent Team key rather than Manager identity.
 
 ### Grundle Bowl Beta
 
@@ -267,6 +281,7 @@ The current suite includes:
 - Unit tests for bracket seeding, transforms, official bracket resolution, stored history, player status, insights, and constitution parsing.
 - Component tests for Beta bracket grid/tiles and matchup cards.
 - Page integration tests for Standings, Matchups, official Playoffs, both Beta views, and Constitution, including representative loading/error paths.
+- History page integration tests for season switching, draftboard keeper markers, current Team designation cards, and the keeper ledger.
 - App routing/navigation tests and Playwright desktop/mobile smoke, preseason standings, matchup, and theme flows.
 
 Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke intentionally checks a live environment, while its dedicated Matchups flow uses route fixtures. Root `TESTING.md` is the authoritative command/CI/gap guide.
@@ -275,8 +290,10 @@ Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke 
 
 - `src/config/league.ts` exports the confirmed 2026 league ID (`1385053148233621511`) for every frontend page and the Playwright Matchups test, plus Weeks 15-17 for the Beta playoff pages.
 - `backend/scripts/updateMatchupHistory.ts` imports that same `LEAGUE_ID` as its default and retains `--league=<id>` as an explicit override.
+- `backend/scripts/updateDraftHistory.ts` follows the linked league chain from that same default and rewrites the canonical draft archive.
 - `VITE_LEAGUE_ID` is not supported. If league selection becomes environment-configurable, design the Vite and Node configuration boundary together rather than creating two independent defaults.
 - The browser imports the checked-in JSON matchup history and filters it by the active Sleeper league ID and season.
+- The browser imports checked-in canonical draft history and overlays the active season with live Sleeper data.
 - The backend script resolves the selected league's season and defaults to replacing that scoped week in the JSON file.
 - `MATCHUP_STORE=sqlite` selects an optional local SQLite store for the maintenance script; it does not change frontend reads.
 - Hosted persistence, scheduling, and runtime API decisions live in `backend/TODO.md`.

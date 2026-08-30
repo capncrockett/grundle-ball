@@ -9,6 +9,7 @@ The official `/playoffs` page renders Sleeper's `winners_bracket` and `losers_br
 - Standings, division summaries, seeding, and playoff-race insights.
 - Weekly Sleeper matchups with ESPN-backed starter completion counts.
 - Official playoff bracket derived directly from Sleeper.
+- Canonical Sleeper draftboards from 2019 onward with Team-specific keeper history.
 - In-repo Grundle League constitution with a table of contents and downloadable review-draft PDF.
 - Grundle Bowl Beta with Live and If-Today views of the rejected custom bracket proposal.
 - Responsive DaisyUI interface, selectable themes, and Vercel build metadata.
@@ -74,6 +75,7 @@ Production is hosted at <https://grundle-ball.vercel.app>. A live root check ret
 | `/standings`                  | Default landing page; standings, division summaries, and playoff-race insights |
 | `/playoffs`                   | Official Sleeper winners and consolation brackets                              |
 | `/matchups`                   | Week-selectable matchups and starter completion counts                         |
+| `/history`                    | Historical draftboards and Team-specific keeper designations                   |
 | `/constitution`               | Current in-repo constitution and review-draft PDF link                         |
 | `/beta/grundle-bowl/live`     | Beta custom bracket populated from playoff results                             |
 | `/beta/grundle-bowl/if-today` | Beta custom bracket seeded from current standings                              |
@@ -91,6 +93,12 @@ Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the correspon
   ```
 
   The maintenance script resolves the selected league's season, defaults to the JSON store, and replaces only the matching league/season/week. Set `MATCHUP_STORE=sqlite` to use its local SQLite adapter. Hosted persistence and scheduling remain tracked in [`backend/TODO.md`](backend/TODO.md).
+
+- `frontend/src/data/draftHistoryStore.json` contains the canonical annual draft for every linked Sleeper season from 2019 onward. `/history` reads completed seasons from that archive and refreshes the active season directly from Sleeper. Refresh the archive with:
+
+  ```bash
+  npm run fetch:drafts -w frontend
+  ```
 
 ## Documentation
 

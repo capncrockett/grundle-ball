@@ -5,6 +5,7 @@ const SLEEPER_PROJECTIONS_BASE = 'https://api.sleeper.com/projections/nfl';
 
 type SleeperSeasonType = 'pre' | 'regular' | 'post';
 type SleeperLeagueStatus = 'pre_draft' | 'drafting' | 'in_season' | 'complete';
+export type SleeperDraftStatus = 'pre_draft' | 'drafting' | 'paused' | 'complete';
 
 // --- Raw Sleeper API types (mirror docs) ---
 
@@ -105,6 +106,52 @@ export interface SleeperPlayoffMatchup {
   p?: number | null;
 }
 
+export interface SleeperDraft {
+  type: string;
+  status: SleeperDraftStatus;
+  start_time: number | null;
+  sport: 'nfl';
+  settings: {
+    teams?: number;
+    rounds?: number;
+    pick_timer?: number;
+    [key: string]: number | undefined;
+  };
+  season_type: SleeperSeasonType;
+  season: string;
+  metadata?: Record<string, string | undefined>;
+  league_id: string;
+  last_picked?: number | null;
+  last_message_time?: number | null;
+  last_message_id?: string | null;
+  draft_order?: Record<string, number> | null;
+  slot_to_roster_id?: Record<string, number> | null;
+  draft_id: string;
+  creators?: string[] | null;
+  created: number;
+}
+
+export interface SleeperDraftPickMetadata {
+  first_name?: string;
+  last_name?: string;
+  position?: string;
+  team?: string;
+  player_id?: string;
+  [key: string]: string | undefined;
+}
+
+export interface SleeperDraftPick {
+  player_id: string;
+  picked_by?: string;
+  roster_id: number | string;
+  round: number;
+  draft_slot: number;
+  pick_no: number;
+  metadata?: SleeperDraftPickMetadata;
+  is_keeper?: boolean | null;
+  draft_id: string;
+}
+
 export interface SleeperPlayerProjection {
   player_id: string;
   stats: {
@@ -173,6 +220,14 @@ export async function getWinnersBracket(leagueId: string): Promise<SleeperPlayof
 
 export async function getLosersBracket(leagueId: string): Promise<SleeperPlayoffMatchup[]> {
   return sleeperFetch<SleeperPlayoffMatchup[]>(`/league/${leagueId}/losers_bracket`, true);
+}
+
+export async function getDraft(draftId: string): Promise<SleeperDraft> {
+  return sleeperFetch<SleeperDraft>(`/draft/${draftId}`, true);
+}
+
+export async function getDraftPicks(draftId: string): Promise<SleeperDraftPick[]> {
+  return sleeperFetch<SleeperDraftPick[]>(`/draft/${draftId}/picks`, true);
 }
 
 export async function getPlayerProjections(

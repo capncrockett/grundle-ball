@@ -12,6 +12,7 @@ const routes = [
   { path: '/', heading: /^standings$/i },
   { path: '/playoffs', heading: /^playoffs$/i },
   { path: '/standings', heading: /^standings$/i },
+  { path: '/history', heading: /^league history$/i },
   { path: '/constitution', heading: /grundle league constitution/i },
   { path: '/beta/grundle-bowl/live', heading: /live playoffs/i },
   { path: '/beta/grundle-bowl/if-today', heading: /if the season ended today/i },
@@ -49,6 +50,10 @@ test.describe('Happy path smoke', () => {
     await expect(page).toHaveURL(/\/playoffs$/);
     await expect(page.getByRole('heading', { name: /^playoffs$/i })).toBeVisible();
 
+    await page.getByRole('link', { name: /^history$/i }).click();
+    await expect(page).toHaveURL(/\/history$/);
+    await expect(page.getByRole('heading', { name: /^league history$/i })).toBeVisible();
+
     await page.getByRole('link', { name: /constitution/i }).click();
     await expect(page).toHaveURL(/\/constitution/);
     await expect(page.getByRole('heading', { name: /grundle league constitution/i })).toBeVisible();
@@ -64,7 +69,7 @@ test.describe('Happy path smoke', () => {
     await page.goto('/');
 
     await expect(page.getByText(/^Grundle Ball$/)).toBeVisible();
-    await expect(page.locator('nav a')).toHaveCount(5);
+    await expect(page.locator('nav a')).toHaveCount(6);
   });
 
   test('constitution TOC jumps to section anchors', async ({ page }) => {

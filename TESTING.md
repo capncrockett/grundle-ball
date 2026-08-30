@@ -71,6 +71,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Official Sleeper playoff rendering and its loading, empty, and error states.
 - Grundle Bowl Beta Live and If-Today pages, including API failures.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
+- Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.
@@ -82,6 +83,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 - Scoped JSON and SQLite matchup-history replacement across overlapping league/season/week values.
 - Automatic migration of the known unscoped SQLite shape to the 2025 league/season identity.
 - CLI selector validation, alternate-league season resolution, and malformed upstream matchup rejection before writes.
+- Canonical draft-history traversal, alternate current-league selection, and league-chain cycle rejection.
 
 ### Playwright
 

@@ -20,10 +20,14 @@ https://api.sleeper.app/v1
 | Weekly matchups              | `/league/<league_id>/matchups/<week>` | `getLeagueMatchupsForWeek()` |
 | Official winners bracket     | `/league/<league_id>/winners_bracket` | `getWinnersBracket()`        |
 | Official consolation bracket | `/league/<league_id>/losers_bracket`  | `getLosersBracket()`         |
+| Canonical draft              | `/draft/<draft_id>`                   | `getDraft()`                 |
+| Draft picks and keepers      | `/draft/<draft_id>/picks`             | `getDraftPicks()`            |
 | NFL state                    | `/state/nfl`                          | `getNFLState()`              |
 | All NFL players              | `/players/nfl`                        | `getAllPlayers()`            |
 
 The official `/playoffs` page resolves and renders the two bracket responses as Sleeper provides them. It does not apply the Grundle Bowl Beta's Champ Bowl / Keeper Bowl / Toilet Bowl routing rules.
+
+The `/history` page follows each league's `previous_league_id` and uses that league record's canonical `draft_id`. Draft picks marked `is_keeper: true` become keeper designations. Completed seasons are stored in `draftHistoryStore.json`; the active season is refreshed directly in the browser.
 
 ## Projection endpoint present but unused
 
@@ -48,7 +52,7 @@ https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype
 ## Fetch and cache behavior
 
 - The shared Sleeper helper throws on non-2xx responses and returns parsed JSON without runtime schema validation.
-- Rosters, weekly matchups, NFL state, and both bracket calls request fresh data through cache-busting/no-store behavior.
+- Rosters, weekly matchups, drafts, draft picks, NFL state, and both bracket calls request fresh data through cache-busting/no-store behavior.
 - League users and league metadata use the browser's default cache behavior.
 - The all-players payload uses `force-cache` because it is large and changes less frequently.
 - ESPN scoreboard requests use `no-store`.
@@ -61,6 +65,7 @@ The confirmed 2026 league ID is `1385053148233621511`. It is checked into `front
 ## Maintenance guidance
 
 - Treat league IDs, current week/season state, rosters, scores, and playoff brackets as live data.
+- Refresh the canonical draft archive with `npm run fetch:drafts -w frontend`; the command accepts `--league=<id>` for an explicit alternate current league.
 - Keep tests deterministic with MSW or Playwright route fixtures; reserve unmocked calls for explicit deployment smoke checks.
 - When adding response fields, update the TypeScript interface, transform tests, fixture payloads, and `docs/data-model.md` together.
 - If an upstream response shape becomes operationally important, add runtime validation rather than relying only on TypeScript's compile-time assertion.
