@@ -98,10 +98,18 @@ describe('HistoryPage', () => {
     render(<HistoryPage initialHistory={history} refreshLive={false} />);
 
     const currentBoard = screen.getByRole('region', { name: '2026 draftboard' });
+    expect(currentBoard).toHaveClass('overflow-x-auto');
+    expect(currentBoard).not.toHaveClass('max-h-[68vh]');
+    expect(currentBoard).not.toHaveClass('overflow-auto');
     expect(within(currentBoard).getByText('A. Player')).toHaveAttribute('title', 'Alpha Player');
     expect(within(currentBoard).getByLabelText('Keeper')).toHaveClass('draft-keeper-badge');
     const wrPick = currentBoard.querySelector('[data-position="WR"]');
-    expect(wrPick).toHaveClass('draft-position-cell', 'draft-position-wr', 'draft-keeper-cell');
+    expect(wrPick).toHaveClass(
+      'draft-board-tile',
+      'draft-position-cell',
+      'draft-position-wr',
+      'draft-keeper-cell',
+    );
     expect(within(wrPick as HTMLElement).getByText('WR - SEA')).toBeInTheDocument();
     expect(wrPick?.querySelector('.draft-position-badge')).toBeNull();
 

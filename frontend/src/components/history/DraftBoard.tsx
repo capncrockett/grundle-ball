@@ -56,7 +56,7 @@ type DraftPickCellProps = {
 function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: DraftPickCellProps) {
   if (!pick) {
     return (
-      <div className="min-h-[4.75rem] border-r border-b border-base-300/70 bg-base-100/35 p-1.5 text-base-content/30">
+      <div className="draft-board-tile border-r border-b border-base-300/70 bg-base-100/35 p-1 text-base-content/30">
         <span className="text-[0.6rem] font-mono">#{pickNo.toString()}</span>
       </div>
     );
@@ -69,7 +69,7 @@ function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: Draf
 
   return (
     <div
-      className={`draft-position-cell min-h-[4.75rem] border-r border-b p-1.5 transition-opacity ${positionStyle.colorClassName} ${
+      className={`draft-board-tile draft-position-cell border-r border-b p-1 transition-opacity ${positionStyle.colorClassName} ${
         pick.isKeeper ? 'draft-keeper-cell' : ''
       } ${dimmed ? 'opacity-25' : ''}`}
       data-keeper={pick.isKeeper ? 'true' : 'false'}
@@ -88,12 +88,12 @@ function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: Draf
           {playerName}
         </abbr>
       </div>
-      <div className="draft-position-muted mt-1 truncate text-[0.65rem] font-semibold uppercase">
+      <div className="draft-position-muted mt-0.5 truncate text-[0.65rem] font-semibold uppercase">
         {[positionStyle.label, pick.nflTeam].filter(Boolean).join(' - ')}
       </div>
       {traded && (
         <div
-          className="draft-position-muted mt-1 truncate text-[0.6rem]"
+          className="draft-position-muted mt-0.5 truncate text-[0.6rem]"
           title={destinationTeam.teamName}
         >
           To {destinationTeam.teamName}
@@ -204,7 +204,7 @@ export function DraftBoard({ season }: DraftBoardProps) {
       </div>
 
       <div
-        className="max-h-[68vh] overflow-auto rounded-box border border-base-300 bg-base-200 shadow-sm"
+        className="overflow-x-auto rounded-box border border-base-300 bg-base-200 shadow-sm"
         role="region"
         aria-label={`${season.season} draftboard`}
         tabIndex={0}
@@ -216,7 +216,7 @@ export function DraftBoard({ season }: DraftBoardProps) {
             minWidth: `${(3 + season.teamCount * 6.25).toString()}rem`,
           }}
         >
-          <div className="sticky left-0 top-0 z-30 flex min-h-[4.75rem] items-center justify-center border-r border-b border-base-300 bg-base-300 px-1 text-[0.65rem] font-bold uppercase tracking-wide">
+          <div className="draft-board-tile sticky left-0 top-0 z-30 flex items-center justify-center border-r border-b border-base-300 bg-base-300 px-1 text-[0.65rem] font-bold uppercase tracking-wide">
             Rd
           </div>
           {draftSlots.map((slot) => {
@@ -225,7 +225,7 @@ export function DraftBoard({ season }: DraftBoardProps) {
             return (
               <div
                 key={slot.draftSlot}
-                className={`sticky top-0 z-20 min-h-[4.75rem] border-r border-b border-base-300 p-1.5 ${
+                className={`draft-board-tile sticky top-0 z-20 border-r border-b border-base-300 p-1 ${
                   selected ? 'bg-primary text-primary-content' : 'bg-base-300'
                 }`}
                 title={
@@ -261,7 +261,7 @@ export function DraftBoard({ season }: DraftBoardProps) {
               const roundLabel = (
                 <div
                   key={`round-${round.toString()}`}
-                  className="sticky left-0 z-10 flex min-h-[4.75rem] items-center justify-center border-r border-b border-base-300 bg-base-300 text-base font-black"
+                  className="draft-board-tile sticky left-0 z-10 flex items-center justify-center border-r border-b border-base-300 bg-base-300 text-base font-black"
                 >
                   {round.toString()}
                 </div>

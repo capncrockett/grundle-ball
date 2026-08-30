@@ -41,6 +41,10 @@ body {
 }
 
 @layer components {
+  .draft-board-tile {
+    min-height: clamp(4.25rem, 5.25vw, 4.75rem);
+  }
+
   .draft-position-cell {
     border-color: color-mix(in oklab, var(--draft-position-ink) 22%, transparent);
     background-color: color-mix(
