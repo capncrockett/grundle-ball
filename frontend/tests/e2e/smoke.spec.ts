@@ -72,8 +72,9 @@ test.describe('Happy path smoke', () => {
 
     await page.goto('/');
 
-    await expect(page.getByText(/^Grundle Ball$/)).toBeVisible();
-    await expect(page.locator('nav a')).toHaveCount(6);
+    await expect(page.getByText(/^GB$/)).toBeVisible();
+    await expect(page.getByText(/^Grundle Ball$/)).toBeHidden();
+    await expect(page.locator('nav a:visible')).toHaveCount(6);
   });
 
   test('constitution TOC jumps to section anchors', async ({ page }) => {
