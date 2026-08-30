@@ -28,6 +28,10 @@ _Avoid_: Rostered player, keeper-eligible player
 One finalized Keeper Designation for a particular Team, player, and season.
 _Avoid_: Keeper year
 
+**Keeper Cycle**:
+An uninterrupted run of consecutive seasons in which the same Team gives the same player a Keeper Designation. A season without that Team-player designation ends the cycle, and a later designation starts a new cycle.
+_Avoid_: Lifetime keeper history, keeper clock
+
 **Draft Selection**:
 A pick in a Canonical Draft that Sleeper does not mark as a Keeper Designation. Draft habits describe Draft Selections rather than pre-filled keepers.
 _Avoid_: Keeper Designation, rostered player

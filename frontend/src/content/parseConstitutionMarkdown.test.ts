@@ -176,5 +176,7 @@ describe('constitution source content', () => {
     expect(serializedKeepers).toContain(
       'Owning or acquiring additional draft picks does not increase the cap',
     );
+    expect(serializedKeepers).toContain('no more than 2 consecutive seasons');
+    expect(serializedKeepers).toContain('A later designation starts a new cycle');
   });
 });

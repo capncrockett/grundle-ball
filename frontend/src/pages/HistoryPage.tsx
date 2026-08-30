@@ -12,6 +12,7 @@ import { LEAGUE_ID } from '../config/league';
 import { DRAFT_HISTORY } from '../data/draftHistory';
 import { buildDraftHistorySeason, mergeLiveDraftSeason } from '../data/draftHistoryTransforms';
 import type { DraftHistorySeason, DraftHistorySnapshot } from '../data/draftHistoryTypes';
+import { findKeeperRuleViolations } from '../data/keeperRuleValidation';
 
 type HistoryView = 'draftboard' | 'keepers';
 
@@ -73,6 +74,10 @@ export function HistoryPage({
       history.seasons.find((season) => season.season === selectedSeason) ?? history.seasons.at(0),
     [history.seasons, selectedSeason],
   );
+  const keeperViolations = useMemo(
+    () => findKeeperRuleViolations(history.seasons),
+    [history.seasons],
+  );
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-6">
@@ -126,6 +131,11 @@ export function HistoryPage({
           }}
         >
           Keeper History
+          {keeperViolations.length > 0 && (
+            <span className="badge badge-error badge-xs ml-1" aria-hidden="true">
+              {keeperViolations.length.toString()}
+            </span>
+          )}
         </button>
       </div>
 
@@ -158,7 +168,9 @@ export function HistoryPage({
         </>
       )}
 
-      {activeView === 'keepers' && <KeeperHistory seasons={history.seasons} />}
+      {activeView === 'keepers' && (
+        <KeeperHistory seasons={history.seasons} violations={keeperViolations} />
+      )}
     </div>
   );
 }

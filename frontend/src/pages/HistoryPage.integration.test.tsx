@@ -143,6 +143,63 @@ describe('HistoryPage', () => {
     expect(screen.getAllByText('Alpha Player').length).toBeGreaterThan(1);
     expect(screen.getByText('2025 - Rd 1')).toBeInTheDocument();
     expect(screen.getByText('2026 - Rd 1')).toBeInTheDocument();
+    expect(screen.queryByText('Keeper rule review required')).not.toBeInTheDocument();
+  });
+
+  it('highlights current keeper count and Keeper Cycle violations', () => {
+    const violatingCurrentSeason: DraftHistorySeason = {
+      ...currentSeason,
+      picks: [
+        ...currentSeason.picks,
+        {
+          ...currentSeason.picks[0],
+          playerId: 'player-c',
+          playerName: 'Charlie Runner',
+          position: 'RB',
+          round: 2,
+          pickNo: 2,
+        },
+        {
+          ...currentSeason.picks[0],
+          playerId: 'player-d',
+          playerName: 'Delta Tight End',
+          position: 'TE',
+          round: 3,
+          pickNo: 3,
+        },
+      ],
+    };
+    const olderSeason: DraftHistorySeason = {
+      ...priorSeason,
+      leagueId: 'league-2024',
+      season: '2024',
+      draftId: 'draft-2024',
+    };
+    const violatingHistory: DraftHistorySnapshot = {
+      ...history,
+      seasons: [violatingCurrentSeason, priorSeason, olderSeason],
+    };
+
+    render(<HistoryPage initialHistory={violatingHistory} refreshLive={false} />);
+    const keeperHistoryTab = screen.getByRole('tab', { name: 'Keeper History' });
+    expect(within(keeperHistoryTab).getByText('2')).toHaveClass('badge-error');
+    fireEvent.click(keeperHistoryTab);
+
+    expect(screen.getByText('Keeper rule review required')).toBeInTheDocument();
+    expect(screen.getByText(/Alpha Team has 3 current keeper designations/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Alpha Player's current designation would be Keeper Season 3/),
+    ).toBeInTheDocument();
+
+    const alphaTeamCard = screen.getByRole('article', {
+      name: 'Alpha Team keeper designations',
+    });
+    expect(alphaTeamCard).toHaveClass('border-error', 'bg-error/5');
+    expect(within(alphaTeamCard).getByText('Maximum 2 keepers per Team')).toBeInTheDocument();
+    expect(within(alphaTeamCard).getByText('Keeper Cycle: 3 of 2')).toBeInTheDocument();
+    expect(within(alphaTeamCard).getByText('Keeper Cycle limit exceeded')).toHaveClass(
+      'badge-error',
+    );
   });
 
   it('keeps the stored draftboard available when the live refresh fails', async () => {

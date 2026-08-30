@@ -166,8 +166,9 @@ Do not feed official bracket data through the custom `bracket/` routing engine.
 2. Refresh the active league's canonical `draft_id`, picks, users, and rosters from Sleeper.
 3. Normalize both paths with `buildDraftHistorySeason()`.
 4. Render the selected season through `DraftBoard` and group `is_keeper` picks by Team/player through `KeeperHistory`.
+5. Flag a Team above two current keepers or a Team-player Keeper Cycle above two consecutive seasons.
 
-The archive follows `previous_league_id` and uses each league record's `draft_id`, which excludes abandoned draft setup records. Current keeper designations remain labeled provisional until the draft is complete. Keeper history uses Sleeper roster ID as the persistent Team key rather than Manager identity.
+The archive follows `previous_league_id` and uses each league record's `draft_id`, which excludes abandoned draft setup records. Current keeper designations remain labeled provisional until the draft is complete. Keeper history and Keeper Cycles use Sleeper roster ID as the persistent Team key rather than Manager identity. Keeper pricing, required-pick ownership, and deadline timing still require Commissioner review.
 
 ### Local Draft Intel
 

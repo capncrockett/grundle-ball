@@ -127,15 +127,15 @@ If the draft is rescheduled before the keeper lock occurs, the lock moves with t
 
 **Designation.** Keepers must be designated in Sleeper. A genuine technical-access problem may be handled by the Commissioner if the manager communicates the intended designation before the deadline.
 
-**Team-specific keeper history.** A team may keep the same player for no more than 2 keeper seasons total. Keeper history belongs to the Team, not the human Manager. A player leaving and later returning to the same team does not reset that team's history with that player.
+**Team-specific keeper cycles.** A team may designate the same player as a keeper for no more than 2 consecutive seasons. Those consecutive designations form that Team-player Keeper Cycle. A season in which that team does not designate the player as a keeper ends the cycle. A later designation starts a new cycle with a new 2-season limit.
 
-Different teams maintain their own keeper histories. A trade to another team therefore gives the receiving team its own keeper eligibility, subject to any prior keeper seasons that same receiving team has already used on that player.
+Keeper Cycles belong to the Team, not the human Manager. Transactions alone do not reset a cycle; only an intervening league season without a Keeper Designation for that Team-player does. Different teams maintain their own Keeper Cycles.
 
-**Keeper cost progression.** A drafted player's first keeper season costs the player's original draft round. The second keeper season for that team costs the highest applicable draft pick, normally a 1st-round pick.
+**Keeper cost progression.** A drafted player's first Keeper Season in a new Keeper Cycle costs the player's most recent non-keeper draft round. The second consecutive Keeper Season in that cycle costs the highest applicable draft pick, normally a 1st-round pick.
 
-If a player was drafted and later dropped, that player retains the original draft-round designation for a team that later acquires the player.
+If a player was drafted and later dropped, that player retains that draft's round designation for a team that later acquires the player.
 
-**Undrafted players.** An undrafted player's first keeper cost is based on Sleeper ADP on draft day. In a 12-team draft, the ADP is converted to the round containing that pick, and the keeper costs two rounds later. Any ADP falling within a round counts as that round. If the calculated cost falls beyond the final draft round, the cost is capped at the final round. The second keeper season still costs the highest applicable pick, normally a 1st.
+**Undrafted players.** An undrafted player's first Keeper Season in a new Keeper Cycle is based on Sleeper ADP on draft day. In a 12-team draft, the ADP is converted to the round containing that pick, and the keeper costs two rounds later. Any ADP falling within a round counts as that round. If the calculated cost falls beyond the final draft round, the cost is capped at the final round. The second consecutive Keeper Season in that cycle still costs the highest applicable pick, normally a 1st.
 
 **Same-round keepers.** If two keepers require the same round and the team owns two distinct picks in that round, both picks may be spent. If the team owns only one pick in that round, one keeper uses that pick and the other moves one round earlier. The team chooses which player is assigned to which cost.
 
@@ -147,7 +147,7 @@ If a player was drafted and later dropped, that player retains the original draf
 
 **Post-lock keeper packages.** After the keeper lock, and before or during the draft where Sleeper permits, a designated keeper may be traded together with the already-spent pick. The receiving team inherits the keeper designation and the attached pick cost. The trade may be completed only if the receiving team will have no more than 2 keepers after the transaction. No new keeper designation may be created after the lock.
 
-A keeper-package trade does not reset the receiving team's keeper clock. If that team has already used two keeper seasons on the player, it cannot receive the player as a keeper. If it has used one keeper season, the transferred package may count as its second and final keeper season at the package's already-spent pick cost.
+A keeper-package trade applies to the receiving Team's Keeper Cycle. If that Team designated the player in the immediately preceding season, the transferred package is the next Keeper Season in the same cycle. A Team that designated the player in each of the prior 2 seasons cannot receive the player as a keeper. If the Team did not designate the player in the immediately preceding season, the transferred package begins a new Keeper Cycle at the package's already-spent pick cost.
 
 ## 9. Draft
 
@@ -343,6 +343,13 @@ Each team is limited to 2 keepers for a draft, including keeper packages acquire
 
 - **Status:** Active
 - **Vote:** Passed
+
+**Keeper Cycle gap reset clarified**
+
+The ambiguous legacy two-year keeper limit was clarified as a maximum of 2 consecutive Keeper Seasons per Team-player Keeper Cycle. A season without a Keeper Designation ends the cycle, and a later designation starts a new cycle. This follows the accepted Patrick Mahomes precedent: the same Team kept him in 2020, did not keep him in 2021 or 2022, and then kept him in 2023 and 2024.
+
+- **Status:** Active
+- **Vote:** No vote - clarification from established league practice
 
 **Abandon IDP experiment**
 

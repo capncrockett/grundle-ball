@@ -1,16 +1,30 @@
 import { useMemo, useState } from 'react';
 import { buildKeeperLedger, getTeamForRoster } from '../../data/draftHistoryTransforms';
 import type { DraftHistorySeason, KeeperLedgerEntry } from '../../data/draftHistoryTypes';
+import {
+  getCurrentKeeperCycleLength,
+  MAX_CONSECUTIVE_KEEPER_SEASONS,
+  type KeeperRuleViolation,
+} from '../../data/keeperRuleValidation';
 import { getPlayerPositionStyle } from './playerPositionStyles';
 
 type KeeperHistoryProps = {
   seasons: DraftHistorySeason[];
+  violations: KeeperRuleViolation[];
 };
 
 const isProvisional = (entry: KeeperLedgerEntry): boolean =>
   entry.designations.some((designation) => designation.draftStatus !== 'complete');
 
-export function KeeperHistory({ seasons }: KeeperHistoryProps) {
+const describeViolation = (violation: KeeperRuleViolation): string => {
+  if (violation.code === 'team-keeper-limit') {
+    return `${violation.teamName} has ${violation.keeperCount.toString()} current keeper designations. The maximum is ${violation.limit.toString()}.`;
+  }
+
+  return `${violation.playerName}'s current designation would be Keeper Season ${violation.keeperCycleLength.toString()} in ${violation.teamName}'s current Keeper Cycle. The consecutive-season limit is ${violation.limit.toString()}.`;
+};
+
+export function KeeperHistory({ seasons, violations }: KeeperHistoryProps) {
   const [rosterFilter, setRosterFilter] = useState<number | null>(null);
   const [playerFilter, setPlayerFilter] = useState('');
   const [currentOnly, setCurrentOnly] = useState(false);
@@ -48,11 +62,33 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
             <span className="badge badge-warning">Current designations are provisional</span>
           )}
         </div>
-        <p className="mt-1 max-w-3xl text-sm text-base-content/60">
-          A keeper season is recorded for the Team that received the keeper draft pick. This is a
-          historical ledger, not an automatic eligibility ruling.
+        <p className="mt-1 max-w-4xl text-sm text-base-content/60">
+          A Keeper Season is recorded for the Team that received the keeper draft pick. A Keeper
+          Cycle may contain at most 2 consecutive Keeper Seasons for the same Team-player pairing.
+          One season without that designation ends the cycle, and a later designation starts a new
+          cycle. This view checks keeper counts automatically. Keeper pricing, required pick
+          ownership at the lock, and deadline timing still require Commissioner review.
         </p>
       </div>
+
+      {violations.length > 0 && (
+        <div className="alert alert-error mb-6 items-start" role="alert">
+          <div>
+            <h3 className="font-bold">Keeper rule review required</h3>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+              {violations.map((violation) => (
+                <li
+                  key={`${violation.code}:${violation.rosterId.toString()}:${
+                    violation.code === 'team-player-cycle-limit' ? violation.playerId : 'team'
+                  }`}
+                >
+                  {describeViolation(violation)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <div className="stats stats-vertical mb-6 w-full border border-base-300 bg-base-100 shadow-sm sm:stats-horizontal">
         <div className="stat py-4">
@@ -84,11 +120,22 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
               const picks = currentKeepers
                 .filter((pick) => pick.rosterId === team.rosterId)
                 .sort((a, b) => a.round - b.round);
+              const teamViolations = violations.filter(
+                (violation) => violation.rosterId === team.rosterId,
+              );
+              const teamLimitViolation = teamViolations.find(
+                (violation) => violation.code === 'team-keeper-limit',
+              );
               return (
                 <article
                   key={team.rosterId}
+                  aria-label={`${team.teamName} keeper designations`}
                   className={`card border bg-base-100 shadow-sm ${
-                    picks.length > 0 ? 'border-base-content/20' : 'border-base-300'
+                    teamViolations.length > 0
+                      ? 'border-error bg-error/5'
+                      : picks.length > 0
+                        ? 'border-base-content/20'
+                        : 'border-base-300'
                   }`}
                 >
                   <div className="card-body gap-2 p-4">
@@ -99,10 +146,19 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                         </h4>
                         <p className="truncate text-xs text-base-content/55">{team.managerName}</p>
                       </div>
-                      <span className="badge badge-sm whitespace-nowrap">
+                      <span
+                        className={`badge badge-sm whitespace-nowrap ${
+                          teamViolations.length > 0 ? 'badge-error' : ''
+                        }`}
+                      >
                         {picks.length.toString()} set
                       </span>
                     </div>
+                    {teamLimitViolation && (
+                      <p className="text-xs font-bold text-error">
+                        Maximum {teamLimitViolation.limit.toString()} keepers per Team
+                      </p>
+                    )}
                     {picks.length === 0 ? (
                       <p className="py-3 text-sm italic text-base-content/40">
                         No designation on the board
@@ -114,10 +170,25 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                             (entry) =>
                               entry.rosterId === pick.rosterId && entry.playerId === pick.playerId,
                           );
+                          const playerViolation = teamViolations.find(
+                            (violation) =>
+                              violation.code === 'team-player-cycle-limit' &&
+                              violation.playerId === pick.playerId,
+                          );
+                          const keeperCycleLength = getCurrentKeeperCycleLength(
+                            seasons,
+                            pick.rosterId,
+                            pick.playerId,
+                          );
+                          const totalKeeperSeasons = history?.designations.length ?? 1;
                           return (
                             <li
                               key={pick.playerId}
-                              className="rounded-box border-l-2 border-base-content/25 bg-base-content/5 px-3 py-2"
+                              className={`rounded-box border-l-2 px-3 py-2 ${
+                                playerViolation
+                                  ? 'border-error bg-error/10'
+                                  : 'border-base-content/25 bg-base-content/5'
+                              }`}
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <span className="truncate text-sm font-semibold">
@@ -127,10 +198,22 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                                   Rd {pick.round.toString()}
                                 </span>
                               </div>
-                              <div className="mt-0.5 text-[0.68rem] text-base-content/55">
-                                {history?.designations.length.toString() ?? '1'} recorded keeper
-                                {history?.designations.length === 1 ? ' season' : ' seasons'} with
-                                this Team
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[0.68rem] text-base-content/55">
+                                <span>
+                                  Keeper Cycle: {keeperCycleLength.toString()} of{' '}
+                                  {MAX_CONSECUTIVE_KEEPER_SEASONS.toString()}
+                                </span>
+                                {totalKeeperSeasons > keeperCycleLength && (
+                                  <span>
+                                    ({totalKeeperSeasons.toString()} total Keeper Seasons with this
+                                    Team)
+                                  </span>
+                                )}
+                                {playerViolation && (
+                                  <span className="badge badge-error badge-xs">
+                                    Keeper Cycle limit exceeded
+                                  </span>
+                                )}
                               </div>
                             </li>
                           );
@@ -206,8 +289,17 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
               const currentTeam = getTeamForRoster(currentSeason, entry.rosterId);
               const latest = entry.designations.at(0);
               const positionStyle = getPlayerPositionStyle(entry.position);
+              const playerViolation = violations.find(
+                (violation) =>
+                  violation.code === 'team-player-cycle-limit' &&
+                  violation.rosterId === entry.rosterId &&
+                  violation.playerId === entry.playerId,
+              );
               return (
-                <tr key={`${entry.rosterId.toString()}:${entry.playerId}`}>
+                <tr
+                  key={`${entry.rosterId.toString()}:${entry.playerId}`}
+                  className={playerViolation ? 'bg-error/10' : ''}
+                >
                   <td>
                     <div className="font-semibold">{entry.playerName}</div>
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-base-content/50">
@@ -241,9 +333,16 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                   </td>
                   <td>
                     <div>{latest?.season ?? 'Unknown'}</div>
-                    {isProvisional(entry) && (
-                      <span className="badge badge-warning badge-xs">Provisional</span>
-                    )}
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {isProvisional(entry) && (
+                        <span className="badge badge-warning badge-xs">Provisional</span>
+                      )}
+                      {playerViolation && (
+                        <span className="badge badge-error badge-xs">
+                          Keeper Cycle limit exceeded
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
