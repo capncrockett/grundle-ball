@@ -28,6 +28,18 @@ _Avoid_: Rostered player, keeper-eligible player
 One finalized Keeper Designation for a particular Team, player, and season.
 _Avoid_: Keeper year
 
+**Draft Selection**:
+A pick in a Canonical Draft that Sleeper does not mark as a Keeper Designation. Draft habits describe Draft Selections rather than pre-filled keepers.
+_Avoid_: Keeper Designation, rostered player
+
+**Individual Defensive Player (IDP) Draft Selection**:
+A Draft Selection of one defender at DL, LB, or DB rather than a team DEF. Grundle League reserved the final two rounds of its 2024 and 2025 Canonical Drafts for IDP because useful 1QB IDP ADP was unavailable, so those selections reflect a league constraint rather than Team preference.
+_Avoid_: Team DEF, unconstrained 2024-2025 draft habit
+
+**Draft Intel**:
+A private scouting view of repeatable Grundle League and Team habits found in completed Canonical Drafts.
+_Avoid_: Prediction, mock draft
+
 **Official Playoffs**:
 The championship and consolation brackets configured by Sleeper and used to determine the league's final standings.
 _Avoid_: Grundle Bowl, Keeper Bowl Playoffs

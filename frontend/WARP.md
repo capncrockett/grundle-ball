@@ -100,6 +100,7 @@ frontend/
 │   ├── config/league.ts               # Shared 2026 league ID and playoff weeks
 │   ├── content/                        # Constitution Markdown + parser
 │   ├── data/                           # Checked-in matchup/draft history + helpers
+│   ├── draftIntel/                     # Local-only draft-pattern analysis
 │   ├── models/fantasy.ts              # Internal team/matchup/season models
 │   ├── pages/                          # Route components and insight logic
 │   ├── sleeperBracket/                 # Official bracket resolution/types
@@ -118,13 +119,14 @@ frontend/
 - `/playoffs` shows Sleeper's official winners and consolation brackets.
 - `/matchups` shows a selectable week of scores and finished-starter counts.
 - `/history` shows canonical annual draftboards and Team-specific keeper history.
+- `/local/draft-intel` analyzes completed drafts for league and Team patterns. Vite includes this route only in the local development build, and the app also requires a localhost browser origin.
 - `/constitution` renders the current Markdown constitution and links the hosted review-draft PDF.
 - `/beta/grundle-bowl` redirects to `/beta/grundle-bowl/live`.
 - `/beta/grundle-bowl/live` applies real playoff outcomes to the custom Beta bracket.
 - `/beta/grundle-bowl/if-today` seeds the custom Beta bracket from current standings.
 - Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the corresponding Beta routes.
 
-The top navigation has six items: Standings, Playoffs, Matchups, History, Constitution, and Grundle Bowl (Beta).
+The shared top navigation has six items: Standings, Playoffs, Matchups, History, Constitution, and Grundle Bowl (Beta). Local development adds Draft Intel.
 
 ## Runtime data flows
 
@@ -166,6 +168,15 @@ Do not feed official bracket data through the custom `bracket/` routing engine.
 4. Render the selected season through `DraftBoard` and group `is_keeper` picks by Team/player through `KeeperHistory`.
 
 The archive follows `previous_league_id` and uses each league record's `draft_id`, which excludes abandoned draft setup records. Current keeper designations remain labeled provisional until the draft is complete. Keeper history uses Sleeper roster ID as the persistent Team key rather than Manager identity.
+
+### Local Draft Intel
+
+1. Import completed seasons from `src/data/draftHistoryStore.json`.
+2. Exclude Keeper Designations, the locally selected user's Team, and constrained 2024-2025 IDP selections.
+3. Derive league-wide and Team-level roster construction, timing, opening-round, and NFL-team affinity patterns.
+4. Label signals from fewer than three applicable drafts as emerging.
+
+The route and navigation are compiled only for `vite serve` and require a localhost origin at runtime. They are absent from Vercel and other production builds. This is a deployment visibility boundary, not user authentication. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
 
 ### Grundle Bowl Beta
 

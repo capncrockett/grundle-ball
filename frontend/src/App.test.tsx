@@ -28,6 +28,12 @@ jest.mock('./pages/HistoryPage', () => ({
   HistoryPage: () => <div>History Page</div>,
 }));
 
+jest.mock('./pages/DraftIntelPage', () => ({
+  __esModule: true,
+  default: () => <div>Draft Intel Page</div>,
+  DraftIntelPage: () => <div>Draft Intel Page</div>,
+}));
+
 jest.mock('./pages/ConstitutionPage', () => ({
   ConstitutionPage: () => <div>Constitution Page</div>,
 }));
@@ -101,6 +107,17 @@ describe('App routing + nav', () => {
     const historyLink = within(banner).getByRole('link', { name: /history/i });
     expect(historyLink).toHaveClass('btn-active');
     expect(historyLink).toHaveAttribute('href', '/history');
+  });
+
+  it('renders Draft Intel only through its local route', async () => {
+    renderWithRouter(<App />, { route: '/local/draft-intel' });
+
+    expect(await screen.findByText('Draft Intel Page')).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const draftIntelLink = within(banner).getByRole('link', { name: /draft intel/i });
+    expect(draftIntelLink).toHaveClass('btn-active');
+    expect(draftIntelLink).toHaveAttribute('href', '/local/draft-intel');
   });
 
   it('shows only the useful deployment details in the footer', () => {

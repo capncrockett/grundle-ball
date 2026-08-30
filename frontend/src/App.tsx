@@ -9,8 +9,13 @@ import PlayoffsIfTodayPage from './pages/PlayoffsIfTodayPage';
 import PlayoffsLivePage from './pages/PlayoffsLivePage';
 import PlayoffsPage from './pages/PlayoffsPage';
 import { StandingsPage } from './pages/StandingsPage';
+import { isLocalToolsHost } from './localTools';
 
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const localToolsBuildEnabled =
+  typeof __LOCAL_TOOLS_BUILD__ === 'undefined' || __LOCAL_TOOLS_BUILD__;
+const localToolsEnabled = localToolsBuildEnabled && isLocalToolsHost();
+const DraftIntelPage = localToolsEnabled ? lazy(() => import('./pages/DraftIntelPage')) : null;
 
 type NavLinkProps = {
   to: string;
@@ -55,7 +60,8 @@ export default function App() {
       <header className="navbar bg-base-100 shadow-md">
         <div className="navbar-start">
           <span className="btn btn-ghost normal-case text-sm sm:text-xl font-bold">
-            Grundle Ball
+            <span className="sm:hidden">GB</span>
+            <span className="hidden sm:inline">Grundle Ball</span>
           </span>
         </div>
         <div className="navbar-center">
@@ -111,6 +117,19 @@ export default function App() {
                 </span>
               }
             />
+            {localToolsEnabled && (
+              <span className="hidden sm:contents">
+                <NavLink
+                  to="/local/draft-intel"
+                  label="Draft Intel"
+                  icon={
+                    <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-secondary/20 text-[0.5rem] font-black text-secondary">
+                      DI
+                    </span>
+                  }
+                />
+              </span>
+            )}
             <NavLink
               to="/constitution"
               label="Constitution"
@@ -161,6 +180,22 @@ export default function App() {
               </Suspense>
             }
           />
+          {localToolsEnabled && DraftIntelPage && (
+            <Route
+              path="/local/draft-intel"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="flex justify-center py-16">
+                      <span className="loading loading-spinner loading-lg" />
+                    </div>
+                  }
+                >
+                  <DraftIntelPage />
+                </Suspense>
+              }
+            />
+          )}
           <Route path="/constitution" element={<ConstitutionPage />} />
           <Route
             path="/beta/grundle-bowl"

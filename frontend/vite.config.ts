@@ -19,7 +19,7 @@ const lightningcssOptions = {
 } satisfies NonNullable<CSSOptions['lightningcss']>;
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     tailwindcss({
@@ -33,9 +33,11 @@ export default defineConfig({
   },
   define: {
     __BUILD_INFO__: JSON.stringify(buildInfo),
+    // Local tools are removed from production builds, including Vercel previews.
+    __LOCAL_TOOLS_BUILD__: JSON.stringify(command === 'serve'),
   },
   build: {
     // Avoid DaisyUI's @property warning during minification
     cssMinify: 'lightningcss',
   },
-});
+}));
