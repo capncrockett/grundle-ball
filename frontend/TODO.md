@@ -2,7 +2,8 @@
 
 ## League configuration
 
-- If deployments need runtime-selectable leagues, replace the checked-in configuration deliberately: validate the browser-facing value, define how the Node history updater receives the same default, preserve its `--league` override, and update deployment docs/tests together. The confirmed 2026 default is already centralized in `src/config/league.ts` for current use.
+- Keep the confirmed 2026 league in checked-in `src/config/league.ts`. Runtime-selectable and multi-league deployments are not currently warranted.
+- If product scope changes, validate the browser-facing value, define how the Node history updater receives the same default, preserve its `--league` override, and update deployment docs/tests together.
 
 ## Tailwind cleanup (optional)
 

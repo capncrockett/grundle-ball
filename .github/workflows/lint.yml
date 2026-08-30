@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - "release/**"
+      - 'release/**'
   workflow_dispatch:
 
 jobs:
@@ -26,6 +26,9 @@ jobs:
 
       - name: Check formatting
         run: npm run format
+
+      - name: Check documentation
+        run: npm run docs:check
 
       - name: Run ESLint
         run: npm run lint

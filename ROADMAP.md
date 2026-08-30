@@ -1,8 +1,8 @@
-# Grundle Ball — Roadmap
+# Grundle Ball - Roadmap
 
 This file tracks work that remains after the Grundle Ball rebrand and the move to a Sleeper-mirrored official playoff page. Completed phase-by-phase implementation notes have been removed; current architecture and supported behavior live in `frontend/WARP.md`.
 
-## High priority — stored-history correctness
+## High priority - stored-history correctness
 
 The 2025 snapshot is labeled with its actual league and season, storage keys are scoped, Standings requests only the active Sleeper league/season, and the CLI validates its arguments and upstream scope before writing.
 
@@ -20,25 +20,31 @@ Production root availability is verified at `https://grundle-ball.vercel.app` (H
 - [x] Run the full local Playwright suite on both projects for every release-branch push in GitHub Actions.
 - [ ] Run a production smoke pass after the next release and verify Sleeper and ESPN requests from the deployed origin.
 - [x] Add CI production-build validation (`npm run build -w frontend`) alongside the frontend and backend tests.
-- [ ] Add automated internal-link and stale-brand checks for maintained Markdown documentation.
+- [x] Add automated internal-link and stale-brand checks for maintained Markdown documentation.
 
 See `TESTING.md` for the verified automated coverage and remaining test gaps, and `docs/deployment.md` for the current release flow.
 
 ## Configuration evolution
 
-- [ ] Decide whether league configuration remains checked-in source or becomes environment-configurable. If it moves, define one validated boundary for both the Vite browser build and the Node history updater; a `VITE_*` variable alone would not configure both runtimes.
-- [ ] If multiple leagues become a supported product requirement, define how league selection affects cached matchup history, divisions, seeding rules, and URLs before adding a selector.
+- [x] Keep league configuration in checked-in source for the current single-league product. The browser and Node history updater share `frontend/src/config/league.ts`.
+- [ ] Revisit configuration only if multiple leagues become a supported product requirement. Before adding a selector, define how league selection affects cached matchup history, divisions, seeding rules, and URLs.
 
 ## Coordinated major dependency migrations
 
 The compatibility-safe dependency refresh does not mean every package is on its latest major. Treat the remaining toolchain jumps as coordinated migrations, not independent version bumps:
 
-- [ ] Plan ESLint 10 together with compatible `typescript-eslint`, React Hooks, and React Refresh plugins/config; keep root frontend/backend lint green.
-- [ ] Plan Jest 30 and `jest-environment-jsdom` 30 with a confirmed TypeScript transform strategy. Do not strand Jest on a major that the selected `ts-jest` version does not support.
-- [ ] Plan Vite 8 with its compatible React plugin, Tailwind integration, and Lightning CSS build path.
-- [ ] Plan TypeScript 7 with compatible `typescript-eslint`, Jest transform, `ts-node`, Vite, and backend type declarations.
-- [ ] Upgrade one compatibility cluster at a time and run root lint/typecheck, Jest, the production build, and both Playwright projects before declaring it complete.
-- [ ] Re-run the dependency report after each cluster and record any deliberately deferred majors; patch/minor currency must not be described as “fully up to date.”
+- [x] Upgrade ESLint 10 with compatible `typescript-eslint`, React Hooks, React Refresh, and globals packages; keep root frontend/backend lint green.
+- [x] Upgrade Jest and `jest-environment-jsdom` to 30 with `ts-jest` 29.4 and Jest 30 types.
+- [x] Upgrade Vite 8 with its compatible React plugin, Tailwind integration, and Lightning CSS build path.
+- [ ] Upgrade TypeScript 7 after its consumers support it. `typescript-eslint` 8.68 supports TypeScript below 6.1, and `ts-jest` 29.4 supports TypeScript below 7.
+- [x] Upgrade one compatibility cluster at a time and run root lint/typecheck, Jest, the production build, and both Playwright projects before declaring it complete.
+- [x] Re-run the dependency report after each cluster and record deliberately deferred majors.
+
+Current deliberate deferrals from the post-upgrade dependency report:
+
+- Keep `@types/node` on 24 while the application runtime contract is Node 24.
+- Keep MSW pinned to 2.12.3 because 2.15 introduces an ESM interceptor path that the current CommonJS Jest transform cannot load.
+- Keep TypeScript on 5.9 until both `typescript-eslint` and `ts-jest` support TypeScript 7.
 
 ## Grundle Bowl Beta polish
 

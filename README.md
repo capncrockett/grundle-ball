@@ -45,6 +45,9 @@ npm run lint
 # Frontend and backend TypeScript checks
 npm run typecheck
 
+# Internal documentation links and stale branding
+npm run docs:check
+
 # Frontend Jest suite
 npm run test:ci -w frontend
 

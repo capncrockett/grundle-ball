@@ -237,7 +237,7 @@ function PlayoffsIfTodayPage() {
             points per week.
           </p>
           <div className="mt-2 text-xs text-base-content/70 leading-relaxed max-w-2xl">
-            We simulate every game with season averages so there&apos;s no lineup guessing—just a
+            We simulate every game with season averages so there&apos;s no lineup guessing-just a
             steady baseline to show how the paths would shake out right now.
           </div>
         </div>

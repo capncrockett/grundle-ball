@@ -134,7 +134,7 @@ export function ConstitutionPage() {
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold">{document.title}</h1>
           <p className="text-sm text-base-content/60">
-            2026 Edition review draft. In-repo source of truth — update as amendments and votes
+            2026 Edition review draft. In-repo source of truth - update as amendments and votes
             land.
           </p>
         </div>

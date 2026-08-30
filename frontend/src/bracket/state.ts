@@ -14,7 +14,7 @@ export interface BracketGameOutcome {
 /**
  * Apply a set of game outcomes to a bracket using the routing rules.
  *
- * This does NOT decide who wins — you tell it who won each from-slot,
+ * This does NOT decide who wins - you tell it who won each from-slot,
  * and it will:
  *  - find the routing rule for that slot
  *  - copy the winner into the target winner slot/index

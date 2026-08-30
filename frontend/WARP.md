@@ -2,6 +2,8 @@
 
 This file is the working index for `frontend/`. Read the root `AGENTS.md` first for repository conventions, skills, and naming rules.
 
+All frontend code, content, tests, and documentation must follow the root prohibition on Unicode em dashes and en dashes. Use the ASCII hyphen-minus (`-`) instead.
+
 ## Product boundary
 
 Grundle Ball is the Grundle League dashboard, not only a playoff visualizer. Its primary features are standings/insights, weekly matchups, the official Sleeper playoff bracket, and the league constitution.
@@ -16,11 +18,11 @@ The 2026 vote is documented in `src/content/constitution.md` under “Rule & Vot
 
 ## Current stack
 
-- React 19.2, Vite 7.2, and TypeScript 5.9
-- React Router 7.9
-- Tailwind CSS 4.1 and DaisyUI 5.5
-- ESLint 9 and Prettier 3.6
-- Jest 29, React Testing Library 16, MSW 2.12, and Playwright 1.49
+- React 19.2, Vite 8.2, and TypeScript 5.9
+- React Router 7.18
+- Tailwind CSS 4.3 and DaisyUI 5.7
+- ESLint 10 and Prettier 3.9
+- Jest 30, React Testing Library 16, MSW 2.12, and Playwright 1.62
 - Checked-in JSON matchup history with an optional local `better-sqlite3` maintenance adapter
 
 ## Commands
@@ -271,7 +273,7 @@ Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke 
 
 ## Configuration and backend notes
 
-- `src/config/league.ts` exports the confirmed 2026 league ID (`1385053148233621511`) for every frontend page and the Playwright Matchups test, plus Weeks 15–17 for the Beta playoff pages.
+- `src/config/league.ts` exports the confirmed 2026 league ID (`1385053148233621511`) for every frontend page and the Playwright Matchups test, plus Weeks 15-17 for the Beta playoff pages.
 - `backend/scripts/updateMatchupHistory.ts` imports that same `LEAGUE_ID` as its default and retains `--league=<id>` as an explicit override.
 - `VITE_LEAGUE_ID` is not supported. If league selection becomes environment-configurable, design the Vite and Node configuration boundary together rather than creating two independent defaults.
 - The browser imports the checked-in JSON matchup history and filters it by the active Sleeper league ID and season.

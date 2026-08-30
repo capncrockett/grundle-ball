@@ -10,9 +10,6 @@ const config: Config = {
     '\\.md\\?raw$': '<rootDir>/src/test/__mocks__/rawMarkdown.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '@vercel/speed-insights/react': '<rootDir>/src/test/__mocks__/speedInsights.tsx',
-    '^msw/node$': '<rootDir>/node_modules/msw/node',
-    '^@mswjs/interceptors/ClientRequest$':
-      '<rootDir>/node_modules/@mswjs/interceptors/ClientRequest',
   },
   transformIgnorePatterns: ['node_modules/(?!(msw|@mswjs|until-async)/)'],
   testPathIgnorePatterns: ['<rootDir>/tests/e2e/'],

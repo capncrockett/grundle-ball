@@ -77,7 +77,7 @@ interface LiveMatchData {
 }
 ```
 
-Despite its historical name, `LiveMatchData` currently contains actual points and starter completion counts—not projected totals or win probabilities.
+Despite its historical name, `LiveMatchData` currently contains actual points and starter completion counts-not projected totals or win probabilities.
 
 ## SeasonState
 

@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
 // Load env (repo root preferred), then allow local override inside frontend/.env if present
-dotenv.config({ path: path.resolve(process.cwd(), '..', '.env') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '..', '.env'), quiet: true });
+dotenv.config({ path: path.resolve(process.cwd(), '.env'), quiet: true });
 
 const baseURL = process.env.E2E_BASE_URL ?? 'https://grundle-ball-staging.vercel.app';
 const isLocalRun = /^http:\/\/(localhost|127\.0\.0\.1):5173\/?$/.test(baseURL);
