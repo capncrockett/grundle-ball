@@ -212,7 +212,7 @@ export function KeeperHistory({ seasons }: KeeperHistoryProps) {
                     <div className="font-semibold">{entry.playerName}</div>
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-base-content/50">
                       <span
-                        className={`draft-position-badge badge badge-xs text-base-content/70 ${positionStyle.colorClassName}`}
+                        className={`draft-position-badge badge badge-xs ${positionStyle.colorClassName}`}
                       >
                         {positionStyle.label}
                       </span>

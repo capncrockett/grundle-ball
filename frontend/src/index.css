@@ -3,6 +3,8 @@
 /* Basic global styles */
 :root {
   color-scheme: light dark;
+  --draft-position-neutral: oklch(82% 0.025 250);
+  --draft-position-ink: oklch(23% 0.045 255);
 }
 
 body {
@@ -18,55 +20,129 @@ body {
     dracula --prefersdark;
 }
 
+[data-theme='cupcake'] {
+  --draft-position-neutral: oklch(90% 0.018 245);
+  --draft-position-ink: oklch(27% 0.04 255);
+}
+
+[data-theme='retro'] {
+  --draft-position-neutral: oklch(85% 0.04 80);
+  --draft-position-ink: oklch(27% 0.04 55);
+}
+
+[data-theme='dim'] {
+  --draft-position-neutral: oklch(76% 0.025 250);
+  --draft-position-ink: oklch(22% 0.04 255);
+}
+
+[data-theme='dracula'] {
+  --draft-position-neutral: oklch(78% 0.025 285);
+  --draft-position-ink: oklch(21% 0.05 265);
+}
+
 @layer components {
   .draft-position-cell {
-    border-left-color: color-mix(in oklab, var(--draft-position-color) 40%, var(--color-base-300));
-    background-color: color-mix(in oklab, var(--draft-position-color) 5%, var(--color-base-100));
+    border-color: color-mix(in oklab, var(--draft-position-ink) 22%, transparent);
+    background-color: color-mix(
+      in oklab,
+      var(--draft-position-color) 78%,
+      var(--draft-position-neutral)
+    );
+    color: var(--draft-position-ink);
   }
 
   .draft-position-badge {
-    border-color: color-mix(in oklab, var(--draft-position-color) 25%, var(--color-base-300));
-    background-color: color-mix(in oklab, var(--draft-position-color) 10%, var(--color-base-100));
+    border-color: color-mix(in oklab, var(--draft-position-ink) 22%, transparent);
+    background-color: color-mix(
+      in oklab,
+      var(--draft-position-color) 78%,
+      var(--draft-position-neutral)
+    );
+    color: var(--draft-position-ink);
+  }
+
+  .draft-position-muted {
+    color: color-mix(in oklab, var(--draft-position-ink) 65%, transparent);
+  }
+
+  .draft-keeper-cell {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--draft-position-ink) 42%, transparent);
+  }
+
+  .draft-keeper-badge {
+    display: inline-flex;
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 9999px;
+    border-color: color-mix(in oklab, var(--draft-position-ink) 24%, transparent);
+    background-color: color-mix(in oklab, white 68%, transparent);
+    color: var(--draft-position-ink);
+  }
+
+  .draft-keeper-lock {
+    position: relative;
+    width: 0.38rem;
+    height: 0.31rem;
+    margin-top: 0.14rem;
+    border-radius: 0.06rem;
+    background-color: currentColor;
+  }
+
+  .draft-keeper-lock::before {
+    position: absolute;
+    top: -0.25rem;
+    left: 0.055rem;
+    width: 0.27rem;
+    height: 0.27rem;
+    border: 0.075rem solid currentColor;
+    border-bottom: 0;
+    border-radius: 0.2rem 0.2rem 0 0;
+    content: '';
   }
 
   .draft-position-qb {
-    --draft-position-color: var(--color-primary);
+    --draft-position-color: oklch(67% 0.12 350);
   }
 
   .draft-position-rb {
-    --draft-position-color: var(--color-success);
+    --draft-position-color: oklch(75% 0.1 165);
   }
 
   .draft-position-wr {
-    --draft-position-color: var(--color-info);
+    --draft-position-color: oklch(69% 0.115 225);
   }
 
   .draft-position-te {
-    --draft-position-color: var(--color-warning);
+    --draft-position-color: oklch(70% 0.115 70);
   }
 
   .draft-position-k {
-    --draft-position-color: var(--color-secondary);
+    --draft-position-color: oklch(72% 0.1 300);
   }
 
   .draft-position-def {
-    --draft-position-color: var(--color-error);
+    --draft-position-color: oklch(68% 0.065 250);
   }
 
   .draft-position-dl {
-    --draft-position-color: color-mix(in oklab, var(--color-error) 65%, var(--color-warning));
+    --draft-position-color: oklch(69% 0.11 30);
   }
 
   .draft-position-lb {
-    --draft-position-color: var(--color-accent);
+    --draft-position-color: oklch(72% 0.1 135);
   }
 
   .draft-position-db {
-    --draft-position-color: color-mix(in oklab, var(--color-info) 55%, var(--color-secondary));
+    --draft-position-color: oklch(69% 0.1 275);
   }
 
   .draft-position-unknown {
-    --draft-position-color: var(--color-base-content);
+    --draft-position-color: oklch(72% 0.02 255);
   }
 
   /* Force long team names to ellipsis within available card width */

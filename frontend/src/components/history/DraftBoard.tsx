@@ -69,17 +69,17 @@ function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: Draf
 
   return (
     <div
-      className={`draft-position-cell min-h-[4.75rem] border-r border-b border-l-[3px] border-r-base-300/70 border-b-base-300/70 p-1.5 transition-opacity ${positionStyle.colorClassName} ${
-        pick.isKeeper ? 'ring-1 ring-inset ring-base-content/25' : ''
+      className={`draft-position-cell min-h-[4.75rem] border-r border-b p-1.5 transition-opacity ${positionStyle.colorClassName} ${
+        pick.isKeeper ? 'draft-keeper-cell' : ''
       } ${dimmed ? 'opacity-25' : ''}`}
       data-keeper={pick.isKeeper ? 'true' : 'false'}
       data-position={positionStyle.label}
     >
-      <div className="mb-0.5 flex items-center justify-between gap-1 text-[0.6rem] text-base-content/55">
+      <div className="draft-position-muted mb-0.5 flex items-center justify-between gap-1 text-[0.6rem]">
         <span className="font-mono">#{pick.pickNo.toString()}</span>
         {pick.isKeeper && (
-          <span className="badge badge-xs border-base-content/20 bg-base-content/5 text-base-content/65">
-            Keeper
+          <span className="draft-keeper-badge" aria-label="Keeper" title="Keeper">
+            <span className="draft-keeper-lock" aria-hidden="true" />
           </span>
         )}
       </div>
@@ -88,20 +88,14 @@ function DraftPickCell({ pick, pickNo, slotTeam, destinationTeam, dimmed }: Draf
           {playerName}
         </abbr>
       </div>
-      <div className="mt-1 flex items-center gap-1">
-        <span
-          className={`draft-position-badge badge badge-xs text-base-content/70 ${positionStyle.colorClassName}`}
-        >
-          {positionStyle.label}
-        </span>
-        {pick.nflTeam && (
-          <span className="truncate text-[0.6rem] font-medium uppercase text-base-content/55">
-            {pick.nflTeam}
-          </span>
-        )}
+      <div className="draft-position-muted mt-1 truncate text-[0.65rem] font-semibold uppercase">
+        {[positionStyle.label, pick.nflTeam].filter(Boolean).join(' - ')}
       </div>
       {traded && (
-        <div className="mt-1 truncate text-[0.6rem] text-info" title={destinationTeam.teamName}>
+        <div
+          className="draft-position-muted mt-1 truncate text-[0.6rem]"
+          title={destinationTeam.teamName}
+        >
           To {destinationTeam.teamName}
         </div>
       )}
@@ -193,14 +187,16 @@ export function DraftBoard({ season }: DraftBoardProps) {
           return (
             <span
               key={position}
-              className={`draft-position-badge badge badge-xs text-base-content/70 ${style.colorClassName}`}
+              className={`draft-position-badge badge badge-xs ${style.colorClassName}`}
             >
               {position}
             </span>
           );
         })}
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-base-content/5 ring-1 ring-inset ring-base-content/25" />{' '}
+          <span className="draft-keeper-badge" aria-hidden="true">
+            <span className="draft-keeper-lock" />
+          </span>{' '}
           Keeper designation
         </span>
         <span>Traded picks show their destination Team.</span>
