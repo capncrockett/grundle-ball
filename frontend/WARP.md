@@ -175,6 +175,7 @@ The archive follows `previous_league_id` and uses each league record's `draft_id
 2. Exclude Keeper Designations, the locally selected user's Team, and constrained 2024-2025 IDP selections.
 3. Derive league-wide and Team-level roster construction, timing, opening-round, and NFL-team affinity patterns.
 4. Label signals from fewer than three applicable drafts as emerging.
+5. Sort by fantasy relevance before confidence: RB/WR, IDP, QB/TE, NFL-team affinity, then K/DEF.
 
 The route and navigation are compiled only for `vite serve` and require a localhost origin at runtime. They are absent from Vercel and other production builds. This is a deployment visibility boundary, not user authentication. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
 

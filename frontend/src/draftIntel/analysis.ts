@@ -122,6 +122,20 @@ const categoryOrder: Record<DraftIntelCategory, number> = {
 
 const IDP_POSITIONS = new Set(['DL', 'LB', 'DB']);
 
+const POSITION_IMPORTANCE: Record<string, number> = {
+  'RB WR': 5,
+  RB: 5,
+  WR: 5,
+  DL: 4,
+  LB: 4,
+  DB: 4,
+  QB: 3,
+  TE: 3,
+  K: 1,
+  DEF: 1,
+  DST: 1,
+};
+
 const normalizePosition = (position: string | null): string | null => {
   const normalized = position?.trim().toUpperCase();
   if (!normalized) return null;
@@ -192,8 +206,15 @@ const ratioStrength = (ratio: number, seasonCount: number): DraftIntelStrength =
   return ratio >= 0.75 ? 'strong' : 'notable';
 };
 
+const fantasyImportance = (pattern: DraftIntelPattern): number => {
+  if (pattern.category === 'nfl-affinity') return 2;
+  return POSITION_IMPORTANCE[pattern.badge] ?? 2;
+};
+
 const sortPatterns = (patterns: DraftIntelPattern[]): DraftIntelPattern[] =>
   [...patterns].sort((a, b) => {
+    const importanceDifference = fantasyImportance(b) - fantasyImportance(a);
+    if (importanceDifference !== 0) return importanceDifference;
     const strengthDifference = STRENGTH_ORDER[b.strength] - STRENGTH_ORDER[a.strength];
     if (strengthDifference !== 0) return strengthDifference;
     const categoryDifference = categoryOrder[b.category] - categoryOrder[a.category];

@@ -75,6 +75,9 @@ const completedPicks = (offset: number): DraftHistoryPick[] => [
   pick(2, 'WR', 1, offset + 4),
   pick(2, 'QB', 4, offset + 5),
   pick(3, 'QB', 1, offset + 6),
+  pick(1, 'K', 9, offset + 7),
+  pick(2, 'K', 9, offset + 8),
+  pick(3, 'K', 9, offset + 9),
 ];
 
 const snapshot: DraftHistorySnapshot = {
@@ -120,8 +123,19 @@ describe('buildDraftIntelReport', () => {
       ]),
     );
 
+    const orderedPatternIds = report.leaguePatterns.map((pattern) => pattern.id);
+    expect(orderedPatternIds).toEqual(
+      expect.arrayContaining(['league-rb-wr-first-five', 'league-backup-QB', 'league-backup-K']),
+    );
+    expect(orderedPatternIds.indexOf('league-rb-wr-first-five')).toBeLessThan(
+      orderedPatternIds.indexOf('league-backup-QB'),
+    );
+    expect(orderedPatternIds.indexOf('league-backup-QB')).toBeLessThan(
+      orderedPatternIds.indexOf('league-backup-K'),
+    );
+
     const alpha = report.teams.find((team) => team.rosterId === 1);
-    expect(alpha?.selectionCount).toBe(6);
+    expect(alpha?.selectionCount).toBe(9);
     expect(alpha?.patterns).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -221,10 +235,22 @@ describe('buildDraftIntelReport', () => {
     expect(forcedReport.leaguePatterns.some((pattern) => pattern.badge === 'DL')).toBe(false);
     expect(forcedReport.teams.every((team) => team.selectionCount === 0)).toBe(true);
 
+    let eligiblePickNo = 0;
+    const eligibleIdpPicks = teams.flatMap((team) =>
+      [
+        { position: 'RB', round: 1 },
+        { position: 'DL', round: 13 },
+        { position: 'QB', round: 5 },
+        { position: 'K', round: 12 },
+      ].map(({ position, round }) => {
+        eligiblePickNo += 1;
+        return pick(team.rosterId, position, round, eligiblePickNo);
+      }),
+    );
     const eligibleIdpSnapshot: DraftHistorySnapshot = {
       generatedAt: '2027-08-30T00:00:00.000Z',
       currentLeagueId: 'league-2026',
-      seasons: [season('2026', 'complete', idpPicks(0))],
+      seasons: [season('2026', 'complete', eligibleIdpPicks)],
     };
     const eligibleReport = buildDraftIntelReport(eligibleIdpSnapshot);
 
@@ -235,6 +261,16 @@ describe('buildDraftIntelReport', () => {
           strength: 'emerging',
         }),
       ]),
+    );
+    const orderedPatternIds = eligibleReport.leaguePatterns.map((pattern) => pattern.id);
+    expect(orderedPatternIds).toEqual(
+      expect.arrayContaining(['league-backup-DL', 'league-backup-QB', 'league-backup-K']),
+    );
+    expect(orderedPatternIds.indexOf('league-backup-DL')).toBeLessThan(
+      orderedPatternIds.indexOf('league-backup-QB'),
+    );
+    expect(orderedPatternIds.indexOf('league-backup-QB')).toBeLessThan(
+      orderedPatternIds.indexOf('league-backup-K'),
     );
   });
 });
