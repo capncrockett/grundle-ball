@@ -72,6 +72,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Grundle Bowl Beta Live and If-Today pages, including API failures.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
 - Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
+- Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, and Draft Intel presentation.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.

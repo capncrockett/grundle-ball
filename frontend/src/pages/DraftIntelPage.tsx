@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { buildSleeperAvatarThumbUrl } from '../api/sleeper';
 import { TeamAvatars } from '../components/common/TeamAvatars';
+import {
+  KeeperAdjustedAdpPanel,
+  type KeeperAdjustedAdpPanelProps,
+} from '../components/draftIntel/KeeperAdjustedAdpPanel';
 import { DRAFT_HISTORY } from '../data/draftHistory';
 import type { DraftHistorySnapshot, DraftHistoryTeam } from '../data/draftHistoryTypes';
 import {
@@ -12,7 +16,7 @@ import {
   type DraftIntelStrength,
 } from '../draftIntel/analysis';
 
-type DraftIntelView = 'league' | 'teams';
+type DraftIntelView = 'league' | 'teams' | 'keeper-adp';
 type CategoryFilter = 'all' | DraftIntelCategory;
 
 type DraftIntelPreferences = {
@@ -24,6 +28,7 @@ type DraftIntelPageProps = {
   history?: DraftHistorySnapshot;
   initialScoutRosterId?: number | null;
   storage?: Pick<Storage, 'getItem' | 'setItem'> | null;
+  keeperAdpPanelProps?: Omit<KeeperAdjustedAdpPanelProps, 'storedSeason' | 'selectedRosterId'>;
 };
 
 const PREFERENCES_KEY = 'grundle-ball:draft-intel:v1';
@@ -143,6 +148,7 @@ export function DraftIntelPage({
   history = DRAFT_HISTORY,
   initialScoutRosterId,
   storage: storageOverride,
+  keeperAdpPanelProps,
 }: DraftIntelPageProps) {
   const storage = storageOverride === undefined ? getBrowserStorage() : storageOverride;
   const storedPreferences = readPreferences(storage);
@@ -180,6 +186,10 @@ export function DraftIntelPage({
   );
 
   const teamOptions = useMemo(() => latestTeams(history), [history]);
+  const currentDraft = useMemo(
+    () => [...history.seasons].sort((a, b) => Number(b.season) - Number(a.season)).at(0),
+    [history.seasons],
+  );
   const report = useMemo(
     () => buildDraftIntelReport(history, { sinceSeason, excludedRosterId: scoutRosterId }),
     [history, scoutRosterId, sinceSeason],
@@ -297,24 +307,37 @@ export function DraftIntelPage({
           >
             Team Patterns
           </button>
-        </div>
-        <label className="form-control w-full sm:w-44">
-          <span className="label py-1 text-xs font-semibold">History window</span>
-          <select
-            className="select select-bordered select-sm"
-            aria-label="History start season"
-            value={sinceSeason}
-            onChange={(event) => {
-              handleStartSeasonChange(event.target.value);
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === 'keeper-adp'}
+            className={`tab ${activeView === 'keeper-adp' ? 'tab-active' : ''}`}
+            onClick={() => {
+              setActiveView('keeper-adp');
             }}
           >
-            {completedSeasonOptions.map((season) => (
-              <option key={season} value={season}>
-                Since {season}
-              </option>
-            ))}
-          </select>
-        </label>
+            Keeper-Adjusted ADP
+          </button>
+        </div>
+        {activeView !== 'keeper-adp' && (
+          <label className="form-control w-full sm:w-44">
+            <span className="label py-1 text-xs font-semibold">History window</span>
+            <select
+              className="select select-bordered select-sm"
+              aria-label="History start season"
+              value={sinceSeason}
+              onChange={(event) => {
+                handleStartSeasonChange(event.target.value);
+              }}
+            >
+              {completedSeasonOptions.map((season) => (
+                <option key={season} value={season}>
+                  Since {season}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       {activeView === 'league' ? (
@@ -347,7 +370,7 @@ export function DraftIntelPage({
           </div>
           <PatternGrid patterns={filteredLeaguePatterns} />
         </section>
-      ) : (
+      ) : activeView === 'teams' ? (
         <section aria-labelledby="team-patterns-heading">
           <div className="mb-4">
             <h2 id="team-patterns-heading" className="text-xl font-bold">
@@ -416,15 +439,23 @@ export function DraftIntelPage({
             </div>
           )}
         </section>
+      ) : (
+        <KeeperAdjustedAdpPanel
+          {...keeperAdpPanelProps}
+          storedSeason={currentDraft}
+          selectedRosterId={scoutRosterId}
+        />
       )}
 
-      <div className="alert mt-6 border border-base-300 bg-base-100 text-sm">
-        <span>
-          Keeper Designations and the forced 2024-2025 IDP rounds are excluded. IDP evidence begins
-          with the completed 2026 draft. Rookie tendency is not scored because the stored draft
-          archive does not preserve rookie status.
-        </span>
-      </div>
+      {activeView !== 'keeper-adp' && (
+        <div className="alert mt-6 border border-base-300 bg-base-100 text-sm">
+          <span>
+            Keeper Designations and the forced 2024-2025 IDP rounds are excluded. IDP evidence
+            begins with the completed 2026 draft. Rookie tendency is not scored because the stored
+            draft archive does not preserve rookie status.
+          </span>
+        </div>
+      )}
 
       {showOnboarding && (
         <div

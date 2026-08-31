@@ -41,8 +41,16 @@ A Draft Selection of one defender at DL, LB, or DB rather than a team DEF. Grund
 _Avoid_: Team DEF, unconstrained 2024-2025 draft habit
 
 **Draft Intel**:
-A private scouting view of repeatable Grundle League and Team habits found in completed Canonical Drafts.
-_Avoid_: Prediction, mock draft
+The private suite of Grundle League draft-preparation tools, including historical pattern analysis and league-specific ADP analysis.
+_Avoid_: Public dashboard feature
+
+**Baseline ADP**:
+An external market estimate of when a player would be selected before Grundle League Keeper Designations change the available player pool and draftboard.
+_Avoid_: Keeper-Adjusted ADP, keeper cost
+
+**Keeper-Adjusted ADP**:
+The estimated draft position of an available player after accounting for both higher-ranked Keeper Designations removed from the player pool and the exact draft picks those keepers occupy.
+_Avoid_: Baseline ADP, observed mock ADP, keeper cost
 
 **Official Playoffs**:
 The championship and consolation brackets configured by Sleeper and used to determine the league's final standings.

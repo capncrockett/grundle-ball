@@ -99,8 +99,8 @@ frontend/
 │   │   └── ThemeSelector.tsx
 │   ├── config/league.ts               # Shared 2026 league ID and playoff weeks
 │   ├── content/                        # Constitution Markdown + parser
-│   ├── data/                           # Checked-in matchup/draft history + helpers
-│   ├── draftIntel/                     # Local-only draft-pattern analysis
+│   ├── data/                           # Checked-in history, timestamped UDK ADP, and helpers
+│   ├── draftIntel/                     # Local-only patterns and Keeper-Adjusted ADP
 │   ├── models/fantasy.ts              # Internal team/matchup/season models
 │   ├── pages/                          # Route components and insight logic
 │   ├── sleeperBracket/                 # Official bracket resolution/types
@@ -119,7 +119,7 @@ frontend/
 - `/playoffs` shows Sleeper's official winners and consolation brackets.
 - `/matchups` shows a selectable week of scores and finished-starter counts.
 - `/history` shows canonical annual draftboards and Team-specific keeper history.
-- `/local/draft-intel` analyzes completed drafts for league and Team patterns. Vite includes this route only in the local development build, and the app also requires a localhost browser origin.
+- `/local/draft-intel` provides completed-draft patterns and Keeper-Adjusted ADP. Vite includes this route only in the local development build, and the app also requires a localhost browser origin.
 - `/constitution` renders the current Markdown constitution and links the hosted review-draft PDF.
 - `/beta/grundle-bowl` redirects to `/beta/grundle-bowl/live`.
 - `/beta/grundle-bowl/live` applies real playoff outcomes to the custom Beta bracket.
@@ -172,13 +172,27 @@ The archive follows `previous_league_id` and uses each league record's `draft_id
 
 ### Local Draft Intel
 
+Historical patterns:
+
 1. Import completed seasons from `src/data/draftHistoryStore.json`.
 2. Exclude Keeper Designations, the locally selected user's Team, and constrained 2024-2025 IDP selections.
 3. Derive league-wide and Team-level roster construction, timing, opening-round, and NFL-team affinity patterns.
 4. Label signals from fewer than three applicable drafts as emerging.
 5. Sort by fantasy relevance before confidence: RB/WR, IDP, QB/TE, NFL-team affinity, then K/DEF.
 
+Keeper-Adjusted ADP:
+
+1. Import the timestamped Fantasy Footballers UDK ADP Comparison CSV and convert its 12-Team `Avg` round-pick values to overall picks.
+2. Refresh the current canonical Sleeper draft through the same normalization used by History.
+3. Resolve UDK names to Sleeper player IDs by normalized name and position, using NFL Team only to disambiguate.
+4. Remove Keeper Designations from the player pool, mark their exact picks occupied, and map each available player's compressed rank onto the open slots.
+5. Reuse the browser-local Team selection to show that Team's open standard-snake picks.
+
+The pure calculator in `draftIntel/keeperAdjustedAdp.ts` has no Sleeper or CSV dependency. Baseline ADP and Keeper-Adjusted ADP are displayed separately. Rows beyond the finite draftboard remain outside the board instead of being capped or extrapolated.
+
 The route and navigation are compiled only for `vite serve` and require a localhost origin at runtime. They are absent from Vercel and other production builds. This is a deployment visibility boundary, not user authentication. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
+
+To refresh the UDK source, add a newly exported CSV under `src/data/adp/` with a `YYYY-MM-DD_HH-mm-ss_TZ` timestamp in its filename, update `src/data/udkAdpSource.ts`, and run the UDK parser, Keeper-Adjusted ADP, typecheck, and production-boundary validations. Do not replace the UDK `Avg` values with Sleeper player search rank.
 
 ### Grundle Bowl Beta
 
@@ -296,6 +310,7 @@ The current suite includes:
 - Component tests for Beta bracket grid/tiles and matchup cards.
 - Page integration tests for Standings, Matchups, official Playoffs, both Beta views, and Constitution, including representative loading/error paths.
 - History page integration tests for season switching, draftboard keeper markers, current Team designation cards, and the keeper ledger.
+- Keeper-Adjusted ADP unit tests for deterministic board mapping plus UDK ingestion and Draft Intel component coverage.
 - App routing/navigation tests and Playwright desktop/mobile smoke, preseason standings, matchup, and theme flows.
 - A Playwright production-boundary project that builds and serves the app, then verifies Draft Intel is absent.
 

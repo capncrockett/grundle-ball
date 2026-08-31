@@ -1,16 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  getDraft,
-  getDraftPicks,
-  getLeague,
-  getLeagueRosters,
-  getLeagueUsers,
-} from '../api/sleeper';
 import { DraftBoard } from '../components/history/DraftBoard';
 import { KeeperHistory } from '../components/history/KeeperHistory';
 import { LEAGUE_ID } from '../config/league';
+import { loadCurrentDraftSeason } from '../data/currentDraft';
 import { DRAFT_HISTORY } from '../data/draftHistory';
-import { buildDraftHistorySeason, mergeLiveDraftSeason } from '../data/draftHistoryTransforms';
+import { mergeLiveDraftSeason } from '../data/draftHistoryTransforms';
 import type { DraftHistorySeason, DraftHistorySnapshot } from '../data/draftHistoryTypes';
 import { findKeeperRuleViolations } from '../data/keeperRuleValidation';
 
@@ -50,14 +44,7 @@ export function HistoryPage({
       try {
         setIsRefreshing(true);
         setLiveError(null);
-        const league = await getLeague(LEAGUE_ID);
-        const [draft, picks, users, rosters] = await Promise.all([
-          getDraft(league.draft_id),
-          getDraftPicks(league.draft_id),
-          getLeagueUsers(league.league_id),
-          getLeagueRosters(league.league_id),
-        ]);
-        const liveSeason = buildDraftHistorySeason(league, draft, picks, users, rosters);
+        const liveSeason = await loadCurrentDraftSeason(LEAGUE_ID);
         setHistory((current) => mergeLiveDraftSeason(current, liveSeason));
       } catch (error) {
         setLiveError(error instanceof Error ? error.message : 'Unknown Sleeper error');

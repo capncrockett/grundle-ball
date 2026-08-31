@@ -1,0 +1,420 @@
+import { useEffect, useMemo, useState } from 'react';
+import { getAllPlayers, type SleeperPlayer } from '../../api/sleeper';
+import { LEAGUE_ID } from '../../config/league';
+import { loadCurrentDraftSeason } from '../../data/currentDraft';
+import type { DraftHistorySeason } from '../../data/draftHistoryTypes';
+import { UDK_ADP_SOURCE, type UdkAdpSource } from '../../data/udkAdpSource';
+import {
+  calculateKeeperAdjustedAdp,
+  getOpenDraftPicksForRoster,
+  type DraftPosition,
+} from '../../draftIntel/keeperAdjustedAdp';
+import { buildKeeperAdjustedDraftInput } from '../../draftIntel/keeperAdjustedDraftInput';
+import { parseUdkAdpCsv, resolveUdkAdpPlayers } from '../../draftIntel/udkAdp';
+
+type SleeperPlayerMap = Record<string, SleeperPlayer>;
+
+export type KeeperAdjustedAdpPanelProps = {
+  storedSeason?: DraftHistorySeason;
+  selectedRosterId: number | null;
+  source?: UdkAdpSource;
+  refreshLive?: boolean;
+  initialSleeperPlayers?: SleeperPlayerMap;
+  loadLiveSeason?: () => Promise<DraftHistorySeason>;
+  loadSleeperPlayers?: () => Promise<SleeperPlayerMap>;
+};
+
+const defaultLoadLiveSeason = () => loadCurrentDraftSeason(LEAGUE_ID);
+const defaultLoadSleeperPlayers = () => getAllPlayers();
+
+const formatNumber = (value: number): string =>
+  new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(
+    value,
+  );
+
+const formatRoundPick = ({ lower, upper }: DraftPosition): string => {
+  const format = (round: number, pick: number) =>
+    `${round.toString()}.${Math.round(pick).toString().padStart(2, '0')}`;
+  const lowerLabel = format(lower.round, lower.pickInRound);
+  const upperLabel = format(upper.round, upper.pickInRound);
+  return lowerLabel === upperLabel ? lowerLabel : `${lowerLabel}-${upperLabel}`;
+};
+
+const formatSourceTime = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(date);
+};
+
+const positionBadgeClass: Record<string, string> = {
+  QB: 'badge-info',
+  RB: 'badge-success',
+  WR: 'badge-warning',
+  TE: 'badge-secondary',
+};
+
+export function KeeperAdjustedAdpPanel({
+  storedSeason,
+  selectedRosterId,
+  source = UDK_ADP_SOURCE,
+  refreshLive = true,
+  initialSleeperPlayers,
+  loadLiveSeason = defaultLoadLiveSeason,
+  loadSleeperPlayers = defaultLoadSleeperPlayers,
+}: KeeperAdjustedAdpPanelProps) {
+  const [season, setSeason] = useState(storedSeason);
+  const [sleeperPlayers, setSleeperPlayers] = useState<SleeperPlayerMap | null>(
+    initialSleeperPlayers ?? null,
+  );
+  const [isLoading, setIsLoading] = useState(refreshLive || initialSleeperPlayers === undefined);
+  const [fatalError, setFatalError] = useState<string | null>(null);
+  const [liveWarning, setLiveWarning] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [position, setPosition] = useState('ALL');
+  const [showOutsideBoard, setShowOutsideBoard] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadData() {
+      setIsLoading(true);
+      setFatalError(null);
+      setLiveWarning(null);
+
+      const [playerResult, seasonResult] = await Promise.allSettled([
+        initialSleeperPlayers ? Promise.resolve(initialSleeperPlayers) : loadSleeperPlayers(),
+        refreshLive ? loadLiveSeason() : Promise.resolve(storedSeason),
+      ]);
+      if (!active) return;
+
+      if (playerResult.status === 'rejected') {
+        setFatalError(
+          `Sleeper player identity refresh failed: ${
+            playerResult.reason instanceof Error
+              ? playerResult.reason.message
+              : String(playerResult.reason)
+          }`,
+        );
+      } else {
+        setSleeperPlayers(playerResult.value);
+      }
+
+      if (seasonResult.status === 'fulfilled' && seasonResult.value) {
+        setSeason(seasonResult.value);
+      } else if (storedSeason) {
+        const reason =
+          seasonResult.status === 'rejected'
+            ? seasonResult.reason instanceof Error
+              ? seasonResult.reason.message
+              : String(seasonResult.reason)
+            : 'No live draft was returned';
+        setSeason(storedSeason);
+        setLiveWarning(
+          `Live keeper refresh failed. Using the stored ${storedSeason.season} draft: ${reason}`,
+        );
+      } else {
+        setFatalError('No current draft configuration is available');
+      }
+      setIsLoading(false);
+    }
+
+    void loadData();
+    return () => {
+      active = false;
+    };
+  }, [initialSleeperPlayers, loadLiveSeason, loadSleeperPlayers, refreshLive, storedSeason]);
+
+  const model = useMemo(() => {
+    if (!season || !sleeperPlayers) return null;
+    try {
+      const parsed = parseUdkAdpCsv(source.csv, source.teamCount);
+      const resolved = resolveUdkAdpPlayers(parsed.rows, sleeperPlayers);
+      const draftInput = buildKeeperAdjustedDraftInput(season);
+      const calculation = calculateKeeperAdjustedAdp(
+        resolved.players,
+        draftInput.keepers,
+        draftInput.config,
+      );
+      return { parsed, resolved, draftInput, calculation, error: null };
+    } catch (error) {
+      return {
+        parsed: null,
+        resolved: null,
+        draftInput: null,
+        calculation: null,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }, [season, sleeperPlayers, source]);
+
+  const positions = useMemo(
+    () =>
+      model?.calculation
+        ? Array.from(new Set(model.calculation.players.map((player) => player.position))).sort()
+        : [],
+    [model],
+  );
+  const filteredPlayers = useMemo(() => {
+    if (!model?.calculation) return [];
+    const normalizedSearch = search.trim().toLowerCase();
+    return model.calculation.players.filter((player) => {
+      if (!showOutsideBoard && player.keeperAdjustedAdp === null) return false;
+      if (position !== 'ALL' && player.position !== position) return false;
+      if (!normalizedSearch) return true;
+      return `${player.playerName} ${player.nflTeam ?? ''} ${player.position}`
+        .toLowerCase()
+        .includes(normalizedSearch);
+    });
+  }, [model, position, search, showOutsideBoard]);
+
+  const myOpenPicks =
+    model?.calculation && selectedRosterId !== null
+      ? getOpenDraftPicksForRoster(model.calculation.board, selectedRosterId)
+      : [];
+  const inBoardCount =
+    model?.calculation?.players.filter((player) => player.keeperAdjustedAdp !== null).length ?? 0;
+
+  return (
+    <section aria-labelledby="keeper-adjusted-adp-heading">
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 id="keeper-adjusted-adp-heading" className="text-2xl font-black">
+            Keeper-Adjusted ADP
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm text-base-content/60">
+            Maps the UDK Baseline ADP pool onto this league's open draft slots. Negative shifts mean
+            the player moves earlier.
+          </p>
+        </div>
+        <div className="rounded-box border border-base-300 bg-base-100 px-3 py-2 text-xs text-base-content/60">
+          <div className="font-semibold text-base-content/80">{source.name}</div>
+          <div>
+            {source.column} column - captured {formatSourceTime(source.capturedAt)}
+          </div>
+        </div>
+      </div>
+
+      {isLoading && (
+        <div className="flex items-center gap-3 rounded-box border border-base-300 bg-base-100 p-5">
+          <span className="loading loading-spinner loading-sm" />
+          <span>Refreshing Sleeper keepers and player identities...</span>
+        </div>
+      )}
+
+      {liveWarning && !isLoading && (
+        <div className="alert alert-warning mb-4">
+          <span>{liveWarning}</span>
+        </div>
+      )}
+
+      {fatalError && !isLoading && (
+        <div className="alert alert-error">
+          <span>{fatalError}</span>
+        </div>
+      )}
+
+      {!isLoading && model?.error && (
+        <div className="alert alert-error">
+          <span>Keeper-Adjusted ADP could not be calculated: {model.error}</span>
+        </div>
+      )}
+
+      {!isLoading && model?.calculation && (
+        <>
+          <section
+            className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+            aria-label="Keeper ADP coverage"
+          >
+            <div className="stat rounded-box border border-base-300 bg-base-100 py-4 shadow-sm">
+              <div className="stat-title text-xs">Keepers locked</div>
+              <div className="stat-value text-2xl">
+                {model.draftInput.keepers.length.toString()}
+              </div>
+              <div className="stat-desc">Exact occupied picks</div>
+            </div>
+            <div className="stat rounded-box border border-base-300 bg-base-100 py-4 shadow-sm">
+              <div className="stat-title text-xs">Open draft slots</div>
+              <div className="stat-value text-2xl">
+                {model.calculation.openSlots.length.toString()}
+              </div>
+              <div className="stat-desc">
+                {model.draftInput.config.teamCount.toString()} Teams -{' '}
+                {model.draftInput.config.rounds.toString()} rounds
+              </div>
+            </div>
+            <div className="stat rounded-box border border-base-300 bg-base-100 py-4 shadow-sm">
+              <div className="stat-title text-xs">UDK players matched</div>
+              <div className="stat-value text-2xl">{model.resolved.players.length.toString()}</div>
+              <div className="stat-desc">Canonical Sleeper IDs</div>
+            </div>
+            <div className="stat rounded-box border border-base-300 bg-base-100 py-4 shadow-sm">
+              <div className="stat-title text-xs">Projected in board</div>
+              <div className="stat-value text-2xl">{inBoardCount.toString()}</div>
+              <div className="stat-desc">Available non-keepers</div>
+            </div>
+          </section>
+
+          {(model.parsed.skippedRows.length > 0 ||
+            model.resolved.unmatchedRows.length > 0 ||
+            model.resolved.ambiguousRows.length > 0) && (
+            <div className="alert mb-4 border border-warning/40 bg-warning/10 text-sm">
+              <span>
+                Source diagnostics: {model.parsed.skippedRows.length.toString()} rows have no usable
+                ADP, {model.resolved.unmatchedRows.length.toString()} did not match a Sleeper
+                player, and {model.resolved.ambiguousRows.length.toString()} were ambiguous. These
+                rows are excluded rather than guessed.
+              </span>
+            </div>
+          )}
+
+          <section
+            className="mb-5 rounded-box border border-base-300 bg-base-100 p-4"
+            aria-labelledby="my-open-picks-heading"
+          >
+            <h3 id="my-open-picks-heading" className="font-bold">
+              My open snake-draft picks
+            </h3>
+            {selectedRosterId === null ? (
+              <p className="mt-2 text-sm text-base-content/60">
+                Choose Your Team in Draft Intel onboarding to calculate your open picks.
+              </p>
+            ) : myOpenPicks.length === 0 ? (
+              <p className="mt-2 text-sm text-base-content/60">No open picks were found.</p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {myOpenPicks.map((pick) => (
+                  <span key={pick.overallPick} className="badge badge-outline gap-1 py-3 font-mono">
+                    {pick.round.toString()}.{pick.pickInRound.toString().padStart(2, '0')}
+                    <span className="opacity-55">#{pick.overallPick.toString()}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <div className="mb-3 grid gap-3 rounded-box border border-base-300 bg-base-100 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
+            <label className="form-control">
+              <span className="label py-1 text-xs font-semibold">Find player</span>
+              <input
+                className="input input-bordered input-sm"
+                type="search"
+                placeholder="Name, Team, or position"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                }}
+              />
+            </label>
+            <label className="form-control">
+              <span className="label py-1 text-xs font-semibold">Position</span>
+              <select
+                className="select select-bordered select-sm"
+                value={position}
+                onChange={(event) => {
+                  setPosition(event.target.value);
+                }}
+              >
+                <option value="ALL">All positions</option>
+                {positions.map((candidate) => (
+                  <option key={candidate} value={candidate}>
+                    {candidate}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="label cursor-pointer justify-start gap-2 rounded-box border border-base-300 px-3 py-2">
+              <input
+                type="checkbox"
+                className="toggle toggle-sm"
+                checked={showOutsideBoard}
+                onChange={(event) => {
+                  setShowOutsideBoard(event.target.checked);
+                }}
+              />
+              <span className="label-text whitespace-nowrap text-xs">Show outside board</span>
+            </label>
+          </div>
+
+          <div className="mb-2 text-xs text-base-content/55">
+            Showing {filteredPlayers.length.toString()} available players. UDK round-pick values are
+            converted to 12-Team overall picks before adjustment.
+          </div>
+
+          <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+            <table className="table table-sm">
+              <thead className="bg-base-200 text-xs">
+                <tr>
+                  <th>Player</th>
+                  <th className="text-right">Baseline ADP</th>
+                  <th className="text-right">Keeper ADP</th>
+                  <th className="text-right">ADP Shift</th>
+                  <th>Baseline R/P</th>
+                  <th>Adjusted R/P</th>
+                  <th className="text-right">Pool Rank</th>
+                  <th className="text-right">Keepers Ahead</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPlayers.map((player) => {
+                  const deltaClass =
+                    player.adpDelta === null || player.adpDelta === 0
+                      ? 'text-base-content/60'
+                      : player.adpDelta < 0
+                        ? 'text-success'
+                        : 'text-warning';
+                  return (
+                    <tr key={player.playerId}>
+                      <td>
+                        <div className="font-semibold">{player.playerName}</div>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/50">
+                          <span
+                            className={`badge badge-xs ${positionBadgeClass[player.position] ?? 'badge-ghost'}`}
+                          >
+                            {player.position}
+                          </span>
+                          {player.nflTeam ?? 'FA'}
+                        </div>
+                      </td>
+                      <td className="text-right font-mono">{formatNumber(player.baselineAdp)}</td>
+                      <td className="text-right font-mono font-bold">
+                        {player.keeperAdjustedAdp === null
+                          ? 'Outside board'
+                          : formatNumber(player.keeperAdjustedAdp)}
+                      </td>
+                      <td className={`text-right font-mono font-bold ${deltaClass}`}>
+                        {player.adpDelta === null
+                          ? '-'
+                          : `${player.adpDelta > 0 ? '+' : ''}${formatNumber(player.adpDelta)}`}
+                      </td>
+                      <td className="font-mono text-xs">
+                        {formatRoundPick(player.baselineRoundPick)}
+                      </td>
+                      <td className="font-mono text-xs">
+                        {player.adjustedRoundPick ? formatRoundPick(player.adjustedRoundPick) : '-'}
+                      </td>
+                      <td className="text-right font-mono">
+                        {formatNumber(player.availablePoolRank)}
+                      </td>
+                      <td className="text-right font-mono">
+                        {player.higherRankedKeepersRemoved.toString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+export default KeeperAdjustedAdpPanel;

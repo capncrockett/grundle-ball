@@ -1,4 +1,4 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,19 @@ const contentTypes: Record<string, string> = {
 
 let productionOrigin = '';
 let productionServer: Server | null = null;
+
+const readProductionText = async (directory: string): Promise<string> => {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const contents = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) return readProductionText(entryPath);
+      if (!/\.(?:css|html|js|json)$/.test(entry.name)) return '';
+      return readFile(entryPath, 'utf8');
+    }),
+  );
+  return contents.join('\n');
+};
 
 const startProductionServer = async (): Promise<string> => {
   productionServer = createServer((request, response) => {
@@ -93,4 +106,12 @@ test('production omits the local-only Draft Intel navigation and route', async (
   await expect(page.getByRole('banner')).toBeVisible();
   await expect(page.getByRole('heading', { name: /draft intel/i })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /draft intel/i })).toHaveCount(0);
+});
+
+test('production output omits the local-only UDK source and Keeper-Adjusted ADP feature', async () => {
+  const productionText = await readProductionText(distRoot);
+
+  expect(productionText).not.toContain('Keeper-Adjusted ADP');
+  expect(productionText).not.toContain('Fantasy Footballers UDK ADP Comparison');
+  expect(productionText).not.toContain('2026-08-31T12:05:31-07:00');
 });

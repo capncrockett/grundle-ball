@@ -8,6 +8,7 @@ const config: Config = {
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.md\\?raw$': '<rootDir>/src/test/__mocks__/rawMarkdown.ts',
+    '\\.csv\\?raw$': '<rootDir>/src/test/__mocks__/rawCsv.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '@vercel/speed-insights/react': '<rootDir>/src/test/__mocks__/speedInsights.tsx',
   },
