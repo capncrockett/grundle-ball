@@ -190,6 +190,16 @@ Keeper-Adjusted ADP:
 
 The pure calculator in `draftIntel/keeperAdjustedAdp.ts` has no Sleeper or CSV dependency. Baseline ADP and Keeper-Adjusted ADP are displayed separately. Rows beyond the finite draftboard remain outside the board instead of being capped or extrapolated.
 
+Observed mock drafts:
+
+1. Use the selected Team's owner ID to fetch that user's Sleeper drafts and leagues for the current season.
+2. Treat completed drafts not attached to the user's current league list as candidates because Sleeper exposes no documented mock flag.
+3. Enable only complete snake drafts whose Team count, rounds, user slot, full pick count, and exact keeper placements match the current board.
+4. Auto-select compatible candidates while preserving manual selection; show incompatible candidates with validation reasons.
+5. Keep Observed Mock ADP separate and show mean, median, range, population standard deviation, observation count, and availability at each selected Team open pick.
+
+The pure analyzer in `draftIntel/mockDraftAnalyzer.ts` has no Sleeper dependency. Availability includes players selected exactly at the target pick and undrafted players. A draft shorter than the target pick does not enter that target's denominator.
+
 The route and navigation are compiled only for `vite serve` and require a localhost origin at runtime. They are absent from Vercel and other production builds. This is a deployment visibility boundary, not user authentication. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
 
 To refresh the UDK source, add a newly exported CSV under `src/data/adp/` with a `YYYY-MM-DD_HH-mm-ss_TZ` timestamp in its filename, update `src/data/udkAdpSource.ts`, and run the UDK parser, Keeper-Adjusted ADP, typecheck, and production-boundary validations. Do not replace the UDK `Avg` values with Sleeper player search rank.

@@ -52,6 +52,14 @@ _Avoid_: Keeper-Adjusted ADP, keeper cost
 The estimated draft position of an available player after accounting for both higher-ranked Keeper Designations removed from the player pool and the exact draft picks those keepers occupy.
 _Avoid_: Baseline ADP, observed mock ADP, keeper cost
 
+**Observed Mock ADP**:
+The descriptive mean overall pick for a player across the selected compatible Sleeper mock drafts in which that player was selected.
+_Avoid_: Baseline ADP, Keeper-Adjusted ADP, prediction
+
+**Mock Availability**:
+The count and percentage of selected compatible Sleeper mock drafts in which a player remains available when one of the selected Team's open picks begins.
+_Avoid_: guaranteed availability, predicted availability
+
 **Official Playoffs**:
 The championship and consolation brackets configured by Sleeper and used to determine the league's final standings.
 _Avoid_: Grundle Bowl, Keeper Bowl Playoffs

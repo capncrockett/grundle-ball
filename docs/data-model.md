@@ -172,3 +172,15 @@ The timestamped UDK ADP Comparison CSV supplies the `Avg` column in 12-Team roun
 The calculation removes Keeper Designations from the Baseline ADP pool, subtracts only higher-ranked keepers from each available player's pool rank, marks exact keeper picks occupied, and maps the resulting rank onto the ordered open draft slots. Decimal ranks use linear interpolation between adjacent open slots. A result beyond the finite board is `null`, and `adpDelta` is `keeperAdjustedAdp - baselineAdp`, so a negative value means earlier.
 
 The selected Team's open picks are the standard snake slots assigned to its Sleeper roster ID, excluding its keeper-occupied slots. This is nominal draft-slot ownership and does not infer traded open-pick ownership.
+
+### Observed mock drafts
+
+`draftIntel/mockDraftAnalyzer.ts` defines source-independent Phase 2 models:
+
+- `MockDraftSample` identifies one selected draft, its board length, and player selections by overall pick.
+- `MockDraftPlayerAnalysis` keeps selection count, mean, median, earliest, latest, population standard deviation, and availability results.
+- `MockDraftAvailability` records the eligible sample count and the count and percentage still available at one overall pick.
+
+A player selected exactly at the Team's pick counts as available when that pick begins. An undrafted player also counts as available. Drafts shorter than a requested pick are excluded from that pick's denominator. Descriptive statistics include only mocks in which the player was selected, while `mockCount` and the selected-mock total expose missing observations.
+
+`draftIntel/sleeperMockDrafts.ts` adapts Sleeper responses into these pure samples. A candidate is selectable only when it is a complete snake draft with the current Team count, round count, user draft slot, full pick count, and every current Keeper Designation at its exact occupied pick.

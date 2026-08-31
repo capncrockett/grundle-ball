@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type { SleeperPlayer } from '../../api/sleeper';
 import type { DraftHistoryPick, DraftHistorySeason } from '../../data/draftHistoryTypes';
 import type { UdkAdpSource } from '../../data/udkAdpSource';
+import type { SleeperMockDraftCandidate } from '../../draftIntel/sleeperMockDrafts';
 import { KeeperAdjustedAdpPanel } from './KeeperAdjustedAdpPanel';
 
 const source: UdkAdpSource = {
@@ -93,6 +94,31 @@ const season: DraftHistorySeason = {
   ],
 };
 
+const mockCandidate = (
+  draftId: string,
+  createdAt: number,
+  picks: Array<{ playerId: string; pickNo: number }>,
+): SleeperMockDraftCandidate => ({
+  draftId,
+  leagueId: `mock-league-${draftId}`,
+  name: `Post-Keeper ${draftId}`,
+  createdAt,
+  teamCount: 4,
+  rounds: 4,
+  draftSlot: 2,
+  compatible: true,
+  compatibilityIssues: [],
+  sample: { draftId, totalPicks: 16, picks },
+});
+
+const mockCandidates = [
+  mockCandidate('Mock One', 1, [
+    { playerId: 'available-4', pickNo: 3 },
+    { playerId: 'available-6', pickNo: 8 },
+  ]),
+  mockCandidate('Mock Two', 2, [{ playerId: 'available-4', pickNo: 5 }]),
+];
+
 describe('KeeperAdjustedAdpPanel', () => {
   it('shows deterministic keeper adjustment and the selected Team open picks', async () => {
     const user = userEvent.setup();
@@ -145,5 +171,37 @@ describe('KeeperAdjustedAdpPanel', () => {
     expect(
       await screen.findByText(/Keeper keeper-late is missing from the baseline ADP source/),
     ).toBeInTheDocument();
+  });
+
+  it('keeps observed mock results separate and shows availability at each open pick', async () => {
+    const user = userEvent.setup();
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        refreshLive={false}
+        refreshMocks={false}
+        initialSleeperPlayers={sleeperPlayers}
+        initialMockDraftCandidates={mockCandidates}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Post-Keeper Mock Drafts' })).toBeVisible();
+    expect(screen.getByText(/2 selected of 2 compatible/)).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: 'Observed Mock ADP' })).toBeVisible();
+
+    const row = screen.getByRole('row', { name: /Available Four/ });
+    const cells = within(row).getAllByRole('cell');
+    expect(cells[8]).toHaveTextContent('4.0');
+    expect(cells[9]).toHaveTextContent('Median 4.0 - Range 3.0-5.0 - SD 1.0');
+    expect(cells[10]).toHaveTextContent('2 / 2');
+    expect(cells[11]).toHaveTextContent('2 / 2');
+    expect(cells[11]).toHaveTextContent('100.0%');
+    expect(cells[12]).toHaveTextContent('0 / 2');
+
+    await user.click(screen.getByRole('checkbox', { name: /Post-Keeper Mock Two/ }));
+    expect(within(row).getAllByRole('cell')[8]).toHaveTextContent('3.0');
+    expect(screen.getByText(/1 selected of 2 compatible/)).toBeVisible();
   });
 });

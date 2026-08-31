@@ -114,4 +114,6 @@ test('production output omits the local-only UDK source and Keeper-Adjusted ADP 
   expect(productionText).not.toContain('Keeper-Adjusted ADP');
   expect(productionText).not.toContain('Fantasy Footballers UDK ADP Comparison');
   expect(productionText).not.toContain('2026-08-31T12:05:31-07:00');
+  expect(productionText).not.toContain('Post-Keeper Mock Drafts');
+  expect(productionText).not.toContain('Observed Mock ADP');
 });

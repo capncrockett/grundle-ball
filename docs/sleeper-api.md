@@ -12,24 +12,32 @@ https://api.sleeper.app/v1
 
 ## Sleeper endpoints in use
 
-| Purpose                      | Path                                  | Client function              |
-| ---------------------------- | ------------------------------------- | ---------------------------- |
-| League metadata/settings     | `/league/<league_id>`                 | `getLeague()`                |
-| Rosters                      | `/league/<league_id>/rosters`         | `getLeagueRosters()`         |
-| Users/managers               | `/league/<league_id>/users`           | `getLeagueUsers()`           |
-| Weekly matchups              | `/league/<league_id>/matchups/<week>` | `getLeagueMatchupsForWeek()` |
-| Official winners bracket     | `/league/<league_id>/winners_bracket` | `getWinnersBracket()`        |
-| Official consolation bracket | `/league/<league_id>/losers_bracket`  | `getLosersBracket()`         |
-| Canonical draft              | `/draft/<draft_id>`                   | `getDraft()`                 |
-| Draft picks and keepers      | `/draft/<draft_id>/picks`             | `getDraftPicks()`            |
-| NFL state                    | `/state/nfl`                          | `getNFLState()`              |
-| All NFL players              | `/players/nfl`                        | `getAllPlayers()`            |
+| Purpose                      | Path                                   | Client function              |
+| ---------------------------- | -------------------------------------- | ---------------------------- |
+| League metadata/settings     | `/league/<league_id>`                  | `getLeague()`                |
+| Rosters                      | `/league/<league_id>/rosters`          | `getLeagueRosters()`         |
+| Users/managers               | `/league/<league_id>/users`            | `getLeagueUsers()`           |
+| Weekly matchups              | `/league/<league_id>/matchups/<week>`  | `getLeagueMatchupsForWeek()` |
+| Official winners bracket     | `/league/<league_id>/winners_bracket`  | `getWinnersBracket()`        |
+| Official consolation bracket | `/league/<league_id>/losers_bracket`   | `getLosersBracket()`         |
+| User drafts by season        | `/user/<user_id>/drafts/nfl/<season>`  | `getUserDrafts()`            |
+| User leagues by season       | `/user/<user_id>/leagues/nfl/<season>` | `getUserLeagues()`           |
+| Canonical draft              | `/draft/<draft_id>`                    | `getDraft()`                 |
+| Draft picks and keepers      | `/draft/<draft_id>/picks`              | `getDraftPicks()`            |
+| NFL state                    | `/state/nfl`                           | `getNFLState()`              |
+| All NFL players              | `/players/nfl`                         | `getAllPlayers()`            |
 
 The official `/playoffs` page resolves and renders the two bracket responses as Sleeper provides them. It does not apply the Grundle Bowl Beta's Champ Bowl / Keeper Bowl / Toilet Bowl routing rules.
 
 The `/history` page follows each league's `previous_league_id` and uses that league record's canonical `draft_id`. Draft picks marked `is_keeper: true` become keeper designations. Completed seasons are stored in `draftHistoryStore.json`; the active season is refreshed directly in the browser.
 
 The local Draft Intel Keeper-Adjusted ADP view uses the same canonical draft flow for current Keeper Designations and exact `pick_no` values. It also uses `/players/nfl` to resolve UDK names to canonical Sleeper player IDs. Sleeper does not supply the Baseline ADP values for this view; those come from the timestamped local UDK CSV.
+
+### Mock-draft discovery
+
+Sleeper's official API documentation exposes user drafts, user leagues, draft metadata, and draft picks, but no mock-draft flag. Live investigation confirmed that the user-drafts endpoint can include completed drafts with no current league association and that their picks remain readable. Draft Intel treats these only as mock candidates.
+
+The adapter removes drafts whose `league_id` appears in the user's current-season league list or matches the canonical league. It fetches picks for the remaining candidates and requires an exact complete-board match before enabling selection. The UI keeps incompatible candidates visible with validation reasons and never blends mock observations into Baseline ADP or Keeper-Adjusted ADP.
 
 ## Projection endpoint present but unused
 

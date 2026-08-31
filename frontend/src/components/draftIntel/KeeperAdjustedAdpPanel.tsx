@@ -4,15 +4,25 @@ import { LEAGUE_ID } from '../../config/league';
 import { loadCurrentDraftSeason } from '../../data/currentDraft';
 import type { DraftHistorySeason } from '../../data/draftHistoryTypes';
 import { UDK_ADP_SOURCE, type UdkAdpSource } from '../../data/udkAdpSource';
+import { analyzeMockDrafts } from '../../draftIntel/mockDraftAnalyzer';
 import {
   calculateKeeperAdjustedAdp,
   getOpenDraftPicksForRoster,
   type DraftPosition,
 } from '../../draftIntel/keeperAdjustedAdp';
 import { buildKeeperAdjustedDraftInput } from '../../draftIntel/keeperAdjustedDraftInput';
+import {
+  loadSleeperMockDraftCandidates,
+  type LoadSleeperMockDraftCandidatesInput,
+  type SleeperMockDraftCandidate,
+} from '../../draftIntel/sleeperMockDrafts';
 import { parseUdkAdpCsv, resolveUdkAdpPlayers } from '../../draftIntel/udkAdp';
+import { MockDraftControls } from './MockDraftControls';
 
 type SleeperPlayerMap = Record<string, SleeperPlayer>;
+type MockCandidateLoader = (
+  input: LoadSleeperMockDraftCandidatesInput,
+) => Promise<SleeperMockDraftCandidate[]>;
 
 export type KeeperAdjustedAdpPanelProps = {
   storedSeason?: DraftHistorySeason;
@@ -20,12 +30,21 @@ export type KeeperAdjustedAdpPanelProps = {
   source?: UdkAdpSource;
   refreshLive?: boolean;
   initialSleeperPlayers?: SleeperPlayerMap;
+  initialMockDraftCandidates?: SleeperMockDraftCandidate[];
   loadLiveSeason?: () => Promise<DraftHistorySeason>;
   loadSleeperPlayers?: () => Promise<SleeperPlayerMap>;
+  loadMockCandidates?: MockCandidateLoader;
+  refreshMocks?: boolean;
 };
 
 const defaultLoadLiveSeason = () => loadCurrentDraftSeason(LEAGUE_ID);
 const defaultLoadSleeperPlayers = () => getAllPlayers();
+const defaultLoadMockCandidates: MockCandidateLoader = (input) =>
+  loadSleeperMockDraftCandidates(input);
+const selectableMockIds = (candidates: SleeperMockDraftCandidate[]): Set<string> =>
+  new Set(
+    candidates.filter((candidate) => candidate.compatible).map((candidate) => candidate.draftId),
+  );
 
 const formatNumber = (value: number): string =>
   new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(
@@ -66,8 +85,11 @@ export function KeeperAdjustedAdpPanel({
   source = UDK_ADP_SOURCE,
   refreshLive = true,
   initialSleeperPlayers,
+  initialMockDraftCandidates,
   loadLiveSeason = defaultLoadLiveSeason,
   loadSleeperPlayers = defaultLoadSleeperPlayers,
+  loadMockCandidates = defaultLoadMockCandidates,
+  refreshMocks = refreshLive,
 }: KeeperAdjustedAdpPanelProps) {
   const [season, setSeason] = useState(storedSeason);
   const [sleeperPlayers, setSleeperPlayers] = useState<SleeperPlayerMap | null>(
@@ -79,6 +101,15 @@ export function KeeperAdjustedAdpPanel({
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState('ALL');
   const [showOutsideBoard, setShowOutsideBoard] = useState(false);
+  const [mockCandidates, setMockCandidates] = useState<SleeperMockDraftCandidate[]>(
+    initialMockDraftCandidates ?? [],
+  );
+  const [selectedMockIds, setSelectedMockIds] = useState<Set<string>>(() =>
+    selectableMockIds(initialMockDraftCandidates ?? []),
+  );
+  const [isLoadingMocks, setIsLoadingMocks] = useState(false);
+  const [mockError, setMockError] = useState<string | null>(null);
+  const [mockRefreshToken, setMockRefreshToken] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -131,6 +162,61 @@ export function KeeperAdjustedAdpPanel({
     };
   }, [initialSleeperPlayers, loadLiveSeason, loadSleeperPlayers, refreshLive, storedSeason]);
 
+  useEffect(() => {
+    let active = true;
+
+    if (!refreshMocks || isLoading || !season || selectedRosterId === null) {
+      return () => {
+        active = false;
+      };
+    }
+
+    const targetSeason = season;
+    const team = targetSeason.teams.find((candidate) => candidate.rosterId === selectedRosterId);
+    const draftSlot = targetSeason.draftSlots.find(
+      (candidate) => candidate.rosterId === selectedRosterId,
+    )?.draftSlot;
+    if (!team || draftSlot === undefined) {
+      return () => {
+        active = false;
+      };
+    }
+    const criteria: LoadSleeperMockDraftCandidatesInput = {
+      userId: team.ownerId,
+      season: targetSeason.season,
+      teamCount: targetSeason.teamCount,
+      rounds: targetSeason.rounds,
+      draftSlot,
+      keepers: targetSeason.picks
+        .filter((pick) => pick.isKeeper)
+        .map((pick) => ({ playerId: pick.playerId, overallPick: pick.pickNo })),
+      knownLeagueIds: [targetSeason.leagueId],
+    };
+
+    async function loadMocks() {
+      setIsLoadingMocks(true);
+      setMockError(null);
+      try {
+        const candidates = await loadMockCandidates(criteria);
+        if (!active) return;
+        setMockCandidates(candidates);
+        setSelectedMockIds(selectableMockIds(candidates));
+      } catch (error) {
+        if (!active) return;
+        setMockError(
+          `Sleeper mock refresh failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      } finally {
+        if (active) setIsLoadingMocks(false);
+      }
+    }
+
+    void loadMocks();
+    return () => {
+      active = false;
+    };
+  }, [isLoading, loadMockCandidates, mockRefreshToken, refreshMocks, season, selectedRosterId]);
+
   const model = useMemo(() => {
     if (!season || !sleeperPlayers) return null;
     try {
@@ -178,6 +264,25 @@ export function KeeperAdjustedAdpPanel({
     model?.calculation && selectedRosterId !== null
       ? getOpenDraftPicksForRoster(model.calculation.board, selectedRosterId)
       : [];
+  const canLoadMocks =
+    season !== undefined &&
+    selectedRosterId !== null &&
+    season.teams.some((team) => team.rosterId === selectedRosterId) &&
+    season.draftSlots.some((slot) => slot.rosterId === selectedRosterId);
+  const selectedMockSamples = (canLoadMocks ? mockCandidates : [])
+    .filter((candidate) => candidate.compatible && selectedMockIds.has(candidate.draftId))
+    .map((candidate) => candidate.sample);
+  const mockAnalysis =
+    model?.calculation && selectedMockSamples.length > 0
+      ? analyzeMockDrafts(
+          model.calculation.players.map((player) => player.playerId),
+          selectedMockSamples,
+          myOpenPicks.map((pick) => pick.overallPick),
+        )
+      : null;
+  const mockAnalysisByPlayer = new Map(
+    mockAnalysis?.players.map((player) => [player.playerId, player]) ?? [],
+  );
   const inBoardCount =
     model?.calculation?.players.filter((player) => player.keeperAdjustedAdp !== null).length ?? 0;
 
@@ -299,6 +404,25 @@ export function KeeperAdjustedAdpPanel({
             )}
           </section>
 
+          <MockDraftControls
+            canLoad={canLoadMocks}
+            candidates={canLoadMocks ? mockCandidates : []}
+            selectedDraftIds={selectedMockIds}
+            isLoading={isLoadingMocks}
+            error={mockError}
+            onRefresh={() => {
+              setMockRefreshToken((current) => current + 1);
+            }}
+            onToggle={(draftId, selected) => {
+              setSelectedMockIds((current) => {
+                const next = new Set(current);
+                if (selected) next.add(draftId);
+                else next.delete(draftId);
+                return next;
+              });
+            }}
+          />
+
           <div className="mb-3 grid gap-3 rounded-box border border-base-300 bg-base-100 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
             <label className="form-control">
               <span className="label py-1 text-xs font-semibold">Find player</span>
@@ -359,10 +483,23 @@ export function KeeperAdjustedAdpPanel({
                   <th>Adjusted R/P</th>
                   <th className="text-right">Pool Rank</th>
                   <th className="text-right">Keepers Ahead</th>
+                  {mockAnalysis && (
+                    <>
+                      <th className="text-right">Observed Mock ADP</th>
+                      <th>Mock Detail</th>
+                      <th className="text-right">Mocks Sampled</th>
+                      {myOpenPicks.map((pick) => (
+                        <th key={pick.overallPick} className="text-right whitespace-nowrap">
+                          At {pick.round.toString()}.{pick.pickInRound.toString().padStart(2, '0')}
+                        </th>
+                      ))}
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {filteredPlayers.map((player) => {
+                  const mockStats = mockAnalysisByPlayer.get(player.playerId);
                   const deltaClass =
                     player.adpDelta === null || player.adpDelta === 0
                       ? 'text-base-content/60'
@@ -405,6 +542,52 @@ export function KeeperAdjustedAdpPanel({
                       <td className="text-right font-mono">
                         {player.higherRankedKeepersRemoved.toString()}
                       </td>
+                      {mockAnalysis && mockStats && (
+                        <>
+                          <td className="text-right font-mono font-bold">
+                            {mockStats.meanPick === null
+                              ? 'Undrafted'
+                              : formatNumber(mockStats.meanPick)}
+                          </td>
+                          <td className="whitespace-nowrap text-xs">
+                            {mockStats.medianPick === null ? (
+                              '-'
+                            ) : (
+                              <>
+                                Median {formatNumber(mockStats.medianPick)} - Range{' '}
+                                {formatNumber(mockStats.earliestPick ?? 0)}-
+                                {formatNumber(mockStats.latestPick ?? 0)} - SD{' '}
+                                {formatNumber(mockStats.standardDeviation ?? 0)}
+                              </>
+                            )}
+                          </td>
+                          <td className="text-right font-mono">
+                            {mockStats.mockCount.toString()} /{' '}
+                            {mockAnalysis.selectedMockCount.toString()}
+                          </td>
+                          {mockStats.availability.map((availability) => (
+                            <td
+                              key={availability.overallPick}
+                              className="text-right font-mono text-xs"
+                            >
+                              {availability.sampleCount === 0 ||
+                              availability.percentage === null ? (
+                                '-'
+                              ) : (
+                                <>
+                                  <div>
+                                    {availability.availableCount.toString()} /{' '}
+                                    {availability.sampleCount.toString()}
+                                  </div>
+                                  <div className="text-base-content/50">
+                                    {formatNumber(availability.percentage)}%
+                                  </div>
+                                </>
+                              )}
+                            </td>
+                          ))}
+                        </>
+                      )}
                     </tr>
                   );
                 })}

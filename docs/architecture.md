@@ -76,9 +76,18 @@ timestamped Fantasy Footballers UDK ADP CSV
   -> parseUdkAdpCsv() and resolveUdkAdpPlayers()
   -> calculateKeeperAdjustedAdp()
   -> available-player table and the selected Team's open picks
+
+selected Team owner ID
+  -> Sleeper user drafts + user leagues for the current season
+  -> completed unlinked draft candidates + their picks
+  -> exact board, draft-slot, and Keeper Designation compatibility checks
+  -> analyzeMockDrafts()
+  -> Observed Mock ADP and availability at the Team's open picks
 ```
 
-The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. Baseline ADP and Keeper-Adjusted ADP remain distinct values, and no mock-draft observation is included in Phase 1.
+The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer` is also source-independent and consumes only selected draft samples. Baseline ADP, Keeper-Adjusted ADP, and Observed Mock ADP remain separate values.
+
+Sleeper exposes no documented mock-draft flag. The adapter therefore presents completed user drafts that are not attached to the user's current-season league list as candidates, then permits selection only when draft size, snake type, user draft slot, completed pick count, and all current keeper placements match exactly. Incompatible candidates stay visible with reasons.
 
 ### Grundle Bowl Beta
 

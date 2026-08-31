@@ -73,6 +73,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
 - Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
 - Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, and Draft Intel presentation.
+- Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, Sleeper candidate filtering, exact compatibility checks, selection controls, and separate Observed Mock ADP presentation.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.
@@ -89,7 +90,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 ### Playwright
 
 - `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
-- `production-boundary.spec.ts`: the production build has no Draft Intel navigation or route, while local development retains the tool.
+- `production-boundary.spec.ts`: the production build has no Draft Intel navigation, route, UDK source, Keeper-Adjusted ADP, or mock-draft feature text, while local development retains the tool.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
 - `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
 - `theme.spec.ts`: theme selection and persistence across reloads.
