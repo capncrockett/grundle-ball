@@ -77,17 +77,18 @@ timestamped Fantasy Footballers UDK ADP CSV
   -> calculateKeeperAdjustedAdp()
   -> available-player table and the selected Team's open picks
 
-selected Team owner ID
-  -> Sleeper user drafts + user leagues for the current season
-  -> completed unlinked draft candidates + their picks
-  -> exact board, draft-slot, and Keeper Designation compatibility checks
+"Mock Drafts to include" URLs or IDs, seeded by postKeeperMockDraftSource.ts
+  + selected Team owner ID
+  + live canonical Keeper Designations
+  -> public Sleeper metadata and picks for each exact draft ID
+  -> league-mock, post-lock, creator, board, draft-slot, and Keeper Designation checks
   -> analyzeMockDrafts()
   -> Observed Mock ADP and availability at the Team's open picks
 ```
 
 The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer` is also source-independent and consumes only selected draft samples. Baseline ADP, Keeper-Adjusted ADP, and Observed Mock ADP remain separate values.
 
-Sleeper exposes no documented mock-draft flag. The adapter therefore presents completed user drafts that are not attached to the user's current-season league list as candidates, then permits selection only when draft size, snake type, user draft slot, completed pick count, and all current keeper placements match exactly. Incompatible candidates stay visible with reasons.
+Sleeper's public user-drafts endpoint does not list league-specific mocks. Its draftboards page uses an authenticated query, so Draft Intel does not attempt automatic discovery or handle Sleeper credentials. Instead, the local source seeds the exact approved post-lock batch, and the local-only field accepts replacement Sleeper draft URLs or bare IDs. Input is deduplicated in entry order before the adapter fetches only that exact set. The adapter permits selection only when league-mock metadata, creator, timestamp, draft size, snake type, user draft slot, completed pick count, and the complete current keeper set match exactly. Incompatible drafts stay visible with reasons.
 
 ### Grundle Bowl Beta
 

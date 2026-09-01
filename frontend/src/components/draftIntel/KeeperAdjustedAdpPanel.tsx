@@ -3,6 +3,10 @@ import { getAllPlayers, type SleeperPlayer } from '../../api/sleeper';
 import { LEAGUE_ID } from '../../config/league';
 import { loadCurrentDraftSeason } from '../../data/currentDraft';
 import type { DraftHistorySeason } from '../../data/draftHistoryTypes';
+import {
+  POST_KEEPER_MOCK_DRAFT_SOURCE,
+  type PostKeeperMockDraftSource,
+} from '../../data/postKeeperMockDraftSource';
 import { UDK_ADP_SOURCE, type UdkAdpSource } from '../../data/udkAdpSource';
 import { analyzeMockDrafts } from '../../draftIntel/mockDraftAnalyzer';
 import {
@@ -12,7 +16,9 @@ import {
 } from '../../draftIntel/keeperAdjustedAdp';
 import { buildKeeperAdjustedDraftInput } from '../../draftIntel/keeperAdjustedDraftInput';
 import {
+  formatSleeperMockDraftInput,
   loadSleeperMockDraftCandidates,
+  parseSleeperMockDraftInput,
   type LoadSleeperMockDraftCandidatesInput,
   type SleeperMockDraftCandidate,
 } from '../../draftIntel/sleeperMockDrafts';
@@ -28,6 +34,7 @@ export type KeeperAdjustedAdpPanelProps = {
   storedSeason?: DraftHistorySeason;
   selectedRosterId: number | null;
   source?: UdkAdpSource;
+  mockDraftSource?: PostKeeperMockDraftSource;
   refreshLive?: boolean;
   initialSleeperPlayers?: SleeperPlayerMap;
   initialMockDraftCandidates?: SleeperMockDraftCandidate[];
@@ -83,6 +90,7 @@ export function KeeperAdjustedAdpPanel({
   storedSeason,
   selectedRosterId,
   source = UDK_ADP_SOURCE,
+  mockDraftSource = POST_KEEPER_MOCK_DRAFT_SOURCE,
   refreshLive = true,
   initialSleeperPlayers,
   initialMockDraftCandidates,
@@ -110,6 +118,17 @@ export function KeeperAdjustedAdpPanel({
   const [isLoadingMocks, setIsLoadingMocks] = useState(false);
   const [mockError, setMockError] = useState<string | null>(null);
   const [mockRefreshToken, setMockRefreshToken] = useState(0);
+  const [mockDraftInput, setMockDraftInput] = useState(() =>
+    formatSleeperMockDraftInput(mockDraftSource.draftIds),
+  );
+  const [activeMockDraftIds, setActiveMockDraftIds] = useState<readonly string[]>(() => [
+    ...mockDraftSource.draftIds,
+  ]);
+  const [mockInputError, setMockInputError] = useState<string | null>(null);
+  const parsedMockDraftInput = useMemo(
+    () => parseSleeperMockDraftInput(mockDraftInput),
+    [mockDraftInput],
+  );
 
   useEffect(() => {
     let active = true;
@@ -165,7 +184,13 @@ export function KeeperAdjustedAdpPanel({
   useEffect(() => {
     let active = true;
 
-    if (!refreshMocks || isLoading || !season || selectedRosterId === null) {
+    if (
+      !refreshMocks ||
+      isLoading ||
+      !season ||
+      season.leagueId !== mockDraftSource.leagueId ||
+      selectedRosterId === null
+    ) {
       return () => {
         active = false;
       };
@@ -183,14 +208,15 @@ export function KeeperAdjustedAdpPanel({
     }
     const criteria: LoadSleeperMockDraftCandidatesInput = {
       userId: team.ownerId,
-      season: targetSeason.season,
+      leagueId: targetSeason.leagueId,
       teamCount: targetSeason.teamCount,
       rounds: targetSeason.rounds,
       draftSlot,
       keepers: targetSeason.picks
         .filter((pick) => pick.isKeeper)
         .map((pick) => ({ playerId: pick.playerId, overallPick: pick.pickNo })),
-      knownLeagueIds: [targetSeason.leagueId],
+      createdAtOrAfter: Date.parse(mockDraftSource.keeperLockedAt),
+      draftIds: activeMockDraftIds,
     };
 
     async function loadMocks() {
@@ -215,7 +241,16 @@ export function KeeperAdjustedAdpPanel({
     return () => {
       active = false;
     };
-  }, [isLoading, loadMockCandidates, mockRefreshToken, refreshMocks, season, selectedRosterId]);
+  }, [
+    isLoading,
+    activeMockDraftIds,
+    loadMockCandidates,
+    mockDraftSource,
+    mockRefreshToken,
+    refreshMocks,
+    season,
+    selectedRosterId,
+  ]);
 
   const model = useMemo(() => {
     if (!season || !sleeperPlayers) return null;
@@ -268,7 +303,8 @@ export function KeeperAdjustedAdpPanel({
     season !== undefined &&
     selectedRosterId !== null &&
     season.teams.some((team) => team.rosterId === selectedRosterId) &&
-    season.draftSlots.some((slot) => slot.rosterId === selectedRosterId);
+    season.draftSlots.some((slot) => slot.rosterId === selectedRosterId) &&
+    (!refreshMocks || season.leagueId === mockDraftSource.leagueId);
   const selectedMockSamples = (canLoadMocks ? mockCandidates : [])
     .filter((candidate) => candidate.compatible && selectedMockIds.has(candidate.draftId))
     .map((candidate) => candidate.sample);
@@ -406,11 +442,35 @@ export function KeeperAdjustedAdpPanel({
 
           <MockDraftControls
             canLoad={canLoadMocks}
+            expectedDraftCount={mockDraftSource.draftIds.length}
+            draftInput={mockDraftInput}
+            parsedDraftCount={parsedMockDraftInput.draftIds.length}
+            duplicateDraftCount={parsedMockDraftInput.duplicateDraftIds.length}
+            inputError={mockInputError}
             candidates={canLoadMocks ? mockCandidates : []}
             selectedDraftIds={selectedMockIds}
             isLoading={isLoadingMocks}
             error={mockError}
-            onRefresh={() => {
+            onDraftInputChange={(value) => {
+              setMockDraftInput(value);
+              setMockInputError(null);
+              setMockError(null);
+            }}
+            onLoad={() => {
+              if (parsedMockDraftInput.invalidEntries.length > 0) {
+                setMockInputError(
+                  `Invalid mock draft entry: ${parsedMockDraftInput.invalidEntries[0]}`,
+                );
+                return;
+              }
+              if (parsedMockDraftInput.draftIds.length === 0) {
+                setMockInputError('Enter at least one Sleeper mock draft URL or ID');
+                return;
+              }
+              setMockInputError(null);
+              setMockCandidates([]);
+              setSelectedMockIds(new Set());
+              setActiveMockDraftIds(parsedMockDraftInput.draftIds);
               setMockRefreshToken((current) => current + 1);
             }}
             onToggle={(draftId, selected) => {

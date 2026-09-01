@@ -195,10 +195,6 @@ export async function getLeague(leagueId: string): Promise<SleeperLeague> {
   return sleeperFetch<SleeperLeague>(`/league/${leagueId}`, true);
 }
 
-export async function getUserLeagues(userId: string, season: string): Promise<SleeperLeague[]> {
-  return sleeperFetch<SleeperLeague[]>(`/user/${userId}/leagues/nfl/${season}`, true);
-}
-
 export async function getLeagueUsers(leagueId: string): Promise<SleeperUser[]> {
   return sleeperFetch<SleeperUser[]>(`/league/${leagueId}/users`, true);
 }
@@ -228,10 +224,6 @@ export async function getLosersBracket(leagueId: string): Promise<SleeperPlayoff
 
 export async function getDraft(draftId: string): Promise<SleeperDraft> {
   return sleeperFetch<SleeperDraft>(`/draft/${draftId}`, true);
-}
-
-export async function getUserDrafts(userId: string, season: string): Promise<SleeperDraft[]> {
-  return sleeperFetch<SleeperDraft[]>(`/user/${userId}/drafts/nfl/${season}`, true);
 }
 
 export async function getDraftPicks(draftId: string): Promise<SleeperDraftPick[]> {

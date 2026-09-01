@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { SleeperPlayer } from '../../api/sleeper';
 import type { DraftHistoryPick, DraftHistorySeason } from '../../data/draftHistoryTypes';
@@ -203,5 +203,95 @@ describe('KeeperAdjustedAdpPanel', () => {
     await user.click(screen.getByRole('checkbox', { name: /Post-Keeper Mock Two/ }));
     expect(within(row).getAllByRole('cell')[8]).toHaveTextContent('3.0');
     expect(screen.getByText(/1 selected of 2 compatible/)).toBeVisible();
+  });
+
+  it('loads only the configured post-lock mock batch for the selected Team', async () => {
+    const loadMockCandidates = jest.fn(() => Promise.resolve([]));
+    const exactMockId = '1400197747742654464';
+
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        mockDraftSource={{
+          name: 'Test post-lock batch',
+          leagueId: season.leagueId,
+          keeperLockedAt: '1970-01-01T00:00:00.050Z',
+          batchCompletedAt: '1970-01-01T00:00:00.100Z',
+          draftIds: [exactMockId],
+        }}
+        refreshLive={false}
+        refreshMocks
+        initialSleeperPlayers={sleeperPlayers}
+        loadMockCandidates={loadMockCandidates}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(loadMockCandidates).toHaveBeenCalledWith({
+        userId: 'owner-2',
+        leagueId: season.leagueId,
+        teamCount: 4,
+        rounds: 4,
+        draftSlot: 2,
+        keepers: [
+          { playerId: 'keeper-early', overallPick: 4 },
+          { playerId: 'keeper-late', overallPick: 10 },
+        ],
+        createdAtOrAfter: 50,
+        draftIds: [exactMockId],
+      });
+    });
+  });
+
+  it('loads pasted Sleeper draft URLs and deduplicates them', async () => {
+    const user = userEvent.setup();
+    const firstDraftId = '1400197747742654464';
+    const secondDraftId = '1400197652271878144';
+    const loadMockCandidates = jest.fn(() => Promise.resolve([]));
+
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        mockDraftSource={{
+          name: 'Test post-lock batch',
+          leagueId: season.leagueId,
+          keeperLockedAt: '1970-01-01T00:00:00.050Z',
+          batchCompletedAt: '1970-01-01T00:00:00.100Z',
+          draftIds: [firstDraftId],
+        }}
+        refreshLive={false}
+        refreshMocks
+        initialSleeperPlayers={sleeperPlayers}
+        loadMockCandidates={loadMockCandidates}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(loadMockCandidates).toHaveBeenCalledTimes(1);
+    });
+
+    const draftInput = screen.getByRole('textbox', { name: 'Mock Drafts to include' });
+    await user.clear(draftInput);
+    await user.type(
+      draftInput,
+      [
+        `https://sleeper.com/draft/nfl/${firstDraftId}`,
+        `https://sleeper.com/draft/nfl/${secondDraftId}`,
+        firstDraftId,
+      ].join('\n'),
+    );
+
+    expect(screen.getByText('2 unique drafts entered - 1 duplicate ignored')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Load and validate' }));
+
+    await waitFor(() => {
+      expect(loadMockCandidates).toHaveBeenLastCalledWith(
+        expect.objectContaining({ draftIds: [firstDraftId, secondDraftId] }),
+      );
+    });
   });
 });
