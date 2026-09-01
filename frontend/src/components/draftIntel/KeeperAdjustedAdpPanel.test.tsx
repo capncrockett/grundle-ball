@@ -146,9 +146,21 @@ describe('KeeperAdjustedAdpPanel', () => {
 
     const adjustedRow = screen.getByRole('row', { name: /Available Four/ });
     const adjustedCells = within(adjustedRow).getAllByRole('cell');
-    expect(adjustedCells[1]).toHaveTextContent('4.0');
-    expect(adjustedCells[2]).toHaveTextContent('2.0');
+    expect(adjustedCells[1]).toHaveTextContent('1.04');
+    expect(adjustedCells[2]).toHaveTextContent('1.02');
     expect(adjustedCells[3]).toHaveTextContent('-2.0');
+    expect(screen.queryByRole('columnheader', { name: 'Baseline ADP' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Keeper ADP' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show details for Available Four' }));
+    const details = screen.getByRole('region', { name: 'Available Four details' });
+    expect(within(details).getByText('Baseline overall ADP').parentElement).toHaveTextContent(
+      '4.0',
+    );
+    expect(
+      within(details).getByText('Keeper-adjusted overall ADP').parentElement,
+    ).toHaveTextContent('2.0');
+    expect(within(details).getByText('Keepers ahead').parentElement).toHaveTextContent('2');
     expect(screen.queryByRole('row', { name: /Late Elite Keeper/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('row', { name: /Outside Player/ })).not.toBeInTheDocument();
 
@@ -193,15 +205,25 @@ describe('KeeperAdjustedAdpPanel', () => {
 
     const row = screen.getByRole('row', { name: /Available Four/ });
     const cells = within(row).getAllByRole('cell');
-    expect(cells[8]).toHaveTextContent('4.0');
-    expect(cells[9]).toHaveTextContent('Median 4.0 - Range 3.0-5.0 - SD 1.0');
-    expect(cells[10]).toHaveTextContent('2 / 2');
-    expect(cells[11]).toHaveTextContent('2 / 2');
-    expect(cells[11]).toHaveTextContent('100.0%');
-    expect(cells[12]).toHaveTextContent('0 / 2');
+    expect(cells[1]).toHaveTextContent('1.04');
+    expect(cells[2]).toHaveTextContent('1.02');
+    expect(cells[3]).toHaveTextContent('-2.0');
+    expect(cells[4]).toHaveTextContent('1.04');
+    expect(cells[5]).toHaveTextContent('Med 1.04 - Rng 1.03 to 2.01');
+    expect(screen.queryByRole('columnheader', { name: 'Mocks Sampled' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show details for Available Four' }));
+    const details = screen.getByRole('region', { name: 'Available Four details' });
+    expect(within(details).getByText('Mocks sampled').parentElement).toHaveTextContent('2 / 2');
+    expect(within(details).getByText('At 1.02').parentElement).toHaveTextContent(
+      '2 / 2 available - 100.0%',
+    );
+    expect(within(details).getByText('At 2.03').parentElement).toHaveTextContent(
+      '0 / 2 available - 0.0%',
+    );
 
     await user.click(screen.getByRole('checkbox', { name: /Post-Keeper Mock Two/ }));
-    expect(within(row).getAllByRole('cell')[8]).toHaveTextContent('3.0');
+    expect(within(row).getAllByRole('cell')[4]).toHaveTextContent('1.03');
     expect(screen.getByText(/1 selected of 2 compatible/)).toBeVisible();
   });
 

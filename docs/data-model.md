@@ -178,10 +178,10 @@ The selected Team's open picks are the standard snake slots assigned to its Slee
 `draftIntel/mockDraftAnalyzer.ts` defines source-independent Phase 2 models:
 
 - `MockDraftSample` identifies one selected draft, its board length, and player selections by overall pick.
-- `MockDraftPlayerAnalysis` keeps selection count, mean, median, earliest, latest, population standard deviation, and availability results.
+- `MockDraftPlayerAnalysis` keeps selection count, mean, median, earliest, latest, and availability results.
 - `MockDraftAvailability` records the eligible sample count and the count and percentage still available at one overall pick.
 
-A player selected exactly at the Team's pick counts as available when that pick begins. An undrafted player also counts as available. Drafts shorter than a requested pick are excluded from that pick's denominator. Descriptive statistics include only mocks in which the player was selected, while `mockCount` and the selected-mock total expose missing observations.
+A player selected exactly at the Team's pick counts as available when that pick begins. An undrafted player also counts as available. Drafts shorter than a requested pick are excluded from that pick's denominator. Descriptive statistics include only mocks in which the player was selected, while `mockCount` and the selected-mock total expose missing observations. The table rounds observed mean and median overall picks to the nearest slot for `round.pick` display, while range endpoints are exact slots shown with "to" between them.
 
 `data/postKeeperMockDraftSource.ts` records the exact 10-draft 2026 league-mock batch plus its keeper-lock cutoff and batch completion time. It seeds the local "Mock Drafts to include" field. `draftIntel/sleeperMockDrafts.ts` parses pasted Sleeper draft URLs or bare IDs, deduplicates them in entry order, loads only that exact set, and adapts their public Sleeper metadata and picks into pure samples.
 

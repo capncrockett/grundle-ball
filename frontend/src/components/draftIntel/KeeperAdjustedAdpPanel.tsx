@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { getAllPlayers, type SleeperPlayer } from '../../api/sleeper';
 import { LEAGUE_ID } from '../../config/league';
 import { loadCurrentDraftSeason } from '../../data/currentDraft';
@@ -23,6 +23,7 @@ import {
   type SleeperMockDraftCandidate,
 } from '../../draftIntel/sleeperMockDrafts';
 import { parseUdkAdpCsv, resolveUdkAdpPlayers } from '../../draftIntel/udkAdp';
+import { getRoundPick } from '../../utils/draftBoard';
 import { MockDraftControls } from './MockDraftControls';
 
 type SleeperPlayerMap = Record<string, SleeperPlayer>;
@@ -64,6 +65,11 @@ const formatRoundPick = ({ lower, upper }: DraftPosition): string => {
   const lowerLabel = format(lower.round, lower.pickInRound);
   const upperLabel = format(upper.round, upper.pickInRound);
   return lowerLabel === upperLabel ? lowerLabel : `${lowerLabel}-${upperLabel}`;
+};
+
+const formatOverallPickAsRoundPick = (overallPick: number, teamCount: number): string => {
+  const { round, pickInRound } = getRoundPick(Math.round(overallPick), teamCount);
+  return `${round.toString()}.${pickInRound.toString().padStart(2, '0')}`;
 };
 
 const formatSourceTime = (value: string): string => {
@@ -109,6 +115,7 @@ export function KeeperAdjustedAdpPanel({
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState('ALL');
   const [showOutsideBoard, setShowOutsideBoard] = useState(false);
+  const [expandedPlayerIds, setExpandedPlayerIds] = useState<Set<string>>(new Set());
   const [mockCandidates, setMockCandidates] = useState<SleeperMockDraftCandidate[]>(
     initialMockDraftCandidates ?? [],
   );
@@ -536,23 +543,22 @@ export function KeeperAdjustedAdpPanel({
               <thead className="bg-base-200 text-xs">
                 <tr>
                   <th>Player</th>
-                  <th className="text-right">Baseline ADP</th>
-                  <th className="text-right">Keeper ADP</th>
+                  <th className="text-right" title="Projected draft position before keepers">
+                    Baseline
+                  </th>
+                  <th className="text-right" title="Projected draft position after keepers">
+                    Adjusted
+                  </th>
                   <th className="text-right">ADP Shift</th>
-                  <th>Baseline R/P</th>
-                  <th>Adjusted R/P</th>
-                  <th className="text-right">Pool Rank</th>
-                  <th className="text-right">Keepers Ahead</th>
                   {mockAnalysis && (
                     <>
-                      <th className="text-right">Observed Mock ADP</th>
-                      <th>Mock Detail</th>
-                      <th className="text-right">Mocks Sampled</th>
-                      {myOpenPicks.map((pick) => (
-                        <th key={pick.overallPick} className="text-right whitespace-nowrap">
-                          At {pick.round.toString()}.{pick.pickInRound.toString().padStart(2, '0')}
-                        </th>
-                      ))}
+                      <th
+                        className="text-right"
+                        title="Average mock selection rounded to the nearest round.pick"
+                      >
+                        Observed Mock ADP
+                      </th>
+                      <th title="Median and range across selected mocks">Mock Detail</th>
                     </>
                   )}
                 </tr>
@@ -560,6 +566,8 @@ export function KeeperAdjustedAdpPanel({
               <tbody>
                 {filteredPlayers.map((player) => {
                   const mockStats = mockAnalysisByPlayer.get(player.playerId);
+                  const isExpanded = expandedPlayerIds.has(player.playerId);
+                  const detailsId = `keeper-adp-details-${player.playerId}`;
                   const deltaClass =
                     player.adpDelta === null || player.adpDelta === 0
                       ? 'text-base-content/60'
@@ -567,88 +575,185 @@ export function KeeperAdjustedAdpPanel({
                         ? 'text-success'
                         : 'text-warning';
                   return (
-                    <tr key={player.playerId}>
-                      <td>
-                        <div className="font-semibold">{player.playerName}</div>
-                        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/50">
-                          <span
-                            className={`badge badge-xs ${positionBadgeClass[player.position] ?? 'badge-ghost'}`}
-                          >
-                            {player.position}
-                          </span>
-                          {player.nflTeam ?? 'FA'}
-                        </div>
-                      </td>
-                      <td className="text-right font-mono">{formatNumber(player.baselineAdp)}</td>
-                      <td className="text-right font-mono font-bold">
-                        {player.keeperAdjustedAdp === null
-                          ? 'Outside board'
-                          : formatNumber(player.keeperAdjustedAdp)}
-                      </td>
-                      <td className={`text-right font-mono font-bold ${deltaClass}`}>
-                        {player.adpDelta === null
-                          ? '-'
-                          : `${player.adpDelta > 0 ? '+' : ''}${formatNumber(player.adpDelta)}`}
-                      </td>
-                      <td className="font-mono text-xs">
-                        {formatRoundPick(player.baselineRoundPick)}
-                      </td>
-                      <td className="font-mono text-xs">
-                        {player.adjustedRoundPick ? formatRoundPick(player.adjustedRoundPick) : '-'}
-                      </td>
-                      <td className="text-right font-mono">
-                        {formatNumber(player.availablePoolRank)}
-                      </td>
-                      <td className="text-right font-mono">
-                        {player.higherRankedKeepersRemoved.toString()}
-                      </td>
-                      {mockAnalysis && mockStats && (
-                        <>
-                          <td className="text-right font-mono font-bold">
-                            {mockStats.meanPick === null
-                              ? 'Undrafted'
-                              : formatNumber(mockStats.meanPick)}
-                          </td>
-                          <td className="whitespace-nowrap text-xs">
-                            {mockStats.medianPick === null ? (
-                              '-'
-                            ) : (
-                              <>
-                                Median {formatNumber(mockStats.medianPick)} - Range{' '}
-                                {formatNumber(mockStats.earliestPick ?? 0)}-
-                                {formatNumber(mockStats.latestPick ?? 0)} - SD{' '}
-                                {formatNumber(mockStats.standardDeviation ?? 0)}
-                              </>
-                            )}
-                          </td>
-                          <td className="text-right font-mono">
-                            {mockStats.mockCount.toString()} /{' '}
-                            {mockAnalysis.selectedMockCount.toString()}
-                          </td>
-                          {mockStats.availability.map((availability) => (
-                            <td
-                              key={availability.overallPick}
-                              className="text-right font-mono text-xs"
+                    <Fragment key={player.playerId}>
+                      <tr>
+                        <td>
+                          <div className="flex items-start gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs mt-0.5 h-6 min-h-6 w-6 px-0 font-mono"
+                              aria-expanded={isExpanded}
+                              aria-controls={detailsId}
+                              aria-label={`${isExpanded ? 'Hide' : 'Show'} details for ${player.playerName}`}
+                              onClick={() => {
+                                setExpandedPlayerIds((current) => {
+                                  const next = new Set(current);
+                                  if (next.has(player.playerId)) next.delete(player.playerId);
+                                  else next.add(player.playerId);
+                                  return next;
+                                });
+                              }}
                             >
-                              {availability.sampleCount === 0 ||
-                              availability.percentage === null ? (
+                              <span aria-hidden="true">{isExpanded ? '-' : '+'}</span>
+                            </button>
+                            <div>
+                              <div className="font-semibold">{player.playerName}</div>
+                              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/50">
+                                <span
+                                  className={`badge badge-xs ${positionBadgeClass[player.position] ?? 'badge-ghost'}`}
+                                >
+                                  {player.position}
+                                </span>
+                                {player.nflTeam ?? 'FA'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-right font-mono text-xs">
+                          {formatRoundPick(player.baselineRoundPick)}
+                        </td>
+                        <td className="text-right font-mono text-xs font-bold">
+                          {player.adjustedRoundPick
+                            ? formatRoundPick(player.adjustedRoundPick)
+                            : 'Outside board'}
+                        </td>
+                        <td className={`text-right font-mono font-bold ${deltaClass}`}>
+                          {player.adpDelta === null
+                            ? '-'
+                            : `${player.adpDelta > 0 ? '+' : ''}${formatNumber(player.adpDelta)}`}
+                        </td>
+                        {mockAnalysis && (
+                          <>
+                            <td className="text-right font-mono font-bold">
+                              {mockStats?.meanPick === null || mockStats?.meanPick === undefined
+                                ? 'Undrafted'
+                                : formatOverallPickAsRoundPick(
+                                    mockStats.meanPick,
+                                    model.draftInput.config.teamCount,
+                                  )}
+                            </td>
+                            <td className="whitespace-nowrap text-xs">
+                              {mockStats?.medianPick === null ||
+                              mockStats?.medianPick === undefined ? (
                                 '-'
                               ) : (
                                 <>
-                                  <div>
-                                    {availability.availableCount.toString()} /{' '}
-                                    {availability.sampleCount.toString()}
-                                  </div>
-                                  <div className="text-base-content/50">
-                                    {formatNumber(availability.percentage)}%
-                                  </div>
+                                  Med{' '}
+                                  {formatOverallPickAsRoundPick(
+                                    mockStats.medianPick,
+                                    model.draftInput.config.teamCount,
+                                  )}{' '}
+                                  - Rng{' '}
+                                  {formatOverallPickAsRoundPick(
+                                    mockStats.earliestPick ?? mockStats.medianPick,
+                                    model.draftInput.config.teamCount,
+                                  )}
+                                  {' to '}
+                                  {formatOverallPickAsRoundPick(
+                                    mockStats.latestPick ?? mockStats.medianPick,
+                                    model.draftInput.config.teamCount,
+                                  )}
                                 </>
                               )}
                             </td>
-                          ))}
-                        </>
+                          </>
+                        )}
+                      </tr>
+                      {isExpanded && (
+                        <tr className="bg-base-200/35">
+                          <td colSpan={mockAnalysis ? 6 : 4} className="p-0">
+                            <div
+                              id={detailsId}
+                              role="region"
+                              aria-label={`${player.playerName} details`}
+                              className="border-t border-base-300 px-4 py-3"
+                            >
+                              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                                <div className="rounded-box bg-base-100 px-3 py-2">
+                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                    Baseline overall ADP
+                                  </div>
+                                  <div className="font-mono font-bold">
+                                    {formatNumber(player.baselineAdp)}
+                                  </div>
+                                </div>
+                                <div className="rounded-box bg-base-100 px-3 py-2">
+                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                    Keeper-adjusted overall ADP
+                                  </div>
+                                  <div className="font-mono font-bold">
+                                    {player.keeperAdjustedAdp === null
+                                      ? 'Outside board'
+                                      : formatNumber(player.keeperAdjustedAdp)}
+                                  </div>
+                                </div>
+                                <div className="rounded-box bg-base-100 px-3 py-2">
+                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                    Pool rank
+                                  </div>
+                                  <div className="font-mono font-bold">
+                                    {formatNumber(player.availablePoolRank)}
+                                  </div>
+                                </div>
+                                <div className="rounded-box bg-base-100 px-3 py-2">
+                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                    Keepers ahead
+                                  </div>
+                                  <div className="font-mono font-bold">
+                                    {player.higherRankedKeepersRemoved.toString()}
+                                  </div>
+                                </div>
+                                {mockAnalysis && mockStats && (
+                                  <div className="rounded-box bg-base-100 px-3 py-2">
+                                    <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                      Mocks sampled
+                                    </div>
+                                    <div className="font-mono font-bold">
+                                      {mockStats.mockCount.toString()} /{' '}
+                                      {mockAnalysis.selectedMockCount.toString()}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {mockAnalysis && mockStats && (
+                                <div className="mt-3 border-t border-base-300 pt-3">
+                                  <div className="text-xs font-semibold">Available at my picks</div>
+                                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                    {mockStats.availability.map((availability) => (
+                                      <div
+                                        key={availability.overallPick}
+                                        className="rounded-box bg-base-100 px-3 py-2 text-xs"
+                                      >
+                                        <div className="font-semibold">
+                                          At{' '}
+                                          {formatOverallPickAsRoundPick(
+                                            availability.overallPick,
+                                            model.draftInput.config.teamCount,
+                                          )}
+                                        </div>
+                                        {availability.sampleCount === 0 ||
+                                        availability.percentage === null ? (
+                                          <div className="text-base-content/50">
+                                            No full samples
+                                          </div>
+                                        ) : (
+                                          <div className="font-mono">
+                                            {availability.availableCount.toString()} /{' '}
+                                            {availability.sampleCount.toString()} available -{' '}
+                                            {formatNumber(availability.percentage)}%
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </tr>
+                    </Fragment>
                   );
                 })}
               </tbody>

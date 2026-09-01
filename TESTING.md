@@ -73,7 +73,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
 - Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
 - Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, and Draft Intel presentation.
-- Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, the unique 10-ID source batch, pasted URL/ID parsing and deduplication, strict league-mock/post-lock filtering, exact complete-keeper-set checks, selection controls, and separate Observed Mock ADP presentation.
+- Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, the unique 10-ID source batch, pasted URL/ID parsing and deduplication, strict league-mock/post-lock filtering, exact complete-keeper-set checks, selection controls, compact `round.pick` scan rows, expandable player detail, and separate Observed Mock ADP presentation.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.

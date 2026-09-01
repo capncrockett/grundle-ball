@@ -23,7 +23,6 @@ export type MockDraftPlayerAnalysis = {
   medianPick: number | null;
   earliestPick: number | null;
   latestPick: number | null;
-  standardDeviation: number | null;
   availability: MockDraftAvailability[];
 };
 
@@ -110,16 +109,6 @@ export function analyzeMockDrafts(
       observedPicks.length === 0
         ? null
         : precise(observedPicks.reduce((sum, pick) => sum + pick, 0) / observedPicks.length);
-    const standardDeviation =
-      meanPick === null
-        ? null
-        : precise(
-            Math.sqrt(
-              observedPicks.reduce((sum, pick) => sum + (pick - meanPick) ** 2, 0) /
-                observedPicks.length,
-            ),
-          );
-
     const availability = availabilityPicks.map<MockDraftAvailability>((overallPick) => {
       const eligibleSamples = samples.filter((sample) => sample.totalPicks >= overallPick);
       const availableCount = eligibleSamples.filter((sample) => {
@@ -144,7 +133,6 @@ export function analyzeMockDrafts(
       medianPick: observedPicks.length === 0 ? null : median(observedPicks),
       earliestPick: observedPicks.at(0) ?? null,
       latestPick: observedPicks.at(-1) ?? null,
-      standardDeviation,
       availability,
     };
   });

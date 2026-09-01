@@ -196,9 +196,11 @@ Observed mock drafts:
 2. Accept pasted Sleeper draft URLs or bare IDs, preserve entry order, ignore duplicates, and fetch public draft metadata and picks for only that exact set. Sleeper's draftboards list uses authenticated GraphQL and is not available to this local tool.
 3. Enable only drafts whose `league_mock` metadata, league, creator, timestamp, Team count, rounds, user slot, full pick count, and complete keeper set match the current board.
 4. Auto-select compatible batch drafts while preserving manual selection; show incompatible drafts with validation reasons.
-5. Keep Observed Mock ADP separate and show mean, median, range, population standard deviation, observation count, and availability at each selected Team open pick.
+5. Keep Observed Mock ADP separate and show mean, median, range, observation count, and availability at each selected Team open pick.
 
 The pure analyzer in `draftIntel/mockDraftAnalyzer.ts` has no Sleeper dependency. Availability includes players selected exactly at the target pick and undrafted players. A draft shorter than the target pick does not enter that target's denominator.
+
+The Keeper-Adjusted ADP table keeps Player, Baseline, Adjusted, ADP Shift, Observed Mock ADP, and Mock Detail in the scan row. Baseline, Adjusted, mock mean, median, and range use `round.pick` notation. The range uses "to" between endpoints so it is not mistaken for decimal subtraction. Expanding a player reveals overall ADP values, pool rank, keepers ahead, mocks sampled, and availability at each open pick.
 
 The route and navigation are compiled only for `vite serve` and require a localhost origin at runtime. They are absent from Vercel and other production builds. This is a deployment visibility boundary, not user authentication. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
 

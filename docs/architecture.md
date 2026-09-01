@@ -86,7 +86,7 @@ timestamped Fantasy Footballers UDK ADP CSV
   -> Observed Mock ADP and availability at the Team's open picks
 ```
 
-The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer` is also source-independent and consumes only selected draft samples. Baseline ADP, Keeper-Adjusted ADP, and Observed Mock ADP remain separate values.
+The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer` is also source-independent and consumes only selected draft samples. Baseline ADP, Keeper-Adjusted ADP, and Observed Mock ADP remain separate values. The UI presents the scan-level draft positions in `round.pick` notation and moves overall ADP, pool, sample, and per-pick availability data into an expandable player detail row.
 
 Sleeper's public user-drafts endpoint does not list league-specific mocks. Its draftboards page uses an authenticated query, so Draft Intel does not attempt automatic discovery or handle Sleeper credentials. Instead, the local source seeds the exact approved post-lock batch, and the local-only field accepts replacement Sleeper draft URLs or bare IDs. Input is deduplicated in entry order before the adapter fetches only that exact set. The adapter permits selection only when league-mock metadata, creator, timestamp, draft size, snake type, user draft slot, completed pick count, and the complete current keeper set match exactly. Incompatible drafts stay visible with reasons.
 

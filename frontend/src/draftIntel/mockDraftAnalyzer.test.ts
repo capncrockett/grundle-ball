@@ -25,7 +25,6 @@ describe('analyzeMockDrafts', () => {
       medianPick: 6,
       earliestPick: 4,
       latestPick: 10,
-      standardDeviation: 2.4944382578,
     });
     expect(byId.get('b')).toMatchObject({
       mockCount: 1,
@@ -33,7 +32,6 @@ describe('analyzeMockDrafts', () => {
       medianPick: 8,
       earliestPick: 8,
       latestPick: 8,
-      standardDeviation: 0,
     });
     expect(byId.get('undrafted')).toMatchObject({
       mockCount: 0,
@@ -41,7 +39,6 @@ describe('analyzeMockDrafts', () => {
       medianPick: null,
       earliestPick: null,
       latestPick: null,
-      standardDeviation: null,
     });
   });
 
@@ -79,7 +76,7 @@ describe('analyzeMockDrafts', () => {
       [],
     );
 
-    expect(result.players[0]).toMatchObject({ meanPick: 5, medianPick: 5, standardDeviation: 3 });
+    expect(result.players[0]).toMatchObject({ meanPick: 5, medianPick: 5 });
   });
 
   it('rejects duplicate players or pick numbers inside a mock', () => {
