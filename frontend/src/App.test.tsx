@@ -109,7 +109,7 @@ describe('App routing + nav', () => {
     expect(historyLink).toHaveAttribute('href', '/history');
   });
 
-  it('renders Draft Intel only through its local route', async () => {
+  it('renders Draft Intel through its restricted route on an approved host', async () => {
     renderWithRouter(<App />, { route: '/local/draft-intel' });
 
     expect(await screen.findByText('Draft Intel Page')).toBeInTheDocument();

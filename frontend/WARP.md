@@ -100,7 +100,7 @@ frontend/
 │   ├── config/league.ts               # Shared 2026 league ID and playoff weeks
 │   ├── content/                        # Constitution Markdown + parser
 │   ├── data/                           # Checked-in history, timestamped UDK ADP, and helpers
-│   ├── draftIntel/                     # Local-only patterns and Keeper-Adjusted ADP
+│   ├── draftIntel/                     # Restricted patterns, ADP, mocks, and IDP plan
 │   ├── models/fantasy.ts              # Internal team/matchup/season models
 │   ├── pages/                          # Route components and insight logic
 │   ├── sleeperBracket/                 # Official bracket resolution/types
@@ -119,14 +119,14 @@ frontend/
 - `/playoffs` shows Sleeper's official winners and consolation brackets.
 - `/matchups` shows a selectable week of scores and finished-starter counts.
 - `/history` shows canonical annual draftboards and Team-specific keeper history.
-- `/local/draft-intel` provides completed-draft patterns and Keeper-Adjusted ADP. Vite includes this route only in the local development build, and the app also requires a localhost browser origin.
+- `/local/draft-intel` provides completed-draft patterns, Keeper-Adjusted ADP, mock observations, and an IDP plan. Vite includes it for local development and approved staging builds; runtime access requires localhost or the exact protected staging hostname.
 - `/constitution` renders the current Markdown constitution and links the hosted review-draft PDF.
 - `/beta/grundle-bowl` redirects to `/beta/grundle-bowl/live`.
 - `/beta/grundle-bowl/live` applies real playoff outcomes to the custom Beta bracket.
 - `/beta/grundle-bowl/if-today` seeds the custom Beta bracket from current standings.
 - Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the corresponding Beta routes.
 
-The shared top navigation has six items: Standings, Playoffs, Matchups, History, Constitution, and Grundle Bowl (Beta). Local development adds Draft Intel.
+The shared top navigation has six public items: Standings, Playoffs, Matchups, History, Constitution, and Grundle Bowl (Beta). Local development and protected staging add Draft Intel, including its compact mobile icon.
 
 ## Runtime data flows
 
@@ -170,7 +170,7 @@ Do not feed official bracket data through the custom `bracket/` routing engine.
 
 The archive follows `previous_league_id` and uses each league record's `draft_id`, which excludes abandoned draft setup records. Current keeper designations remain labeled provisional until the draft is complete. Keeper history and Keeper Cycles use Sleeper roster ID as the persistent Team key rather than Manager identity. Keeper pricing, required-pick ownership, and deadline timing still require Commissioner review.
 
-### Local Draft Intel
+### Restricted Draft Intel
 
 Historical patterns:
 
@@ -193,20 +193,30 @@ The pure calculator in `draftIntel/keeperAdjustedAdp.ts` has no Sleeper or CSV d
 Observed mock drafts:
 
 1. Seed the "Mock Drafts to include" field with the exact 10-ID post-lock league-mock batch from `src/data/postKeeperMockDraftSource.ts`.
-2. Accept pasted Sleeper draft URLs or bare IDs, preserve entry order, ignore duplicates, and fetch public draft metadata and picks for only that exact set. Sleeper's draftboards list uses authenticated GraphQL and is not available to this local tool.
+2. Accept pasted Sleeper draft URLs or bare IDs, preserve entry order, ignore duplicates, and fetch public draft metadata and picks for only that exact set. Sleeper's draftboards list uses authenticated GraphQL and is not available to this tool.
 3. Enable only drafts whose `league_mock` metadata, league, creator, timestamp, Team count, rounds, user slot, full pick count, and complete keeper set match the current board.
 4. Auto-select compatible batch drafts while preserving manual selection; show incompatible drafts with validation reasons.
 5. Keep Observed Mock ADP separate and show mean, median, range, observation count, and availability at each selected Team open pick.
 
+IDP Draft Plan:
+
+1. Import the dated public FantasyPros Tier 1 and Tier 2 IDP target pool from `src/data/idpTierSource.ts`; expert tiers remain categorical.
+2. Refresh Sleeper's publicly reachable but undocumented season projection feed ordered by `adp_idp_1qb`; show a warning and retain mock timing if it fails.
+3. Reuse the exact selected compatible post-lock mock samples and the selected Team's open picks.
+4. Prefer big-play EDGE candidates within a tier, then the cheapest responsible window. The responsible pick is the latest open pick with at least 70 percent mock availability.
+5. Show up to two viable Tier 1 primary targets and two collapsed Tier 2 fallbacks. Draft one; a player selected in fewer than half of the mocks is a streaming option.
+
 The pure analyzer in `draftIntel/mockDraftAnalyzer.ts` has no Sleeper dependency. Availability includes players selected exactly at the target pick and undrafted players. A draft shorter than the target pick does not enter that target's denominator.
+
+The pure builder in `draftIntel/idpDraftPlan.ts` has no network dependency. Do not average IDP Tier, UDK rank, Sleeper ADP, or Observed Mock ADP into one value. IDP Tier answers who; Sleeper and mock timing answer when.
 
 The Keeper-Adjusted ADP table keeps Player, Baseline, Adjusted, ADP Shift, Observed Mock ADP, and Mock Detail in the scan row. Baseline, Adjusted, mock mean, median, and range use `round.pick` notation. The range uses "to" between endpoints so it is not mistaken for decimal subtraction. Expanding a player reveals overall ADP values, pool rank, keepers ahead, mocks sampled, and availability at each open pick.
 
-The route and navigation are compiled only for `vite serve` and require a localhost origin at runtime. They are absent from Vercel and other production builds. This is a deployment visibility boundary, not user authentication. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
+The build gate includes the route and navigation for `vite serve`, a Vercel custom `staging` target, the dedicated staging project hostname, or a `release/**` preview used by the staging alias. The runtime gate accepts localhost variants and `grundle-ball-staging.vercel.app` only. The public production build excludes the route and its private data sources. This is a deployment visibility boundary, while Vercel Deployment Protection controls staging access. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
 
 To refresh the UDK source, add a newly exported CSV under `src/data/adp/` with a `YYYY-MM-DD_HH-mm-ss_TZ` timestamp in its filename, update `src/data/udkAdpSource.ts`, and run the UDK parser, Keeper-Adjusted ADP, typecheck, and production-boundary validations. Do not replace the UDK `Avg` values with Sleeper player search rank.
 
-For an ad hoc local sample, paste Sleeper draft URLs or bare IDs into "Mock Drafts to include" and select "Load and validate." To replace the checked-in default batch, update `src/data/postKeeperMockDraftSource.ts` with the exact draft IDs, keeper-lock cutoff, and batch completion time. Validate every ID through Sleeper's public draft and pick endpoints before committing; invalid entries, pre-lock drafts, generic mocks, wrong leagues or creators, incomplete boards, and keeper-set mismatches must fail visibly.
+For an ad hoc sample, paste Sleeper draft URLs or bare IDs into "Mock Drafts to include" and select "Load and validate." To replace the checked-in default batch, update `src/data/postKeeperMockDraftSource.ts` with the exact draft IDs, keeper-lock cutoff, and batch completion time. Validate every ID through Sleeper's public draft and pick endpoints before committing; invalid entries, pre-lock drafts, generic mocks, wrong leagues or creators, incomplete boards, and keeper-set mismatches must fail visibly.
 
 ### Grundle Bowl Beta
 
@@ -326,7 +336,7 @@ The current suite includes:
 - History page integration tests for season switching, draftboard keeper markers, current Team designation cards, and the keeper ledger.
 - Keeper-Adjusted ADP unit tests for deterministic board mapping plus UDK ingestion and Draft Intel component coverage.
 - App routing/navigation tests and Playwright desktop/mobile smoke, preseason standings, matchup, and theme flows.
-- A Playwright production-boundary project that builds and serves the app, then verifies Draft Intel is absent.
+- A Playwright production-boundary project that builds and serves the public app, then verifies Draft Intel is absent.
 
 Use MSW/fixtures for deterministic Jest coverage. Playwright's deployment smoke intentionally checks a live environment, while its dedicated Matchups flow uses route fixtures. Root `TESTING.md` is the authoritative command/CI/gap guide.
 

@@ -7,6 +7,7 @@ import {
   mockSleeperUsers,
 } from '../../src/test/fixtures/sleeper';
 import { LEAGUE_ID } from '../../src/config/league';
+import { isDraftIntelHost } from '../../src/draftIntelAccess';
 
 const routes = [
   { path: '/', heading: /^standings$/i },
@@ -74,7 +75,18 @@ test.describe('Happy path smoke', () => {
 
     await expect(page.getByText(/^GB$/)).toBeVisible();
     await expect(page.getByText(/^Grundle Ball$/)).toBeHidden();
-    await expect(page.locator('nav a:visible')).toHaveCount(6);
+    const hostname = new URL(String(testInfo.project.use.baseURL)).hostname;
+    await expect(page.locator('nav a:visible')).toHaveCount(isDraftIntelHost(hostname) ? 7 : 6);
+  });
+
+  test('exposes Draft Intel on its approved local or staging host', async ({ page }, testInfo) => {
+    const hostname = new URL(String(testInfo.project.use.baseURL)).hostname;
+    test.skip(!isDraftIntelHost(hostname), 'Draft Intel is excluded from this deployment');
+
+    await page.goto('/local/draft-intel');
+
+    await expect(page.getByRole('heading', { name: /^draft intel$/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^draft intel$/i })).toBeVisible();
   });
 
   test('constitution TOC jumps to section anchors', async ({ page }) => {

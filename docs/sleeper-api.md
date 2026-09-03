@@ -29,7 +29,7 @@ The official `/playoffs` page resolves and renders the two bracket responses as 
 
 The `/history` page follows each league's `previous_league_id` and uses that league record's canonical `draft_id`. Draft picks marked `is_keeper: true` become keeper designations. Completed seasons are stored in `draftHistoryStore.json`; the active season is refreshed directly in the browser.
 
-The local Draft Intel Keeper-Adjusted ADP view uses the same canonical draft flow for current Keeper Designations and exact `pick_no` values. It also uses `/players/nfl` to resolve UDK names to canonical Sleeper player IDs. Sleeper does not supply the Baseline ADP values for this view; those come from the timestamped local UDK CSV.
+The restricted Draft Intel Keeper-Adjusted ADP view uses the same canonical draft flow for current Keeper Designations and exact `pick_no` values. It also uses `/players/nfl` to resolve UDK names to canonical Sleeper player IDs. Sleeper does not supply the Baseline ADP values for this view; those come from the timestamped checked-in UDK CSV.
 
 ### League-specific mock drafts
 
@@ -39,15 +39,23 @@ Individual league-mock IDs remain readable through the public draft and pick end
 
 The checked-in IDs seed Draft Intel's "Mock Drafts to include" field. A user can paste replacement Sleeper draft URLs or bare IDs; the field ignores duplicates and the adapter loads only the resulting exact set. It repeats the source, timestamp, creator, board, and complete keeper-set checks at runtime. The UI keeps incompatible drafts visible with validation reasons and never blends mock observations into Baseline ADP or Keeper-Adjusted ADP.
 
-## Projection endpoint present but unused
+## Sleeper projection feeds
 
-`getPlayerProjections()` is implemented against a separate Sleeper host:
+`getPlayerProjections()` is implemented against a separate Sleeper host for weekly data:
 
 ```text
 https://api.sleeper.com/projections/nfl/<season>/<week>?season_type=regular
 ```
 
-No current page calls this function, and `LiveMatchData` does not contain projections or win probability. Work required before enabling those features is tracked in `ROADMAP.md`.
+No current page calls the weekly function, and `LiveMatchData` does not contain projections or win probability. Work required before enabling those features is tracked in `ROADMAP.md`.
+
+Draft Intel calls a season-level feed through `getIdp1QbAdp()`:
+
+```text
+https://api.sleeper.com/projections/nfl/<season>?season_type=regular&order_by=adp_idp_1qb
+```
+
+The `adp_idp_1qb` field supplies one unified Sleeper market position for offensive and defensive players. The IDP Draft Plan uses only the defensive players from its expert Tier 1 and Tier 2 pool. This projection host and field are publicly reachable but absent from Sleeper's documented v1 API. The client therefore isolates the call, surfaces failures visibly, and keeps selected mock timing usable when the feed is unavailable. Tests inject projection fixtures and do not call this live endpoint.
 
 ## ESPN game-status endpoint
 
@@ -65,6 +73,7 @@ https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype
 - Rosters, weekly matchups, drafts, draft picks, NFL state, and both bracket calls request fresh data through cache-busting/no-store behavior.
 - League users and league metadata use the browser's default cache behavior.
 - The all-players payload uses `force-cache` because it is large and changes less frequently.
+- The local IDP ADP feed uses `no-store`; a failure does not remove expert tiers or selected mock evidence.
 - ESPN scoreboard requests use `no-store`.
 - Pages surface caught API errors in visible alerts; automated coverage is summarized in `TESTING.md`.
 

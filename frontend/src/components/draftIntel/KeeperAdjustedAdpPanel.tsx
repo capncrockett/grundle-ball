@@ -1,13 +1,20 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { getAllPlayers, type SleeperPlayer } from '../../api/sleeper';
+import {
+  getAllPlayers,
+  getIdp1QbAdp,
+  type SleeperPlayer,
+  type SleeperPlayerProjection,
+} from '../../api/sleeper';
 import { LEAGUE_ID } from '../../config/league';
 import { loadCurrentDraftSeason } from '../../data/currentDraft';
 import type { DraftHistorySeason } from '../../data/draftHistoryTypes';
+import { IDP_TIER_SOURCE, type IdpTierSource } from '../../data/idpTierSource';
 import {
   POST_KEEPER_MOCK_DRAFT_SOURCE,
   type PostKeeperMockDraftSource,
 } from '../../data/postKeeperMockDraftSource';
 import { UDK_ADP_SOURCE, type UdkAdpSource } from '../../data/udkAdpSource';
+import { buildIdpDraftPlan } from '../../draftIntel/idpDraftPlan';
 import { analyzeMockDrafts } from '../../draftIntel/mockDraftAnalyzer';
 import {
   calculateKeeperAdjustedAdp,
@@ -24,29 +31,36 @@ import {
 } from '../../draftIntel/sleeperMockDrafts';
 import { parseUdkAdpCsv, resolveUdkAdpPlayers } from '../../draftIntel/udkAdp';
 import { getRoundPick } from '../../utils/draftBoard';
+import { IdpDraftPlan } from './IdpDraftPlan';
 import { MockDraftControls } from './MockDraftControls';
 
 type SleeperPlayerMap = Record<string, SleeperPlayer>;
 type MockCandidateLoader = (
   input: LoadSleeperMockDraftCandidatesInput,
 ) => Promise<SleeperMockDraftCandidate[]>;
+type IdpAdpLoader = (season: number) => Promise<SleeperPlayerProjection[]>;
 
 export type KeeperAdjustedAdpPanelProps = {
   storedSeason?: DraftHistorySeason;
   selectedRosterId: number | null;
   source?: UdkAdpSource;
+  idpTierSource?: IdpTierSource;
   mockDraftSource?: PostKeeperMockDraftSource;
   refreshLive?: boolean;
+  refreshIdpAdp?: boolean;
   initialSleeperPlayers?: SleeperPlayerMap;
+  initialIdpAdp?: SleeperPlayerProjection[];
   initialMockDraftCandidates?: SleeperMockDraftCandidate[];
   loadLiveSeason?: () => Promise<DraftHistorySeason>;
   loadSleeperPlayers?: () => Promise<SleeperPlayerMap>;
+  loadIdpAdp?: IdpAdpLoader;
   loadMockCandidates?: MockCandidateLoader;
   refreshMocks?: boolean;
 };
 
 const defaultLoadLiveSeason = () => loadCurrentDraftSeason(LEAGUE_ID);
 const defaultLoadSleeperPlayers = () => getAllPlayers();
+const defaultLoadIdpAdp: IdpAdpLoader = (season) => getIdp1QbAdp(season);
 const defaultLoadMockCandidates: MockCandidateLoader = (input) =>
   loadSleeperMockDraftCandidates(input);
 const selectableMockIds = (candidates: SleeperMockDraftCandidate[]): Set<string> =>
@@ -96,12 +110,16 @@ export function KeeperAdjustedAdpPanel({
   storedSeason,
   selectedRosterId,
   source = UDK_ADP_SOURCE,
+  idpTierSource = IDP_TIER_SOURCE,
   mockDraftSource = POST_KEEPER_MOCK_DRAFT_SOURCE,
   refreshLive = true,
+  refreshIdpAdp = refreshLive,
   initialSleeperPlayers,
+  initialIdpAdp,
   initialMockDraftCandidates,
   loadLiveSeason = defaultLoadLiveSeason,
   loadSleeperPlayers = defaultLoadSleeperPlayers,
+  loadIdpAdp = defaultLoadIdpAdp,
   loadMockCandidates = defaultLoadMockCandidates,
   refreshMocks = refreshLive,
 }: KeeperAdjustedAdpPanelProps) {
@@ -112,6 +130,11 @@ export function KeeperAdjustedAdpPanel({
   const [isLoading, setIsLoading] = useState(refreshLive || initialSleeperPlayers === undefined);
   const [fatalError, setFatalError] = useState<string | null>(null);
   const [liveWarning, setLiveWarning] = useState<string | null>(null);
+  const [idpAdp, setIdpAdp] = useState<SleeperPlayerProjection[]>(initialIdpAdp ?? []);
+  const [isLoadingIdpAdp, setIsLoadingIdpAdp] = useState(
+    refreshIdpAdp && initialIdpAdp === undefined,
+  );
+  const [idpAdpWarning, setIdpAdpWarning] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState('ALL');
   const [showOutsideBoard, setShowOutsideBoard] = useState(false);
@@ -136,6 +159,7 @@ export function KeeperAdjustedAdpPanel({
     () => parseSleeperMockDraftInput(mockDraftInput),
     [mockDraftInput],
   );
+  const idpSeason = season?.season;
 
   useEffect(() => {
     let active = true;
@@ -187,6 +211,39 @@ export function KeeperAdjustedAdpPanel({
       active = false;
     };
   }, [initialSleeperPlayers, loadLiveSeason, loadSleeperPlayers, refreshLive, storedSeason]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (initialIdpAdp !== undefined || !refreshIdpAdp || !idpSeason) {
+      return () => {
+        active = false;
+      };
+    }
+
+    const seasonNumber = Number(idpSeason);
+    async function loadAdp() {
+      setIsLoadingIdpAdp(true);
+      setIdpAdpWarning(null);
+      try {
+        const projections = await loadIdpAdp(seasonNumber);
+        if (!active) return;
+        setIdpAdp(projections);
+      } catch (error) {
+        if (!active) return;
+        setIdpAdpWarning(
+          `Sleeper IDP ADP refresh failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      } finally {
+        if (active) setIsLoadingIdpAdp(false);
+      }
+    }
+
+    void loadAdp();
+    return () => {
+      active = false;
+    };
+  }, [idpSeason, initialIdpAdp, loadIdpAdp, refreshIdpAdp]);
 
   useEffect(() => {
     let active = true;
@@ -326,6 +383,25 @@ export function KeeperAdjustedAdpPanel({
   const mockAnalysisByPlayer = new Map(
     mockAnalysis?.players.map((player) => [player.playerId, player]) ?? [],
   );
+  const idpMockAnalysis =
+    selectedMockSamples.length > 0
+      ? analyzeMockDrafts(
+          idpTierSource.players.map((player) => player.playerId),
+          selectedMockSamples,
+          myOpenPicks.map((pick) => pick.overallPick),
+        )
+      : null;
+  const idpPlan =
+    sleeperPlayers && model?.draftInput
+      ? buildIdpDraftPlan({
+          source: idpTierSource,
+          sleeperPlayers,
+          projections: idpAdp,
+          mockAnalysis: idpMockAnalysis,
+          openPicks: myOpenPicks,
+          keeperPlayerIds: new Set(model.draftInput.keepers.map((keeper) => keeper.playerId)),
+        })
+      : null;
   const inBoardCount =
     model?.calculation?.players.filter((player) => player.keeperAdjustedAdp !== null).length ?? 0;
 
@@ -489,6 +565,16 @@ export function KeeperAdjustedAdpPanel({
               });
             }}
           />
+
+          {idpPlan && (
+            <IdpDraftPlan
+              source={idpTierSource}
+              plan={idpPlan}
+              teamCount={model.draftInput.config.teamCount}
+              isLoadingAdp={isLoadingIdpAdp}
+              adpWarning={idpAdpWarning}
+            />
+          )}
 
           <div className="mb-3 grid gap-3 rounded-box border border-base-300 bg-base-100 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
             <label className="form-control">

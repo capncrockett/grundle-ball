@@ -10,7 +10,7 @@ Grundle Ball is deployed as a static Vite SPA on Vercel. This document separates
 - Expected build command: `npm run build -w frontend`.
 - Build output: `frontend/dist`.
 - Production: `https://grundle-ball.vercel.app`.
-- Staging test target: `https://grundle-ball-staging.vercel.app`.
+- Protected staging and Draft Intel target: `https://grundle-ball-staging.vercel.app`.
 - The root package and GitHub Actions use Node 24.x; the Vercel project should use the same major version unless a release explicitly validates a different one.
 
 Live checks performed during the rebrand audit established only host-level state:
@@ -38,7 +38,14 @@ Current environment variables are test/deployment controls rather than app confi
 
 - `E2E_BASE_URL`: overrides Playwright's target URL.
 - `VERCEL_AUTOMATION_BYPASS_SECRET`: lets Playwright access a protected Vercel deployment.
-- Vercel-provided build variables populate the footer's branch and environment through `frontend/vite.config.ts`; the repository link uses the canonical public GitHub URL.
+- Vercel-provided build variables populate the footer's branch and target environment through `frontend/vite.config.ts`; the repository link uses the canonical public GitHub URL.
+
+Draft Intel uses two deployment gates:
+
+- Vite includes it during local development, for `VERCEL_TARGET_ENV=staging`, for a dedicated project whose `VERCEL_PROJECT_PRODUCTION_URL` is `grundle-ball-staging.vercel.app`, or for a `release/**` Vercel preview used by the protected staging alias.
+- The browser renders it only on localhost variants or `grundle-ball-staging.vercel.app`. The public `grundle-ball.vercel.app` build and origin remain excluded.
+
+The hostname check is not authentication. Keep Vercel Deployment Protection enabled for staging and use its normal authenticated session when opening Draft Intel on a phone.
 
 `VITE_LEAGUE_ID` is not implemented. The confirmed 2026 league ID is centralized in `frontend/src/config/league.ts`; all frontend pages use it, and the Node history updater imports it as its default. Before adding a Vercel variable, define how both the Vite build and the Node updater will receive and validate the same configuration instead of creating separate defaults; see `frontend/TODO.md`.
 
@@ -54,7 +61,7 @@ Classify the release and select its version using [`versioning.md`](versioning.m
 6. Run the Playwright smoke suite against the production URL by setting `E2E_BASE_URL` explicitly.
 7. Verify the deployment footer reports the expected branch and environment and links to the public repository.
 
-The protected staging deployment is an optional environment check, not a release gate. When `VERCEL_AUTOMATION_BYPASS_SECRET` is available, `npm run test:e2e -w frontend` exercises it before merge; otherwise the required release-branch Playwright job still tests the exact commit locally.
+The protected staging deployment is an optional environment check, not a release gate. When `VERCEL_AUTOMATION_BYPASS_SECRET` is available, `npm run test:e2e -w frontend` exercises it before merge, including the Draft Intel route on desktop and mobile. Otherwise the required release-branch Playwright job still tests the exact commit locally.
 
 The Vercel Git integration, production-branch selection, project root, install/build commands, output directory, Node version, and ignored-build command live outside this repository. Confirm them in the dashboard when changing deployment behavior; do not infer them solely from these docs.
 
@@ -82,6 +89,7 @@ Repository-backed items:
 - [x] Staging Playwright target uses the Grundle Ball hostname.
 - [x] Production root responds at `https://grundle-ball.vercel.app` with the Grundle Ball title.
 - [x] New staging hostname exists behind Vercel protection; legacy Keeper Bowl hosts return 404.
+- [x] Draft Intel build/runtime gates allow localhost and protected staging while excluding public production.
 - [x] GitHub Actions run Jest, backend Node tests, the production Vite build, and conditional local Playwright jobs.
 - [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 24.x.
 - [x] Vite embeds the Vercel environment and Git branch, the footer links to the public repository, and the app renders Vercel Speed Insights.
@@ -92,6 +100,7 @@ Items requiring live operational verification:
 - [ ] Confirm Vercel is connected to `capncrockett/grundle-ball` and `main` is the production branch.
 - [ ] Confirm project root/build/output/Node settings match the expectations above.
 - [ ] Confirm `vercel-ignore-build.sh` is configured as the ignored-build command if branch filtering is desired.
+- [ ] After the release deployment completes, open `/local/draft-intel` through the protected staging hostname on a phone and confirm the Draft Intel nav icon and live Sleeper requests.
 - [ ] Run every route on staging and production at desktop and mobile widths.
 - [ ] Verify Sleeper and ESPN requests succeed from the deployed origins and failures remain user-visible.
 - [ ] If desired, add a Grundle Ball custom domain and update tests/docs after DNS and TLS are live.

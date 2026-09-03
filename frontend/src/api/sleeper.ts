@@ -155,6 +155,7 @@ export interface SleeperDraftPick {
 export interface SleeperPlayerProjection {
   player_id: string;
   stats: {
+    adp_idp_1qb?: number;
     pts_half_ppr?: number;
     pts_ppr?: number;
     pts_std?: number;
@@ -240,6 +241,23 @@ export async function getPlayerProjections(
     throw new Error(
       `Projections API error (${response.status.toString()}): ${response.statusText}`,
     );
+  }
+  return (await response.json()) as SleeperPlayerProjection[];
+}
+
+/**
+ * Sleeper's restricted Draft Intel feed for a unified 1QB plus IDP market.
+ * This public endpoint is not part of Sleeper's documented v1 API, so callers
+ * must preserve a useful fallback when it is unavailable or changes shape.
+ */
+export async function getIdp1QbAdp(season: number): Promise<SleeperPlayerProjection[]> {
+  if (!Number.isInteger(season) || season < 2000) {
+    throw new Error('IDP ADP season must be a valid year');
+  }
+  const url = `${SLEEPER_PROJECTIONS_BASE}/${season.toString()}?season_type=regular&order_by=adp_idp_1qb`;
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`IDP ADP API error (${response.status.toString()}): ${response.statusText}`);
   }
   return (await response.json()) as SleeperPlayerProjection[];
 }

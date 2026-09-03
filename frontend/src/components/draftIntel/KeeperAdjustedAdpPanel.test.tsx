@@ -1,7 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SleeperPlayer } from '../../api/sleeper';
+import type { SleeperPlayer, SleeperPlayerProjection } from '../../api/sleeper';
 import type { DraftHistoryPick, DraftHistorySeason } from '../../data/draftHistoryTypes';
+import type { IdpTierSource } from '../../data/idpTierSource';
 import type { UdkAdpSource } from '../../data/udkAdpSource';
 import type { SleeperMockDraftCandidate } from '../../draftIntel/sleeperMockDrafts';
 import { KeeperAdjustedAdpPanel } from './KeeperAdjustedAdpPanel';
@@ -117,6 +118,77 @@ const mockCandidates = [
     { playerId: 'available-6', pickNo: 8 },
   ]),
   mockCandidate('Mock Two', 2, [{ playerId: 'available-4', pickNo: 5 }]),
+];
+
+const idpTierSource: IdpTierSource = {
+  name: 'Test tiered IDP rankings',
+  sourceUrl: 'https://example.com/idp-tiers',
+  publishedOn: '2026-06-16',
+  retrievedOn: '2026-09-01',
+  players: [
+    {
+      playerId: 'idp-early',
+      playerName: 'Early Edge',
+      sourceRank: 1,
+      tier: 1,
+      archetype: 'EDGE',
+    },
+    {
+      playerId: 'idp-late',
+      playerName: 'Late Edge',
+      sourceRank: 2,
+      tier: 1,
+      archetype: 'EDGE',
+    },
+    {
+      playerId: 'idp-fallback-one',
+      playerName: 'Fallback One',
+      sourceRank: 3,
+      tier: 2,
+      archetype: 'EDGE',
+    },
+    {
+      playerId: 'idp-fallback-two',
+      playerName: 'Fallback Two',
+      sourceRank: 4,
+      tier: 2,
+      archetype: 'EDGE',
+    },
+  ],
+};
+
+const idpSleeperPlayers: Record<string, SleeperPlayer> = Object.fromEntries(
+  idpTierSource.players.map((player) => [
+    player.playerId,
+    {
+      player_id: player.playerId,
+      first_name: player.playerName.split(' ')[0] ?? '',
+      last_name: player.playerName.split(' ').slice(1).join(' '),
+      position: 'DE',
+      team: 'TST',
+      status: 'Active',
+    },
+  ]),
+);
+
+const idpAdp: SleeperPlayerProjection[] = idpTierSource.players.map((player, index) => ({
+  player_id: player.playerId,
+  stats: { adp_idp_1qb: 8 + index * 2 },
+}));
+
+const idpMockCandidates = [
+  mockCandidate('IDP Mock One', 3, [
+    { playerId: 'idp-early', pickNo: 8 },
+    { playerId: 'idp-late', pickNo: 15 },
+    { playerId: 'idp-fallback-one', pickNo: 10 },
+    { playerId: 'idp-fallback-two', pickNo: 13 },
+  ]),
+  mockCandidate('IDP Mock Two', 4, [
+    { playerId: 'idp-early', pickNo: 9 },
+    { playerId: 'idp-late', pickNo: 16 },
+    { playerId: 'idp-fallback-one', pickNo: 11 },
+    { playerId: 'idp-fallback-two', pickNo: 14 },
+  ]),
 ];
 
 describe('KeeperAdjustedAdpPanel', () => {
@@ -267,6 +339,35 @@ describe('KeeperAdjustedAdpPanel', () => {
     });
   });
 
+  it('builds a compact tier-aware IDP target plan from Sleeper and selected mocks', async () => {
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        idpTierSource={idpTierSource}
+        refreshLive={false}
+        initialSleeperPlayers={{ ...sleeperPlayers, ...idpSleeperPlayers }}
+        initialIdpAdp={idpAdp}
+        initialMockDraftCandidates={idpMockCandidates}
+      />,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'IDP Draft Plan' })).toBeVisible();
+    expect(screen.getByText('Primary Tier 1 shortlist')).toBeVisible();
+    expect(screen.getByText('2 mocks selected')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Test tiered IDP rankings' })).toHaveAttribute(
+      'href',
+      'https://example.com/idp-tiers',
+    );
+
+    const lateTarget = screen.getByRole('article', { name: 'Late Edge IDP target' });
+    expect(within(lateTarget).getByText('Target 4.03')).toBeVisible();
+    expect(within(lateTarget).getByText(/100% at 4.03/)).toBeVisible();
+    expect(screen.getByText(/Tier 2 fallback plan/)).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Fallback Two IDP target' })).toBeInTheDocument();
+  });
+
   it('loads pasted Sleeper draft URLs and deduplicates them', async () => {
     const user = userEvent.setup();
     const firstDraftId = '1400197747742654464';
@@ -296,7 +397,7 @@ describe('KeeperAdjustedAdpPanel', () => {
       expect(loadMockCandidates).toHaveBeenCalledTimes(1);
     });
 
-    const draftInput = screen.getByRole('textbox', { name: 'Mock Drafts to include' });
+    const draftInput = await screen.findByRole('textbox', { name: 'Mock Drafts to include' });
     await user.clear(draftInput);
     await user.type(
       draftInput,

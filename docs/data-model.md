@@ -183,6 +183,14 @@ The selected Team's open picks are the standard snake slots assigned to its Slee
 
 A player selected exactly at the Team's pick counts as available when that pick begins. An undrafted player also counts as available. Drafts shorter than a requested pick are excluded from that pick's denominator. Descriptive statistics include only mocks in which the player was selected, while `mockCount` and the selected-mock total expose missing observations. The table rounds observed mean and median overall picks to the nearest slot for `round.pick` display, while range endpoints are exact slots shown with "to" between them.
 
+### IDP Draft Plan
+
+`data/idpTierSource.ts` records the public 2026 FantasyPros Tier 1 and Tier 2 target pool with stable Sleeper player IDs, source rank, and EDGE, interior, or tackle archetype. It is a dated expert-ranking snapshot rather than a live ranking API. The source tier remains categorical and is never averaged with ADP.
+
+`draftIntel/idpDraftPlan.ts` combines those tiers with the selected Team's open picks, the selected compatible mock samples, and Sleeper's 1QB plus IDP ADP. It excludes Keeper Designations, prefers big-play EDGE candidates within the same tier, and then prefers the later responsible draft window. A responsible mock window is the latest open Team pick where at least 70 percent of eligible selected mocks still had the player available. Sleeper ADP supplies a fallback window when no mock sample is selected. A player selected in fewer than half of the chosen mocks is labeled as a streaming option instead of a draft target.
+
+The IDP Plan exposes up to two viable Tier 1 primary targets and two collapsed Tier 2 fallbacks. This is a shortlist for one IDP Draft Selection, not a recommendation to roster every displayed candidate or to compare their expert rank numerically against offensive UDK ranks.
+
 `data/postKeeperMockDraftSource.ts` records the exact 10-draft 2026 league-mock batch plus its keeper-lock cutoff and batch completion time. It seeds the local "Mock Drafts to include" field. `draftIntel/sleeperMockDrafts.ts` parses pasted Sleeper draft URLs or bare IDs, deduplicates them in entry order, loads only that exact set, and adapts their public Sleeper metadata and picks into pure samples.
 
 A configured draft is selectable only when its metadata identifies the current league and `league_mock` type, the selected user created it, it was created after keeper lock, and it is a complete snake draft with the current Team count, round count, user draft slot, and full pick count. Its complete set of Sleeper-marked keepers must equal the current Keeper Designations at their exact occupied picks; both missing and unexpected keepers invalidate it.

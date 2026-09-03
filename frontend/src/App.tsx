@@ -9,13 +9,15 @@ import PlayoffsIfTodayPage from './pages/PlayoffsIfTodayPage';
 import PlayoffsLivePage from './pages/PlayoffsLivePage';
 import PlayoffsPage from './pages/PlayoffsPage';
 import { StandingsPage } from './pages/StandingsPage';
-import { isLocalToolsHost } from './localTools';
+import { isDraftIntelHost } from './draftIntelAccess';
 
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
-const localToolsBuildEnabled =
-  typeof __LOCAL_TOOLS_BUILD__ === 'undefined' || __LOCAL_TOOLS_BUILD__;
-const localToolsEnabled = localToolsBuildEnabled && isLocalToolsHost();
-const DraftIntelPage = localToolsEnabled ? lazy(() => import('./pages/DraftIntelPage')) : null;
+const draftIntelBuildEnabled =
+  typeof __DRAFT_INTEL_BUILD__ === 'undefined' || __DRAFT_INTEL_BUILD__;
+const draftIntelEnabled =
+  draftIntelBuildEnabled &&
+  isDraftIntelHost(typeof window === 'undefined' ? undefined : window.location.hostname);
+const DraftIntelPage = draftIntelEnabled ? lazy(() => import('./pages/DraftIntelPage')) : null;
 
 type NavLinkProps = {
   to: string;
@@ -117,18 +119,16 @@ export default function App() {
                 </span>
               }
             />
-            {localToolsEnabled && (
-              <span className="hidden sm:contents">
-                <NavLink
-                  to="/local/draft-intel"
-                  label="Draft Intel"
-                  icon={
-                    <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-secondary/20 text-[0.5rem] font-black text-secondary">
-                      DI
-                    </span>
-                  }
-                />
-              </span>
+            {draftIntelEnabled && (
+              <NavLink
+                to="/local/draft-intel"
+                label="Draft Intel"
+                icon={
+                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-secondary/20 text-[0.5rem] font-black text-secondary">
+                    DI
+                  </span>
+                }
+              />
             )}
             <NavLink
               to="/constitution"
@@ -180,7 +180,7 @@ export default function App() {
               </Suspense>
             }
           />
-          {localToolsEnabled && DraftIntelPage && (
+          {draftIntelEnabled && DraftIntelPage && (
             <Route
               path="/local/draft-intel"
               element={

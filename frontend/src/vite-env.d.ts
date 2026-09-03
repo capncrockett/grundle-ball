@@ -10,7 +10,7 @@ declare global {
     gitRef: string | null;
     vercelEnv: string | null;
   };
-  const __LOCAL_TOOLS_BUILD__: boolean;
+  const __DRAFT_INTEL_BUILD__: boolean;
 }
 
 export {};

@@ -41,7 +41,7 @@ A Draft Selection of one defender at DL, LB, or DB rather than a team DEF. Grund
 _Avoid_: Team DEF, unconstrained 2024-2025 draft habit
 
 **Draft Intel**:
-The private suite of Grundle League draft-preparation tools, including historical pattern analysis and league-specific ADP analysis.
+The private suite of Grundle League draft-preparation tools, including historical pattern analysis and league-specific ADP analysis. It is available on localhost and the protected staging deployment, but excluded from the public production app.
 _Avoid_: Public dashboard feature
 
 **Baseline ADP**:
@@ -59,6 +59,14 @@ _Avoid_: Baseline ADP, Keeper-Adjusted ADP, prediction
 **Mock Availability**:
 The count and percentage of selected compatible Sleeper mock drafts in which a player remains available when one of the selected Team's open picks begins.
 _Avoid_: guaranteed availability, predicted availability
+
+**IDP Tier**:
+An expert-defined group of Individual Defensive Players with roughly comparable fantasy value. It describes player quality within IDP, not value against offensive positions or expected draft timing.
+_Avoid_: IDP ADP, offensive rank
+
+**IDP Draft Plan**:
+A short list of preferred and fallback IDPs paired with Grundle League draft timing. It treats the single IDP Flex as a streamable onesie position and seeks one responsible Draft Selection rather than a full defensive board.
+_Avoid_: full IDP rankings, multi-IDP roster plan
 
 **Official Playoffs**:
 The championship and consolation brackets configured by Sleeper and used to determine the league's final standings.

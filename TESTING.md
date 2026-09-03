@@ -46,7 +46,7 @@ Run Playwright:
 npm run test:e2e:local -w frontend
 ```
 
-All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects. It also builds and serves the production app for the production-boundary project, which verifies that local-only tools are absent.
+All Playwright scripts use the repo-local browser cache selected by `PLAYWRIGHT_BROWSERS_PATH=0`. The local script also sets `E2E_BASE_URL=http://localhost:5173`, starts Vite automatically (or reuses an existing local server), and runs the configured Chromium desktop and iPhone 12 projects. It also builds and serves the production app for the production-boundary project, which verifies that restricted tools are absent.
 
 ### Playwright against a deployment
 
@@ -74,6 +74,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
 - Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, and Draft Intel presentation.
 - Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, the unique 10-ID source batch, pasted URL/ID parsing and deduplication, strict league-mock/post-lock filtering, exact complete-keeper-set checks, selection controls, compact `round.pick` scan rows, expandable player detail, and separate Observed Mock ADP presentation.
+- IDP Tier source integrity, big-play target selection within a tier, 70 percent availability cliffs, Sleeper ADP fallback timing, keeper exclusion, streaming classification, and the compact Tier 1 plus Tier 2 Draft Plan presentation.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.
@@ -90,7 +91,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 ### Playwright
 
 - `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
-- `production-boundary.spec.ts`: the production build has no Draft Intel navigation, route, UDK source, Keeper-Adjusted ADP, or mock-draft feature text, while local development retains the tool.
+- `production-boundary.spec.ts`: the public production build has no Draft Intel navigation, route, UDK source, Keeper-Adjusted ADP, IDP Tier source, IDP Draft Plan, or mock-draft feature text, while local development and protected staging retain the tool.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
 - `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
 - `theme.spec.ts`: theme selection and persistence across reloads.

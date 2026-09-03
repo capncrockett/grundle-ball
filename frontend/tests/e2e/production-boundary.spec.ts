@@ -95,7 +95,7 @@ test.afterAll(async () => {
   });
 });
 
-test('production omits the local-only Draft Intel navigation and route', async ({ page }) => {
+test('production omits the restricted Draft Intel navigation and route', async ({ page }) => {
   await page.goto(`${productionOrigin}/`);
 
   await expect(page.getByRole('banner')).toBeVisible();
@@ -108,7 +108,7 @@ test('production omits the local-only Draft Intel navigation and route', async (
   await expect(page.getByRole('link', { name: /draft intel/i })).toHaveCount(0);
 });
 
-test('production output omits the local-only UDK source and Keeper-Adjusted ADP feature', async () => {
+test('production output omits the restricted ADP and IDP planning features', async () => {
   const productionText = await readProductionText(distRoot);
 
   expect(productionText).not.toContain('Keeper-Adjusted ADP');
@@ -119,4 +119,8 @@ test('production output omits the local-only UDK source and Keeper-Adjusted ADP 
   expect(productionText).not.toContain('Observed Mock ADP');
   expect(productionText).not.toContain('2026 Grundle post-lock Sleeper league mocks');
   expect(productionText).not.toContain('1400197747742654464');
+  expect(productionText).not.toContain('IDP Draft Plan');
+  expect(productionText).not.toContain('Onesie strategy');
+  expect(productionText).not.toContain('Scott Bogman 2026 IDP Rankings & Tiers');
+  expect(productionText).not.toContain('adp_idp_1qb');
 });
