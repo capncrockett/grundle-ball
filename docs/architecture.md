@@ -16,6 +16,7 @@ Grundle Ball is a client-rendered React application with a small set of Node mai
 - `/playoffs` renders Sleeper's official `winners_bracket` and `losers_bracket` responses directly. `sleeperBracket/resolveBracket.ts` resolves participants and placement labels without applying house routing.
 - `/matchups` combines Sleeper league/matchup/player data with ESPN NFL game status to show scores and finished-starter counts.
 - `/history` renders canonical annual draftboards and Team-specific keeper history. Completed seasons come from a checked-in snapshot; the active season is refreshed from Sleeper in the browser.
+- `/local/draft-intel` is available only in local development. It combines completed-draft pattern analysis with deterministic Keeper-Adjusted ADP and is removed from production builds.
 - `/constitution` renders `frontend/src/content/constitution.md`; the review-draft PDF is served as a static file.
 - `/beta/grundle-bowl/*` contains the custom Champ Bowl / Keeper Bowl / Toilet Bowl proposal. This Beta feature has its own immutable bracket template and routing engine and must not be confused with the official playoff route.
 
@@ -62,6 +63,42 @@ checked-in draftHistoryStore.json
 
 The season chain follows `previous_league_id`, while each season uses the league record's `draft_id`. This excludes abandoned or setup-only Sleeper draftboards. Keeper ledger identity is `(rosterId, playerId)` across seasons because keeper history belongs to the persistent Team rather than the current Manager.
 
+### Restricted Draft Intel
+
+```text
+completed draftHistoryStore.json
+  -> buildDraftIntelReport()
+  -> League and Team pattern views
+
+timestamped Fantasy Footballers UDK ADP CSV
+  + Sleeper all-player identities
+  + live canonical draft Keeper Designations and exact pick numbers
+  -> parseUdkAdpCsv() and resolveUdkAdpPlayers()
+  -> calculateKeeperAdjustedAdp()
+  -> available-player table and the selected Team's open picks
+
+"Mock Drafts to include" URLs or IDs, seeded by postKeeperMockDraftSource.ts
+  + selected Team owner ID
+  + live canonical Keeper Designations
+  -> public Sleeper metadata and picks for each exact draft ID
+  -> league-mock, post-lock, creator, board, draft-slot, and Keeper Designation checks
+  -> analyzeMockDrafts()
+  -> Observed Mock ADP and availability at the Team's open picks
+
+dated FantasyPros IDP Tier 1 and Tier 2 source
+  + live Sleeper adp_idp_1qb market
+  + the same selected post-lock mock samples
+  + the selected Team's open picks
+  -> buildIdpDraftPlan()
+  -> up to two Tier 1 targets and two collapsed Tier 2 fallbacks
+```
+
+The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer` and the IDP plan builder are also source-independent. Baseline ADP, Keeper-Adjusted ADP, Observed Mock ADP, IDP Tier, and Sleeper IDP ADP remain separate values. The UI presents the scan-level offensive draft positions in `round.pick` notation and moves overall ADP, pool, sample, and per-pick availability data into an expandable player detail row. The compact IDP Plan keeps expert tiers categorical and uses market timing only to select inexpensive big-play targets and identify the Team's last responsible open pick.
+
+Sleeper's public user-drafts endpoint does not list league-specific mocks. Its draftboards page uses an authenticated query, so Draft Intel does not attempt automatic discovery or handle Sleeper credentials. Instead, the checked-in source seeds the exact approved post-lock batch, and the input field accepts replacement Sleeper draft URLs or bare IDs. Input is deduplicated in entry order before the adapter fetches only that exact set. The adapter permits selection only when league-mock metadata, creator, timestamp, draft size, snake type, user draft slot, completed pick count, and the complete current keeper set match exactly. Incompatible drafts stay visible with reasons.
+
+Vite includes Draft Intel for local development and approved staging builds. The runtime allowlist accepts localhost variants and the exact protected staging hostname. The public production build does not include the route, navigation, UDK source, or IDP planning source. The hostname allowlist is a visibility boundary; Vercel Deployment Protection remains the staging access-control layer.
+
 ### Grundle Bowl Beta
 
 ```text
@@ -81,12 +118,14 @@ Sleeper data
 - `backend/matchupHistoryStore.ts` provides a `MatchupHistoryStore` interface with a checked-in JSON implementation (default) and an optional local `better-sqlite3` implementation. Both schemas include league/season identity.
 - The deployed frontend imports `frontend/src/data/matchupHistoryStore.json`; it does not query SQLite or a backend service.
 - The deployed frontend imports `frontend/src/data/draftHistoryStore.json` and overlays the active draft with a live browser fetch.
+- The timestamped UDK CSV is bundled only with approved Draft Intel builds. It is not a runtime service or a public production dependency.
 - Hosted storage, scheduling, and any future API boundary are intentionally deferred in `backend/TODO.md`.
 
 ## External boundaries
 
 - Sleeper public APIs provide league, roster, user, matchup, draft, draft-pick, player, NFL-state, and playoff-bracket data.
 - ESPN's public NFL scoreboard endpoint provides game completion status for the Matchups page.
+- The Fantasy Footballers UDK CSV provides the local Baseline ADP snapshot. Sleeper supplies canonical player IDs and current Keeper Designations, not the ADP values used by this calculation.
 - Neither current browser flow requires a private application API key.
 
 ## Configuration boundary

@@ -2,10 +2,12 @@ import { defineConfig } from 'vite';
 import type { CSSOptions } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { shouldIncludeDraftIntelBuild } from './src/draftIntelAccess.ts';
 
 const buildInfo = {
   gitRef: process.env.VERCEL_GIT_COMMIT_REF ?? process.env.GIT_REF ?? null,
-  vercelEnv: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? null,
+  vercelEnv:
+    process.env.VERCEL_TARGET_ENV ?? process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? null,
 };
 
 const lightningcssOptions = {
@@ -33,8 +35,8 @@ export default defineConfig(({ command }) => ({
   },
   define: {
     __BUILD_INFO__: JSON.stringify(buildInfo),
-    // Local tools are removed from production builds, including Vercel previews.
-    __LOCAL_TOOLS_BUILD__: JSON.stringify(command === 'serve'),
+    // Draft Intel is included only for local development and approved staging deployments.
+    __DRAFT_INTEL_BUILD__: JSON.stringify(shouldIncludeDraftIntelBuild(command, process.env)),
   },
   build: {
     // Avoid DaisyUI's @property warning during minification

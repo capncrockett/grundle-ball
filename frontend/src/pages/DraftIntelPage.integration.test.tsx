@@ -9,6 +9,7 @@ describe('DraftIntelPage', () => {
     renderWithRouter(<DraftIntelPage initialScoutRosterId={1} storage={null} />);
 
     expect(screen.getByRole('heading', { name: 'Draft Intel' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Keeper-Adjusted ADP' })).toBeInTheDocument();
     const coverage = screen.getByRole('region', { name: 'Draft Intel coverage' });
     expect(within(coverage).getByText('11')).toBeInTheDocument();
     expect(within(coverage).getByText(/Glaurung & Foes excluded as your Team/)).toBeInTheDocument();

@@ -14,6 +14,7 @@ import type {
   KeeperDesignation,
   KeeperLedgerEntry,
 } from './draftHistoryTypes';
+import { getSnakeDraftPickNumber } from '../utils/draftBoard.ts';
 
 const positiveInteger = (value: unknown, label: string): number => {
   const parsed = typeof value === 'string' ? Number(value) : value;
@@ -151,8 +152,7 @@ export function getTeamForRoster(
 }
 
 export function getDraftPickNumber(round: number, draftSlot: number, teamCount: number): number {
-  const roundOffset = (round - 1) * teamCount;
-  return roundOffset + (round % 2 === 1 ? draftSlot : teamCount - draftSlot + 1);
+  return getSnakeDraftPickNumber(round, draftSlot, teamCount);
 }
 
 export function buildKeeperLedger(seasons: DraftHistorySeason[]): KeeperLedgerEntry[] {

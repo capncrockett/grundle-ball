@@ -10,6 +10,7 @@ The official `/playoffs` page renders Sleeper's `winners_bracket` and `losers_br
 - Weekly Sleeper matchups with ESPN-backed starter completion counts.
 - Official playoff bracket derived directly from Sleeper.
 - Canonical Sleeper draftboards from 2019 onward with Team-specific keeper history.
+- Restricted Draft Intel on localhost and protected staging, with historical Team patterns, Keeper-Adjusted ADP from a timestamped UDK baseline, selected Sleeper mock observations, and tiered IDP timing.
 - In-repo Grundle League constitution with a table of contents and downloadable review-draft PDF.
 - Grundle Bowl Beta with Live and If-Today views of the rejected custom bracket proposal.
 - Responsive DaisyUI interface, selectable themes, and a compact deployment footer linking to the public repository.
@@ -76,6 +77,7 @@ Production is hosted at <https://grundle-ball.vercel.app>. A live root check ret
 | `/playoffs`                   | Official Sleeper winners and consolation brackets                              |
 | `/matchups`                   | Week-selectable matchups and starter completion counts                         |
 | `/history`                    | Historical draftboards and Team-specific keeper designations                   |
+| `/local/draft-intel`          | Restricted local/staging draft patterns, ADP, mock, and IDP planning tools     |
 | `/constitution`               | Current in-repo constitution and review-draft PDF link                         |
 | `/beta/grundle-bowl/live`     | Beta custom bracket populated from playoff results                             |
 | `/beta/grundle-bowl/if-today` | Beta custom bracket seeded from current standings                              |
