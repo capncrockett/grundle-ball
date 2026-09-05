@@ -2,6 +2,17 @@
 
 Guidance for coding agents working in this repository.
 
+## Start here
+
+Grundle Ball is a companion dashboard. Keep improvements within the user's requested scope; roadmap entries do not authorize new fantasy-platform features.
+
+1. Check `git status --short --branch` and preserve unrelated work. Run `npm run doctor` to diagnose local prerequisites without changing the checkout.
+2. Read the relevant directory entry point: [frontend/AGENTS.md](frontend/AGENTS.md) or [backend/AGENTS.md](backend/AGENTS.md). The [task map](docs/agent-workflow.md#task-map) connects each feature to its implementation and tests.
+3. Use focused tests while iterating. `npm run verify:quick` runs static/tooling checks; `npm run verify` adds all unit/integration tests and the production build. `npm run verify -- --e2e` includes the browser gate.
+4. Hand off the actual diff and completed verification. Commit only when asked, as specified below.
+
+See [the development workflow](docs/agent-workflow.md) for command behavior, fixture use, browser prerequisites, and release handoffs.
+
 ## Where things live
 
 | Concern                                                 | Location                                                                                     |
@@ -11,6 +22,7 @@ Guidance for coding agents working in this repository.
 | Domain glossary (ubiquitous language)                   | `CONTEXT.md` (created when terminology work starts)                                          |
 | Architecture Decision Records                           | `docs/adr/` (created lazily)                                                                 |
 | Versioning and release policy                           | `docs/versioning.md`                                                                         |
+| Agent task map and verification workflow                | [docs/agent-workflow.md](docs/agent-workflow.md)                                             |
 | Installed agent skills                                  | `.agents/skills/`                                                                            |
 | League constitution source of truth                     | `frontend/src/content/constitution.md`                                                       |
 | Current constitution archive (2026 review draft)        | `docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`                                  |

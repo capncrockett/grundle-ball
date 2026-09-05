@@ -26,6 +26,8 @@ dist-ssr
 
 # Test artifacts
 test-results/
+.playwright-mcp/
+playwright-report/
 .vercel
 .env*.local
 .env

@@ -76,6 +76,7 @@ https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype
 - The local IDP ADP feed uses `no-store`; a failure does not remove expert tiers or selected mock evidence.
 - ESPN scoreboard requests use `no-store`.
 - Pages surface caught API errors in visible alerts; automated coverage is summarized in `TESTING.md`.
+- Matchups treat player metadata and ESPN completion as optional. Their failures retain valid Sleeper scores and show unavailable completion status instead of guessed counts.
 
 ## League configuration
 

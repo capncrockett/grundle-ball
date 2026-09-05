@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { repositoryFiles } from './repository-files.mjs';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, '..');
@@ -19,12 +19,7 @@ const staleBrands = [
   },
 ];
 
-const markdownFiles = execFileSync('git', ['ls-files', '-z', '--', '*.md'], {
-  cwd: repositoryRoot,
-  encoding: 'utf8',
-})
-  .split('\0')
-  .filter(Boolean);
+const markdownFiles = repositoryFiles(repositoryRoot).filter((file) => file.endsWith('.md'));
 
 const errors = [];
 let checkedLinks = 0;
@@ -95,8 +90,15 @@ function validateLink(sourceFile, sourceLine, rawTarget) {
   }
 
   const [rawPath, rawFragment = ''] = target.split('#', 2);
-  const linkPath = decodeURIComponent(rawPath.split('?', 1)[0]);
-  const fragment = decodeURIComponent(rawFragment);
+  let linkPath;
+  let fragment;
+  try {
+    linkPath = decodeURIComponent(rawPath.split('?', 1)[0]);
+    fragment = decodeURIComponent(rawFragment);
+  } catch {
+    errors.push(`${sourceFile}:${sourceLine}: invalid URL encoding in ${target}`);
+    return;
+  }
   const resolvedPath = linkPath
     ? path.resolve(path.dirname(path.join(repositoryRoot, sourceFile)), linkPath)
     : path.join(repositoryRoot, sourceFile);

@@ -30,6 +30,9 @@ jobs:
       - name: Check documentation
         run: npm run docs:check
 
+      - name: Check repository invariants
+        run: npm run repo:check
+
       - name: Run ESLint
         run: npm run lint
 

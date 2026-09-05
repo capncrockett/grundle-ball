@@ -26,6 +26,8 @@ export function MatchupsPage() {
   const [seasonState, setSeasonState] = useState<SeasonState | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusWarning, setStatusWarning] = useState<string | null>(null);
+  const [completionAvailable, setCompletionAvailable] = useState(false);
 
   // 1) Load the NFL calendar once. NFL preseason weeks are not fantasy matchup weeks.
   useEffect(() => {
@@ -51,17 +53,22 @@ export function MatchupsPage() {
   // 2) Whenever selectedWeek changes, fetch league data for that week
   useEffect(() => {
     if (selectedWeek == null || !seasonState) return;
+    let cancelled = false;
+    const isCancelled = () => cancelled;
 
     async function loadWeekData(week: number) {
       try {
         setIsLoading(true);
         setError(null);
+        setStatusWarning(null);
+        setCompletionAvailable(false);
 
         const [users, rosters, matchups] = await Promise.all([
           getLeagueUsers(LEAGUE_ID),
           getLeagueRosters(LEAGUE_ID),
           getLeagueMatchupsForWeek(LEAGUE_ID, week),
         ]);
+        if (isCancelled()) return;
 
         const mergedTeams = mergeRostersAndUsersToTeams(rosters, users);
         setTeams(mergedTeams);
@@ -71,30 +78,40 @@ export function MatchupsPage() {
           return;
         }
 
-        // Player metadata and ESPN status are only needed for populated matchup cards.
-        const [playersById, espnScoreboard] = await Promise.all([
-          getAllPlayers(),
-          getESPNScoreboard(week),
-        ]);
-
-        // Build team game status map from ESPN data
-        const teamGameStatus = buildTeamGameStatusMap(espnScoreboard);
-
-        // Pass player and game status data to pairMatchups
-        const paired = pairMatchups(week, matchups, playersById, teamGameStatus);
+        // Optional completion data must never prevent displaying valid Sleeper scores.
+        let paired = pairMatchups(week, matchups);
+        try {
+          const [players, scoreboard] = await Promise.all([
+            getAllPlayers(),
+            getESPNScoreboard(week),
+          ]);
+          if (isCancelled()) return;
+          paired = pairMatchups(week, matchups, players, buildTeamGameStatusMap(scoreboard));
+          setCompletionAvailable(true);
+        } catch (err) {
+          if (isCancelled()) return;
+          const reason = err instanceof Error ? err.message : 'Game status request failed';
+          setStatusWarning(
+            `Starter completion is unavailable. Sleeper scores are still shown. ${reason}`,
+          );
+        }
         const live = paired.map((p) => buildLiveMatchData(p));
         setLiveMatchups(live);
       } catch (err) {
+        if (isCancelled()) return;
         console.error(err);
         setError(err instanceof Error ? err.message : 'Failed to load matchups');
         setLiveMatchups([]);
         setTeams([]);
       } finally {
-        setIsLoading(false);
+        if (!isCancelled()) setIsLoading(false);
       }
     }
 
     void loadWeekData(selectedWeek);
+    return () => {
+      cancelled = true;
+    };
   }, [selectedWeek, seasonState]);
 
   const seasonLabel = seasonState
@@ -160,6 +177,12 @@ export function MatchupsPage() {
         </div>
       )}
 
+      {statusWarning && !isLoading && (
+        <div role="status" className="alert alert-warning mb-4">
+          <span>{statusWarning}</span>
+        </div>
+      )}
+
       {!isLoading && !error && liveMatchups.length === 0 && (
         <p className="text-sm text-base-content/60">
           {seasonState?.seasonType === 'pre'
@@ -169,17 +192,26 @@ export function MatchupsPage() {
       )}
 
       <div>
-        {liveMatchups.map((live) => {
-          const teamA = teamsByRosterId.get(live.teamIdA);
-          const teamB = live.teamIdB !== null ? teamsByRosterId.get(live.teamIdB) : undefined;
-          const matchupKey = [
-            live.week.toString(),
-            live.teamIdA.toString(),
-            live.teamIdB?.toString() ?? 'bye',
-          ].join('-');
+        {!isLoading &&
+          liveMatchups.map((live) => {
+            const teamA = teamsByRosterId.get(live.teamIdA);
+            const teamB = live.teamIdB !== null ? teamsByRosterId.get(live.teamIdB) : undefined;
+            const matchupKey = [
+              live.week.toString(),
+              live.teamIdA.toString(),
+              live.teamIdB?.toString() ?? 'bye',
+            ].join('-');
 
-          return <MatchupCard key={matchupKey} live={live} teamA={teamA} teamB={teamB} />;
-        })}
+            return (
+              <MatchupCard
+                key={matchupKey}
+                live={live}
+                teamA={teamA}
+                teamB={teamB}
+                completionAvailable={completionAvailable}
+              />
+            );
+          })}
       </div>
     </div>
   );
