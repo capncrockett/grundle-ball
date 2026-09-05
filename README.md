@@ -38,23 +38,14 @@ The development server defaults to `http://localhost:5173`.
 ## Quality checks
 
 ```bash
-# Prettier check
-npm run format
+# Diagnose local prerequisites without changing the checkout
+npm run doctor
 
-# Frontend and backend lint
-npm run lint
+# Static checks and repository tooling tests while iterating
+npm run verify:quick
 
-# Frontend and backend TypeScript checks
-npm run typecheck
-
-# Internal documentation links and stale branding
-npm run docs:check
-
-# Frontend Jest suite
-npm run test:ci -w frontend
-
-# Production build
-npm run build -w frontend
+# All non-browser checks, tests, and the production build
+npm run verify
 ```
 
 For local end-to-end testing, run:
@@ -64,6 +55,8 @@ npm run test:e2e:local -w frontend
 ```
 
 Playwright starts Vite automatically for this command, or reuses an existing local server.
+
+`npm run verify -- --e2e` runs the complete verification flow including Playwright. `npm run verify -- --list` previews the commands. See the [agent development workflow](docs/agent-workflow.md) for a feature-to-test map and [TESTING.md](TESTING.md) for individual commands.
 
 Playwright's default non-local target is the Grundle Ball staging deployment. Set `E2E_BASE_URL` to test a different deployment. See [`TESTING.md`](TESTING.md) for browser setup, CI behavior, coverage, and known gaps.
 
@@ -104,6 +97,8 @@ Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the correspon
 
 ## Documentation
 
+- [`AGENTS.md`](AGENTS.md): repository conventions and agent entry points
+- [`docs/agent-workflow.md`](docs/agent-workflow.md): setup diagnostics, verification commands, and task map
 - [`frontend/WARP.md`](frontend/WARP.md): frontend architecture, patterns, and commands
 - [`docs/architecture.md`](docs/architecture.md): system boundaries and data flows
 - [`docs/data-model.md`](docs/data-model.md): current TypeScript domain models

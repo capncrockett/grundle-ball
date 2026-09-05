@@ -77,6 +77,15 @@ test.describe('Happy path smoke', () => {
     await expect(page.getByText(/^Grundle Ball$/)).toBeHidden();
     const hostname = new URL(String(testInfo.project.use.baseURL)).hostname;
     await expect(page.locator('nav a:visible')).toHaveCount(isDraftIntelHost(hostname) ? 7 : 6);
+    for (const width of [375, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect(page.locator('header nav')).toBeInViewport({ ratio: 1 });
+      await expect(page.getByLabel('Theme', { exact: true })).toBeInViewport({ ratio: 1 });
+      const headerFits = await page
+        .locator('header')
+        .evaluate((header) => header.scrollWidth <= header.clientWidth);
+      expect(headerFits).toBe(true);
+    }
   });
 
   test('exposes Draft Intel on its approved local or staging host', async ({ page }, testInfo) => {
@@ -101,7 +110,7 @@ test.describe('Happy path smoke', () => {
     await expect(page.locator('#keepers')).toBeVisible();
   });
 
-  test('surfaces ESPN API errors', async ({ page }) => {
+  test('keeps Sleeper scores visible when ESPN fails', async ({ page }) => {
     await page.route('**/state/nfl**', (route) =>
       route.fulfill({
         status: 200,
@@ -144,5 +153,8 @@ test.describe('Happy path smoke', () => {
     await page.goto('/matchups');
 
     await expect(page.getByText(/ESPN API error/i)).toBeVisible();
+    await expect(page.getByTestId('matchup-card')).toHaveCount(6);
+    await expect(page.getByText('87.88')).toBeVisible();
+    await expect(page.getByText(/\d+\/\d+ finished/)).toHaveCount(0);
   });
 });

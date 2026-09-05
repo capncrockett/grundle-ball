@@ -71,13 +71,12 @@ Run from the repository root:
 
 ```bash
 npm ci
-npm run format
-npm run lint
-npm run typecheck
-npm run test:ci -w frontend
-npm run build -w frontend
+npm run doctor
+npm run verify -- --e2e
 git diff --check
 ```
+
+Install browser prerequisites as described in [TESTING.md](../TESTING.md). The shared verification flow covers repository/documentation checks, formatting, frontend/backend lint and typechecks, tooling and application tests, and the production build before browser tests.
 
 Then follow `TESTING.md` for staging and production browser checks.
 

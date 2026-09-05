@@ -2,6 +2,8 @@
 
 This file is the working index for `frontend/`. Read the root `AGENTS.md` first for repository conventions, skills, and naming rules.
 
+[AGENTS.md](AGENTS.md) is the standard frontend agent entry point. The repository [task map](../docs/agent-workflow.md#task-map) provides focused test routing, and `npm run doctor` / `npm run verify` provide setup diagnostics and the shared validation flow.
+
 All frontend code, content, tests, and documentation must follow the root prohibition on Unicode em dashes and en dashes. Use the ASCII hyphen-minus (`-`) instead.
 
 ## Product boundary
@@ -148,6 +150,8 @@ Standings does not query SQLite or a runtime backend. The checked-in rows are ex
 3. `buildTeamGameStatusMap()` maps NFL teams to completed/not-completed.
 4. `pairMatchups()` groups Sleeper rows and counts completed starters.
 5. `buildLiveMatchData()` produces the actual-score data rendered by `MatchupCard`.
+
+Player metadata and ESPN completion data are optional enrichments. If either fails, retain Sleeper scores, show a warning, and render starter completion as unavailable. Obsolete week requests cannot overwrite a newer selection. Numeric zero scores display as `0.00` on both sides.
 
 Projected totals and win probability are not currently part of `LiveMatchData`. The unused projection client is tracked as future work in root `ROADMAP.md`.
 

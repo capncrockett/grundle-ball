@@ -5,6 +5,21 @@ Grundle Ball uses Jest and React Testing Library for unit/integration coverage a
 ## Commands
 
 ```bash
+# Diagnose installed prerequisites without modifying the checkout
+npm run doctor
+
+# Static checks and repository tooling tests
+npm run verify:quick
+
+# All non-browser checks, frontend/backend tests, and production build
+npm run verify
+
+# Complete flow including desktop/mobile and production-boundary browser tests
+npm run verify -- --e2e
+
+# Preview checks without executing them
+npm run verify -- --list
+
 # Jest (interactive/default)
 npm run test -w frontend
 
@@ -30,15 +45,17 @@ npm run typecheck
 npm run build -w frontend
 ```
 
+The shared runner stops on the first failed command and exits nonzero. It does not rewrite formatting, install dependencies, or refresh history. See the [agent workflow](docs/agent-workflow.md) for the task-to-test map and exact command scopes.
+
 ### Playwright against local development
 
 Install the browsers once in the cache used by the local script:
 
 ```bash
-cd frontend
-PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium webkit
-cd ..
+npm exec -w frontend -- cross-env PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit
 ```
+
+This command works in PowerShell and POSIX shells. Linux environments may also need Playwright's `--with-deps` installation option for OS libraries.
 
 Run Playwright:
 
@@ -71,6 +88,7 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Official Sleeper playoff rendering and its loading, empty, and error states.
 - Grundle Bowl Beta Live and If-Today pages, including API failures.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
+- Matchups retain Sleeper scores when ESPN/player metadata fails and distinguish unavailable completion data from numeric scores, including zero.
 - Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
 - Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, and Draft Intel presentation.
 - Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, the unique 10-ID source batch, pasted URL/ID parsing and deduplication, strict league-mock/post-lock filtering, exact complete-keeper-set checks, selection controls, compact `round.pick` scan rows, expandable player detail, and separate Observed Mock ADP presentation.
@@ -83,6 +101,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 
 ### Node test runner
 
+- Repository tooling checks cover untracked documentation, ignored artifacts, tracked deletions, malformed links, package/lockfile drift, prohibited Unicode dash punctuation, verification failure propagation, and structured setup diagnostics (`npm run test:tooling`).
 - Scoped JSON and SQLite matchup-history replacement across overlapping league/season/week values.
 - Automatic migration of the known unscoped SQLite shape to the 2025 league/season identity.
 - CLI selector validation, alternate-league season resolution, and malformed upstream matchup rejection before writes.
@@ -90,7 +109,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 
 ### Playwright
 
-- `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation, Constitution anchors, the Grundle Ball header/footer, and a user-visible ESPN error.
+- `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation with all controls inside 375px/390px viewports, Constitution anchors, the Grundle Ball header/footer, and preserved Sleeper scores during a visible ESPN failure.
 - `production-boundary.spec.ts`: the public production build has no Draft Intel navigation, route, UDK source, Keeper-Adjusted ADP, IDP Tier source, IDP Draft Plan, or mock-draft feature text, while local development and protected staging retain the tool.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
 - `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
@@ -103,7 +122,9 @@ Most smoke checks target the configured deployment and therefore exercise its cu
 
 - Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
 - `.github/workflows/lint.yml` runs root formatting, lint, and typechecks on pull requests, `release/**` pushes, and manual dispatch. The lint and typecheck commands cover both frontend and backend workspaces.
+- The lint workflow also runs `repo:check` for root package/lockfile consistency and the repository's ASCII dash convention. Both repository and documentation checks include new, non-ignored files before staging.
 - `.github/workflows/test.yml` runs the frontend Jest CI suite, backend matchup-history store tests, and the production Vite build on pull requests, `release/**` pushes, and manual dispatch.
+- The test workflow also runs the Node repository-tooling tests.
 - The Playwright job runs on pushes to `release/**`, pull requests targeting `main`, and manual dispatch. It starts the checked-out app locally and runs Chromium desktop and iPhone 12 coverage against that exact commit.
 
 For a release, require the release-branch CI run against the checked-out local application to pass before merging to `main`. Protected staging remains available as an optional environment check when `VERCEL_AUTOMATION_BYPASS_SECRET` is configured. After deployment, run the smoke suite against the production URL to verify the real deployment and external API access.

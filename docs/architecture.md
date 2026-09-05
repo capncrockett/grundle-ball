@@ -16,7 +16,7 @@ Grundle Ball is a client-rendered React application with a small set of Node mai
 - `/playoffs` renders Sleeper's official `winners_bracket` and `losers_bracket` responses directly. `sleeperBracket/resolveBracket.ts` resolves participants and placement labels without applying house routing.
 - `/matchups` combines Sleeper league/matchup/player data with ESPN NFL game status to show scores and finished-starter counts.
 - `/history` renders canonical annual draftboards and Team-specific keeper history. Completed seasons come from a checked-in snapshot; the active season is refreshed from Sleeper in the browser.
-- `/local/draft-intel` is available only in local development. It combines completed-draft pattern analysis with deterministic Keeper-Adjusted ADP and is removed from production builds.
+- `/local/draft-intel` is available in local development and protected staging. It combines completed-draft patterns, Keeper-Adjusted ADP, selected mock observations, and IDP timing, and is removed from public production builds.
 - `/constitution` renders `frontend/src/content/constitution.md`; the review-draft PDF is served as a static file.
 - `/beta/grundle-bowl/*` contains the custom Champ Bowl / Keeper Bowl / Toilet Bowl proposal. This Beta feature has its own immutable bracket template and routing engine and must not be confused with the official playoff route.
 
@@ -43,6 +43,8 @@ Sleeper NFL state + players + users + rosters + weekly matchups
   -> buildLiveMatchData()
   -> MatchupCard
 ```
+
+Sleeper scores remain visible when optional ESPN or player metadata requests fail. A warning explains why completion counts are unavailable, and stale requests cannot replace the selected week's results.
 
 ### Official playoffs
 

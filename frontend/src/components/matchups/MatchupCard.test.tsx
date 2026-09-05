@@ -130,15 +130,16 @@ describe('MatchupCard', () => {
     expect(screen.getByText('8-3-2')).toBeInTheDocument();
   });
 
-  it('shows zero points as dash when pointsA is 0', () => {
+  it('displays zero as a score on both sides', () => {
     const noPointsMatch: LiveMatchData = {
       ...mockLiveMatchData,
       pointsA: 0,
+      pointsB: 0,
     };
 
     render(<MatchupCard live={noPointsMatch} teamA={mockTeamA} teamB={mockTeamB} />);
 
-    // 0 is falsy, so it shows '-'
-    expect(screen.getByText('-')).toBeInTheDocument();
+    expect(screen.getAllByText('0.00')).toHaveLength(2);
+    expect(screen.queryByText('-')).not.toBeInTheDocument();
   });
 });

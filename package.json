@@ -1,6 +1,6 @@
 {
   "name": "grundle-ball",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "private": true,
   "engines": {
     "node": "24.x"
@@ -10,6 +10,11 @@
     "backend"
   ],
   "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "repo:check": "node scripts/check-repo.mjs",
+    "test:tooling": "node --test scripts/*.test.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:quick": "node scripts/verify.mjs --quick",
     "docs:check": "node scripts/check-docs.mjs",
     "format": "npm run format -w frontend",
     "format:write": "npm run format:write -w frontend",

@@ -33,7 +33,7 @@ function NavLink({ to, label, icon }: NavLinkProps) {
     <Link
       to={to}
       aria-label={label}
-      className={`btn btn-ghost btn-sm ${isActive ? 'btn-active font-semibold' : 'opacity-80'}`}
+      className={`btn btn-ghost btn-sm px-1.5 sm:px-3 ${isActive ? 'btn-active font-semibold' : 'opacity-80'}`}
     >
       <span className="flex items-center gap-1">
         {icon}

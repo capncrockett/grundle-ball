@@ -27,6 +27,9 @@ jobs:
       - name: Run frontend tests
         run: npm run test:ci -w frontend
 
+      - name: Run repository tooling tests
+        run: npm run test:tooling
+
       - name: Run matchup-history store tests
         run: npm run test -w backend
 

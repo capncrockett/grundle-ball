@@ -7,6 +7,7 @@ interface MatchupCardProps {
   live: LiveMatchData;
   teamA: Team | undefined;
   teamB: Team | undefined;
+  completionAvailable?: boolean;
 }
 
 const formatRecord = (record: Team['record']): string => {
@@ -14,7 +15,7 @@ const formatRecord = (record: Team['record']): string => {
   return record.ties ? `${base}-${record.ties.toString()}` : base;
 };
 
-export function MatchupCard({ live, teamA, teamB }: MatchupCardProps) {
+export function MatchupCard({ live, teamA, teamB, completionAvailable = true }: MatchupCardProps) {
   return (
     <div className="card bg-base-200 shadow-md mb-4" data-testid="matchup-card">
       <div className="card-body p-4 gap-3">
@@ -50,11 +51,11 @@ export function MatchupCard({ live, teamA, teamB }: MatchupCardProps) {
             </div>
 
             <div className="mt-1">
-              <div className="text-2xl font-bold">
-                {live.pointsA ? live.pointsA.toFixed(2) : '-'}
-              </div>
+              <div className="text-2xl font-bold">{live.pointsA.toFixed(2)}</div>
               <div className="text-xs text-base-content/60">
-                {live.playersFinishedA}/{live.startersA} finished
+                {completionAvailable
+                  ? `${live.playersFinishedA.toString()}/${live.startersA.toString()} finished`
+                  : 'Starter status unavailable'}
               </div>
             </div>
           </div>
@@ -84,7 +85,9 @@ export function MatchupCard({ live, teamA, teamB }: MatchupCardProps) {
               <div className="text-2xl font-bold">{teamB ? live.pointsB.toFixed(2) : '-'}</div>
               {teamB && (
                 <div className="text-xs text-base-content/60">
-                  {live.playersFinishedB}/{live.startersB} finished
+                  {completionAvailable
+                    ? `${live.playersFinishedB.toString()}/${live.startersB.toString()} finished`
+                    : 'Starter status unavailable'}
                 </div>
               )}
             </div>
