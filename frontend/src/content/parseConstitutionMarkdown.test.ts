@@ -173,6 +173,14 @@ describe('constitution source content', () => {
     const serializedKeepers = JSON.stringify(keepers);
     expect(serializedKeepers).toContain('exactly 1 week (7 days)');
     expect(serializedKeepers).toContain('no more than 2 keepers');
+
+    const autoSubs = constitutionDocument.sections.find(
+      (section) => section.id === 'sleeper-auto-subs',
+    );
+    const serializedAutoSubs = JSON.stringify(autoSubs);
+    expect(CONSTITUTION_MARKDOWN).toContain('| Require AutoSub To Not Play Before Starter | On');
+    expect(serializedAutoSubs).toContain('Require AutoSub To Not Play Before Starter');
+    expect(serializedAutoSubs).toContain('same time as or later than');
     expect(serializedKeepers).toContain(
       'Owning or acquiring additional draft picks does not increase the cap',
     );
