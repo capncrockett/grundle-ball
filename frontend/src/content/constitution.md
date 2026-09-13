@@ -16,7 +16,7 @@
 | Keepers        | Maximum 2 per team, including keeper packages acquired by trade                       |
 | Keeper lock    | 1 week before the scheduled Sleeper draft start                                       |
 | Trade deadline | Week 12, exact timestamp per Sleeper                                                  |
-| Auto Subs      | Maximum 1 per matchup                                                                 |
+| Auto Subs      | Maximum 1 per matchup; substitute cannot play before starter                          |
 | Playoffs       | 6-team championship bracket, Weeks 15-17                                              |
 | Rule changes   | Offseason 75%; in-season existing-rule changes 100%; in-season new-rule additions 75% |
 
@@ -75,11 +75,11 @@ A starter who is inactive but is properly covered by a valid Sleeper Auto Sub do
 
 Auto Subs are intended to protect a manager who prepared a valid replacement but misses a late inactive announcement. They are not a substitute for maintaining a legal lineup.
 
-| Setting                                    | Value | What it means here                                                                                                                                                        |
-| ------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Maximum Auto Subs per matchup              | 1     | A team may designate at most one Auto Sub pairing in a matchup.                                                                                                           |
-| Require AutoSub To Not Play Before Starter | Off   | The substitute is allowed to play before the starter. Example: a Thursday player may protect a Sunday starter if the pairing is created before the Thursday player locks. |
-| Lock AutoSub If Starter Active             | Off   | If the starter plays, the unused substitute is not treated as consumed merely because it was designated as the Auto Sub.                                                  |
+| Setting                                    | Value | What it means here                                                                                                                        |
+| ------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Maximum Auto Subs per matchup              | 1     | A team may designate at most one Auto Sub pairing in a matchup.                                                                           |
+| Require AutoSub To Not Play Before Starter | On    | The substitute's game must start at the same time as or later than the starter's game. A player whose game starts earlier cannot be used. |
+| Lock AutoSub If Starter Active             | Off   | If the starter plays, the unused substitute is not treated as consumed merely because it was designated as the Auto Sub.                  |
 
 The designated substitute must be eligible for the starter's lineup slot and will enter only if the starter is inactive under Sleeper's Auto Sub rules. The pairing must be established before the relevant players lock.
 
