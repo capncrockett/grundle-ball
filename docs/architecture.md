@@ -79,13 +79,19 @@ timestamped Fantasy Footballers UDK ADP CSV
   -> calculateKeeperAdjustedAdp()
   -> available-player table and the selected Team's open picks
 
+live canonical draft status and standard Draft Selections
+  -> load once, then refresh on demand or every 15 seconds after Draft started
+  -> buildDraftTrackerSnapshot()
+  -> progress, latest pick, next pick, remaining Team picks, and drafted-row visibility
+
 "Mock Drafts to include" URLs or IDs, seeded by postKeeperMockDraftSource.ts
   + selected Team owner ID
   + live canonical Keeper Designations
+  + Sleeper player identities for selected K, DEF, and IDP picks
   -> public Sleeper metadata and picks for each exact draft ID
   -> league-mock, post-lock, creator, board, draft-slot, and Keeper Designation checks
   -> analyzeMockDrafts()
-  -> Observed Mock ADP and availability at the Team's open picks
+  -> Observed Mock ADP, specialist table rows, and availability at the Team's open picks
 
 dated FantasyPros IDP Tier 1 and Tier 2 source
   + live Sleeper adp_idp_1qb market
@@ -95,7 +101,7 @@ dated FantasyPros IDP Tier 1 and Tier 2 source
   -> up to two Tier 1 targets and two collapsed Tier 2 fallbacks
 ```
 
-The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer` and the IDP plan builder are also source-independent. Baseline ADP, Keeper-Adjusted ADP, Observed Mock ADP, IDP Tier, and Sleeper IDP ADP remain separate values. The UI presents the scan-level offensive draft positions in `round.pick` notation and moves overall ADP, pool, sample, and per-pick availability data into an expandable player detail row. The compact IDP Plan keeps expert tiers categorical and uses market timing only to select inexpensive big-play targets and identify the Team's last responsible open pick.
+The Keeper-Adjusted ADP engine accepts normalized player, keeper, and draft inputs. It does not fetch Sleeper or parse the UDK CSV. `MockDraftAnalyzer`, the draft tracker, and the IDP plan builder are also source-independent. Baseline ADP, Keeper-Adjusted ADP, Observed Mock ADP, IDP Tier, and Sleeper IDP ADP remain separate values. The UI presents the scan-level offensive draft positions in `round.pick` notation and moves overall ADP, pool, sample, and per-pick availability data into an expandable player detail row. The compact IDP Plan keeps expert tiers categorical and uses market timing only to select inexpensive big-play targets and identify the Team's last responsible open pick.
 
 Sleeper's public user-drafts endpoint does not list league-specific mocks. Its draftboards page uses an authenticated query, so Draft Intel does not attempt automatic discovery or handle Sleeper credentials. Instead, the checked-in source seeds the exact approved post-lock batch, and the input field accepts replacement Sleeper draft URLs or bare IDs. Input is deduplicated in entry order before the adapter fetches only that exact set. The adapter permits selection only when league-mock metadata, creator, timestamp, draft size, snake type, user draft slot, completed pick count, and the complete current keeper set match exactly. Incompatible drafts stay visible with reasons.
 

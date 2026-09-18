@@ -66,6 +66,25 @@ const keeperPick = (
   isKeeper: true,
 });
 
+const draftedPick = (
+  playerId: string,
+  playerName: string,
+  pickNo: number,
+  round: number,
+  draftSlot: number,
+  rosterId: number,
+): DraftHistoryPick => ({
+  playerId,
+  playerName,
+  position: 'RB',
+  nflTeam: 'TST',
+  rosterId,
+  round,
+  draftSlot,
+  pickNo,
+  isKeeper: false,
+});
+
 const season: DraftHistorySeason = {
   leagueId: 'league-2026',
   season: '2026',
@@ -95,6 +114,17 @@ const season: DraftHistorySeason = {
   ],
 };
 
+const liveSeason: DraftHistorySeason = {
+  ...season,
+  leagueStatus: 'drafting',
+  draftStatus: 'drafting',
+  picks: [
+    ...season.picks,
+    draftedPick('available-2', 'Available Two', 1, 1, 1, 1),
+    draftedPick('available-4', 'Available Four', 2, 1, 2, 2),
+  ],
+};
+
 const mockCandidate = (
   draftId: string,
   createdAt: number,
@@ -118,6 +148,45 @@ const mockCandidates = [
     { playerId: 'available-6', pickNo: 8 },
   ]),
   mockCandidate('Mock Two', 2, [{ playerId: 'available-4', pickNo: 5 }]),
+];
+
+const specialistSleeperPlayers: Record<string, SleeperPlayer> = {
+  kicker: {
+    player_id: 'kicker',
+    first_name: 'Test',
+    last_name: 'Kicker',
+    position: 'K',
+    team: 'TST',
+  },
+  MIN: {
+    player_id: 'MIN',
+    first_name: 'Minnesota',
+    last_name: 'Vikings',
+    position: 'DEF',
+    team: 'MIN',
+  },
+  defender: {
+    player_id: 'defender',
+    first_name: 'Test',
+    last_name: 'Linebacker',
+    position: 'LB',
+    team: 'TST',
+  },
+};
+
+const specialistMockCandidates = [
+  mockCandidate('Specialist Mock One', 5, [
+    { playerId: 'available-4', pickNo: 3 },
+    { playerId: 'defender', pickNo: 10 },
+    { playerId: 'kicker', pickNo: 12 },
+    { playerId: 'MIN', pickNo: 15 },
+  ]),
+  mockCandidate('Specialist Mock Two', 6, [
+    { playerId: 'available-4', pickNo: 5 },
+    { playerId: 'defender', pickNo: 11 },
+    { playerId: 'kicker', pickNo: 14 },
+    { playerId: 'MIN', pickNo: 16 },
+  ]),
 ];
 
 const idpTierSource: IdpTierSource = {
@@ -209,7 +278,9 @@ describe('KeeperAdjustedAdpPanel', () => {
     expect(within(coverage).getByText('2')).toBeInTheDocument();
     expect(within(coverage).getByText('14')).toBeInTheDocument();
 
-    const picks = screen.getByRole('heading', { name: 'My open snake-draft picks' }).parentElement;
+    const picks = screen.getByRole('heading', {
+      name: 'My remaining snake-draft picks',
+    }).parentElement;
     expect(picks).not.toBeNull();
     if (!picks) return;
     expect(within(picks).getByText('1.02')).toBeInTheDocument();
@@ -239,6 +310,121 @@ describe('KeeperAdjustedAdpPanel', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Show outside board' }));
     expect(screen.getByRole('row', { name: /Outside Player/ })).toBeInTheDocument();
     expect(screen.getByText(/1 rows have no usable ADP/)).toBeInTheDocument();
+  });
+
+  it('tracks live selections, removes used Team picks, and can show drafted players', async () => {
+    const user = userEvent.setup();
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={liveSeason}
+        selectedRosterId={2}
+        source={source}
+        refreshLive={false}
+        initialSleeperPlayers={sleeperPlayers}
+      />,
+    );
+
+    const tracker = await screen.findByRole('region', { name: 'Draft tracker' });
+    expect(within(tracker).getByText('Live')).toBeVisible();
+    expect(within(tracker).getByText('2 / 14 drafted')).toBeVisible();
+    expect(within(tracker).getByText('1.03 #3')).toBeVisible();
+    expect(within(tracker).getByText('Available Four')).toBeVisible();
+    expect(within(tracker).getByText(/1\.02 #2 - Team 2/)).toBeVisible();
+
+    const picks = screen.getByRole('heading', {
+      name: 'My remaining snake-draft picks',
+    }).parentElement;
+    expect(picks).not.toBeNull();
+    if (!picks) return;
+    expect(within(picks).queryByText('1.02')).not.toBeInTheDocument();
+    expect(within(picks).getByText('2.03')).toBeVisible();
+
+    const hideDrafted = screen.getByRole('checkbox', { name: 'Hide drafted' });
+    expect(hideDrafted).toBeChecked();
+    expect(screen.queryByRole('row', { name: /Available Four/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/2 drafted players hidden/)).toBeVisible();
+
+    await user.click(hideDrafted);
+
+    const draftedRow = screen.getByRole('row', { name: /Available Four/ });
+    expect(within(draftedRow).getByText('Drafted 1.02 #2')).toBeVisible();
+  });
+
+  it('refreshes the canonical draft tracker from the table on demand', async () => {
+    const user = userEvent.setup();
+    const loadLiveSeason = jest
+      .fn<Promise<DraftHistorySeason>, []>()
+      .mockResolvedValueOnce(season)
+      .mockResolvedValueOnce(liveSeason);
+
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        refreshLive
+        refreshIdpAdp={false}
+        refreshMocks={false}
+        draftRefreshIntervalMs={0}
+        initialSleeperPlayers={sleeperPlayers}
+        loadLiveSeason={loadLiveSeason}
+      />,
+    );
+
+    const tracker = await screen.findByRole('region', { name: 'Draft tracker' });
+    await waitFor(() => {
+      expect(loadLiveSeason).toHaveBeenCalledTimes(1);
+    });
+    expect(within(tracker).getByText('Pre-draft')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Refresh draft now' }));
+
+    await waitFor(() => {
+      expect(loadLiveSeason).toHaveBeenCalledTimes(2);
+      expect(within(tracker).getByText('Live')).toBeVisible();
+      expect(within(tracker).getByText('2 / 14 drafted')).toBeVisible();
+    });
+  });
+
+  it('polls an incomplete canonical draft after Draft started is pressed', async () => {
+    const user = userEvent.setup();
+    const loadLiveSeason = jest
+      .fn<Promise<DraftHistorySeason>, []>()
+      .mockResolvedValueOnce(season)
+      .mockResolvedValue(liveSeason);
+
+    const view = render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        refreshLive
+        refreshIdpAdp={false}
+        refreshMocks={false}
+        draftRefreshIntervalMs={20}
+        initialSleeperPlayers={sleeperPlayers}
+        loadLiveSeason={loadLiveSeason}
+      />,
+    );
+
+    const tracker = await screen.findByRole('region', { name: 'Draft tracker' });
+    await waitFor(() => {
+      expect(loadLiveSeason).toHaveBeenCalledTimes(1);
+    });
+
+    await new Promise((resolve) => window.setTimeout(resolve, 50));
+    expect(loadLiveSeason).toHaveBeenCalledTimes(1);
+
+    await user.click(within(tracker).getByRole('button', { name: 'Draft started' }));
+
+    await waitFor(() => {
+      expect(loadLiveSeason.mock.calls.length).toBeGreaterThanOrEqual(3);
+    });
+    expect(within(tracker).getByText('Live')).toBeVisible();
+    expect(within(tracker).getByText('Live sync on')).toBeVisible();
+    expect(within(tracker).getByText('2 / 14 drafted')).toBeVisible();
+
+    view.unmount();
   });
 
   it('fails visibly when a current keeper has no resolved baseline ADP', async () => {
@@ -297,6 +483,66 @@ describe('KeeperAdjustedAdpPanel', () => {
     await user.click(screen.getByRole('checkbox', { name: /Post-Keeper Mock Two/ }));
     expect(within(row).getAllByRole('cell')[4]).toHaveTextContent('1.03');
     expect(screen.getByText(/1 selected of 2 compatible/)).toBeVisible();
+  });
+
+  it('adds K, defense, and IDP players observed in the selected mocks', async () => {
+    const user = userEvent.setup();
+    render(
+      <KeeperAdjustedAdpPanel
+        storedSeason={season}
+        selectedRosterId={2}
+        source={source}
+        refreshLive={false}
+        refreshMocks={false}
+        initialSleeperPlayers={{ ...sleeperPlayers, ...specialistSleeperPlayers }}
+        initialMockDraftCandidates={specialistMockCandidates}
+      />,
+    );
+
+    const allPositions = await screen.findByRole('button', { name: 'All positions' });
+    const kickerFilter = screen.getByRole('button', { name: 'K' });
+    const defenseFilter = screen.getByRole('button', { name: 'Defense' });
+    const idpFilter = screen.getByRole('button', { name: 'IDP' });
+    expect(allPositions).toHaveAttribute('aria-pressed', 'true');
+    expect(kickerFilter).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(kickerFilter);
+    expect(allPositions).toHaveAttribute('aria-pressed', 'false');
+    expect(kickerFilter).toHaveAttribute('aria-pressed', 'true');
+    const kickerRow = screen.getByRole('row', { name: /Test Kicker/ });
+    const kickerCells = within(kickerRow).getAllByRole('cell');
+    expect(within(kickerRow).getByText('Mock-only')).toBeVisible();
+    expect(kickerCells[1]).toHaveTextContent('-');
+    expect(kickerCells[2]).toHaveTextContent('-');
+    expect(kickerCells[3]).toHaveTextContent('-');
+    expect(kickerCells[4]).toHaveTextContent('4.01');
+
+    await user.click(defenseFilter);
+    expect(screen.getByRole('row', { name: /Minnesota Vikings/ })).toBeVisible();
+    expect(screen.getByRole('row', { name: /Test Kicker/ })).toBeVisible();
+
+    await user.click(kickerFilter);
+    expect(screen.queryByRole('row', { name: /Test Kicker/ })).not.toBeInTheDocument();
+    expect(defenseFilter).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(idpFilter);
+    const idpRow = screen.getByRole('row', { name: /Test Linebacker/ });
+    expect(within(idpRow).getByText('LB')).toBeVisible();
+    expect(within(idpRow).getAllByRole('cell')[4]).toHaveTextContent('3.03');
+
+    await user.click(screen.getByRole('button', { name: 'Show details for Test Linebacker' }));
+    const details = screen.getByRole('region', { name: 'Test Linebacker details' });
+    expect(within(details).getByText('Selected Sleeper mocks')).toBeVisible();
+    expect(within(details).getByText('2 / 2')).toBeVisible();
+
+    await user.click(allPositions);
+    expect(allPositions).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('row', { name: /Test Kicker/ })).toBeVisible();
+
+    await user.click(idpFilter);
+    expect(allPositions).toHaveAttribute('aria-pressed', 'false');
+    await user.click(idpFilter);
+    expect(allPositions).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('loads only the configured post-lock mock batch for the selected Team', async () => {

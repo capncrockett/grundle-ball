@@ -190,9 +190,10 @@ Keeper-Adjusted ADP:
 2. Refresh the current canonical Sleeper draft through the same normalization used by History.
 3. Resolve UDK names to Sleeper player IDs by normalized name and position, using NFL Team only to disambiguate.
 4. Remove Keeper Designations from the player pool, mark their exact picks occupied, and map each available player's compressed rank onto the open slots.
-5. Reuse the browser-local Team selection to show that Team's open standard-snake picks.
+5. Reuse the browser-local Team selection to show that Team's remaining open standard-snake picks.
+6. Load one canonical Sleeper draft snapshot with the view. After the user presses "Draft started," refresh every 15 seconds while the draft is incomplete and the view is visible. Track non-keeper selections and retain a compact table refresh control for immediate checks.
 
-The pure calculator in `draftIntel/keeperAdjustedAdp.ts` has no Sleeper or CSV dependency. Baseline ADP and Keeper-Adjusted ADP are displayed separately. Rows beyond the finite draftboard remain outside the board instead of being capped or extrapolated.
+The pure calculator in `draftIntel/keeperAdjustedAdp.ts` has no Sleeper or CSV dependency. Baseline ADP and Keeper-Adjusted ADP are displayed separately. Rows beyond the finite draftboard remain outside the board instead of being capped or extrapolated. The draft tracker derives progress, latest and next picks, drafted player IDs, and the selected Team's remaining picks from the live normalized season. Drafted rows are hidden by default and remain available through the "Hide drafted" toggle. K, Team Defense, and individual defenders selected in the chosen mocks join the table as mock-only rows; DL, LB, and DB share the IDP filter, and no UDK or keeper-adjusted value is fabricated for them. Position filters use independent toggle buttons, with an empty selection represented by All positions.
 
 Observed mock drafts:
 
@@ -206,7 +207,7 @@ IDP Draft Plan:
 
 1. Import the dated public FantasyPros Tier 1 and Tier 2 IDP target pool from `src/data/idpTierSource.ts`; expert tiers remain categorical.
 2. Refresh Sleeper's publicly reachable but undocumented season projection feed ordered by `adp_idp_1qb`; show a warning and retain mock timing if it fails.
-3. Reuse the exact selected compatible post-lock mock samples and the selected Team's open picks.
+3. Reuse the exact selected compatible post-lock mock samples and the selected Team's remaining open picks, excluding IDPs already selected in the live draft.
 4. Prefer big-play EDGE candidates within a tier, then the cheapest responsible window. The responsible pick is the latest open pick with at least 70 percent mock availability.
 5. Show up to two viable Tier 1 primary targets and two collapsed Tier 2 fallbacks. Draft one; a player selected in fewer than half of the mocks is a streaming option.
 
@@ -214,7 +215,7 @@ The pure analyzer in `draftIntel/mockDraftAnalyzer.ts` has no Sleeper dependency
 
 The pure builder in `draftIntel/idpDraftPlan.ts` has no network dependency. Do not average IDP Tier, UDK rank, Sleeper ADP, or Observed Mock ADP into one value. IDP Tier answers who; Sleeper and mock timing answer when.
 
-The Keeper-Adjusted ADP table keeps Player, Baseline, Adjusted, ADP Shift, Observed Mock ADP, and Mock Detail in the scan row. Baseline, Adjusted, mock mean, median, and range use `round.pick` notation. The range uses "to" between endpoints so it is not mistaken for decimal subtraction. Expanding a player reveals overall ADP values, pool rank, keepers ahead, mocks sampled, and availability at each open pick.
+The Keeper-Adjusted ADP table keeps Player, Baseline, Adjusted, ADP Shift, Observed Mock ADP, and Mock Detail in the scan row. Baseline, Adjusted, mock mean, median, and range use `round.pick` notation. The range uses "to" between endpoints so it is not mistaken for decimal subtraction. Live Draft Selections add an actual-pick badge when drafted rows are shown. Expanding an offensive UDK player reveals overall ADP values, pool rank, keepers ahead, mocks sampled, and availability at each remaining open pick. Expanding a mock-only specialist identifies the selected mocks as its market source and shows the same mock availability evidence.
 
 The build gate includes the route and navigation for `vite serve`, a Vercel custom `staging` target, the dedicated staging project hostname, or a `release/**` preview used by the staging alias. The runtime gate accepts localhost variants and `grundle-ball-staging.vercel.app` only. The public production build excludes the route and its private data sources. This is a deployment visibility boundary, while Vercel Deployment Protection controls staging access. IDP evidence begins with completed 2026 drafts, after Sleeper's 1QB IDP ADP became usable. Rookie patterns remain unavailable until the stored archive records rookie status.
 

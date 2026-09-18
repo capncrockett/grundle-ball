@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getAllPlayers,
   getIdp1QbAdp,
@@ -14,11 +14,18 @@ import {
   type PostKeeperMockDraftSource,
 } from '../../data/postKeeperMockDraftSource';
 import { UDK_ADP_SOURCE, type UdkAdpSource } from '../../data/udkAdpSource';
+import { buildDraftTrackerSnapshot } from '../../draftIntel/draftTracker';
 import { buildIdpDraftPlan } from '../../draftIntel/idpDraftPlan';
 import { analyzeMockDrafts } from '../../draftIntel/mockDraftAnalyzer';
 import {
+  buildMockDraftSpecialistPool,
+  getDraftIntelPositionGroup,
+  type MockDraftSpecialistPlayer,
+} from '../../draftIntel/mockDraftSpecialists';
+import {
   calculateKeeperAdjustedAdp,
   getOpenDraftPicksForRoster,
+  type KeeperAdjustedAdpRow,
   type DraftPosition,
 } from '../../draftIntel/keeperAdjustedAdp';
 import { buildKeeperAdjustedDraftInput } from '../../draftIntel/keeperAdjustedDraftInput';
@@ -31,6 +38,7 @@ import {
 } from '../../draftIntel/sleeperMockDrafts';
 import { parseUdkAdpCsv, resolveUdkAdpPlayers } from '../../draftIntel/udkAdp';
 import { getRoundPick } from '../../utils/draftBoard';
+import { DraftTracker } from './DraftTracker';
 import { IdpDraftPlan } from './IdpDraftPlan';
 import { MockDraftControls } from './MockDraftControls';
 
@@ -39,6 +47,8 @@ type MockCandidateLoader = (
   input: LoadSleeperMockDraftCandidatesInput,
 ) => Promise<SleeperMockDraftCandidate[]>;
 type IdpAdpLoader = (season: number) => Promise<SleeperPlayerProjection[]>;
+
+const DEFAULT_DRAFT_REFRESH_INTERVAL_MS = 15_000;
 
 export type KeeperAdjustedAdpPanelProps = {
   storedSeason?: DraftHistorySeason;
@@ -56,6 +66,7 @@ export type KeeperAdjustedAdpPanelProps = {
   loadIdpAdp?: IdpAdpLoader;
   loadMockCandidates?: MockCandidateLoader;
   refreshMocks?: boolean;
+  draftRefreshIntervalMs?: number;
 };
 
 const defaultLoadLiveSeason = () => loadCurrentDraftSeason(LEAGUE_ID);
@@ -104,7 +115,53 @@ const positionBadgeClass: Record<string, string> = {
   RB: 'badge-success',
   WR: 'badge-warning',
   TE: 'badge-secondary',
+  K: 'badge-accent',
+  DEF: 'badge-neutral',
+  DL: 'badge-error',
+  LB: 'badge-success',
+  DB: 'badge-secondary',
 };
+
+type KeeperAdjustedTablePlayer = KeeperAdjustedAdpRow & {
+  source: 'udk';
+  positionGroup: string;
+};
+
+type MockSpecialistTablePlayer = MockDraftSpecialistPlayer & {
+  source: 'mock';
+};
+
+type DraftIntelTablePlayer = KeeperAdjustedTablePlayer | MockSpecialistTablePlayer;
+
+const POSITION_FILTER_ORDER = ['QB', 'RB', 'TE', 'WR', 'K', 'DEF', 'IDP'];
+const POSITION_FILTER_LABELS: Record<string, string> = {
+  DEF: 'Defense',
+};
+
+const comparePositionFilters = (a: string, b: string): number => {
+  const aIndex = POSITION_FILTER_ORDER.indexOf(a);
+  const bIndex = POSITION_FILTER_ORDER.indexOf(b);
+  if (aIndex !== -1 || bIndex !== -1) {
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  }
+  return a.localeCompare(b);
+};
+
+const draftPlanningSignature = (season: DraftHistorySeason): string =>
+  JSON.stringify({
+    leagueId: season.leagueId,
+    draftId: season.draftId,
+    draftType: season.draftType,
+    teamCount: season.teamCount,
+    rounds: season.rounds,
+    draftSlots: season.draftSlots,
+    teams: season.teams.map(({ rosterId, ownerId }) => ({ rosterId, ownerId })),
+    keepers: season.picks
+      .filter((pick) => pick.isKeeper)
+      .map(({ playerId, pickNo }) => ({ playerId, pickNo })),
+  });
 
 export function KeeperAdjustedAdpPanel({
   storedSeason,
@@ -122,8 +179,10 @@ export function KeeperAdjustedAdpPanel({
   loadIdpAdp = defaultLoadIdpAdp,
   loadMockCandidates = defaultLoadMockCandidates,
   refreshMocks = refreshLive,
+  draftRefreshIntervalMs = DEFAULT_DRAFT_REFRESH_INTERVAL_MS,
 }: KeeperAdjustedAdpPanelProps) {
   const [season, setSeason] = useState(storedSeason);
+  const [draftTrackerSeason, setDraftTrackerSeason] = useState(storedSeason);
   const [sleeperPlayers, setSleeperPlayers] = useState<SleeperPlayerMap | null>(
     initialSleeperPlayers ?? null,
   );
@@ -136,8 +195,9 @@ export function KeeperAdjustedAdpPanel({
   );
   const [idpAdpWarning, setIdpAdpWarning] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [position, setPosition] = useState('ALL');
+  const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set());
   const [showOutsideBoard, setShowOutsideBoard] = useState(false);
+  const [hideDrafted, setHideDrafted] = useState(true);
   const [expandedPlayerIds, setExpandedPlayerIds] = useState<Set<string>>(new Set());
   const [mockCandidates, setMockCandidates] = useState<SleeperMockDraftCandidate[]>(
     initialMockDraftCandidates ?? [],
@@ -155,6 +215,11 @@ export function KeeperAdjustedAdpPanel({
     ...mockDraftSource.draftIds,
   ]);
   const [mockInputError, setMockInputError] = useState<string | null>(null);
+  const [isRefreshingDraft, setIsRefreshingDraft] = useState(false);
+  const [isDraftSyncEnabled, setIsDraftSyncEnabled] = useState(false);
+  const [draftRefreshWarning, setDraftRefreshWarning] = useState<string | null>(null);
+  const [lastDraftRefreshAt, setLastDraftRefreshAt] = useState<number | null>(null);
+  const draftRefreshInFlight = useRef(false);
   const parsedMockDraftInput = useMemo(
     () => parseSleeperMockDraftInput(mockDraftInput),
     [mockDraftInput],
@@ -189,6 +254,8 @@ export function KeeperAdjustedAdpPanel({
 
       if (seasonResult.status === 'fulfilled' && seasonResult.value) {
         setSeason(seasonResult.value);
+        setDraftTrackerSeason(seasonResult.value);
+        if (refreshLive) setLastDraftRefreshAt(Date.now());
       } else if (storedSeason) {
         const reason =
           seasonResult.status === 'rejected'
@@ -197,8 +264,9 @@ export function KeeperAdjustedAdpPanel({
               : String(seasonResult.reason)
             : 'No live draft was returned';
         setSeason(storedSeason);
+        setDraftTrackerSeason(storedSeason);
         setLiveWarning(
-          `Live keeper refresh failed. Using the stored ${storedSeason.season} draft: ${reason}`,
+          `Live draft refresh failed. Using the stored ${storedSeason.season} draft: ${reason}`,
         );
       } else {
         setFatalError('No current draft configuration is available');
@@ -211,6 +279,63 @@ export function KeeperAdjustedAdpPanel({
       active = false;
     };
   }, [initialSleeperPlayers, loadLiveSeason, loadSleeperPlayers, refreshLive, storedSeason]);
+
+  const refreshDraft = useCallback(async () => {
+    if (draftRefreshInFlight.current) return;
+    draftRefreshInFlight.current = true;
+    setIsRefreshingDraft(true);
+    setDraftRefreshWarning(null);
+    setLiveWarning(null);
+
+    try {
+      const liveSeason = await loadLiveSeason();
+      setDraftTrackerSeason(liveSeason);
+      setSeason((current) =>
+        !current || draftPlanningSignature(current) !== draftPlanningSignature(liveSeason)
+          ? liveSeason
+          : current,
+      );
+      setLastDraftRefreshAt(Date.now());
+    } catch (error) {
+      setDraftRefreshWarning(
+        `Sleeper draft refresh failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      draftRefreshInFlight.current = false;
+      setIsRefreshingDraft(false);
+    }
+  }, [loadLiveSeason]);
+
+  const startDraftSync = useCallback(() => {
+    setIsDraftSyncEnabled(true);
+    void refreshDraft();
+  }, [refreshDraft]);
+
+  useEffect(() => {
+    if (
+      !refreshLive ||
+      !isDraftSyncEnabled ||
+      isLoading ||
+      draftRefreshIntervalMs <= 0 ||
+      draftTrackerSeason?.draftStatus === 'complete'
+    ) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refreshDraft();
+    }, draftRefreshIntervalMs);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    draftRefreshIntervalMs,
+    draftTrackerSeason?.draftStatus,
+    isDraftSyncEnabled,
+    isLoading,
+    refreshDraft,
+    refreshLive,
+  ]);
 
   useEffect(() => {
     let active = true;
@@ -339,71 +464,159 @@ export function KeeperAdjustedAdpPanel({
     }
   }, [season, sleeperPlayers, source]);
 
-  const positions = useMemo(
+  const trackedDraft = draftTrackerSeason ?? season;
+  const draftTracker = useMemo(
     () =>
-      model?.calculation
-        ? Array.from(new Set(model.calculation.players.map((player) => player.position))).sort()
-        : [],
-    [model],
+      trackedDraft && model?.calculation
+        ? buildDraftTrackerSnapshot(trackedDraft, model.calculation.openSlots)
+        : null,
+    [model, trackedDraft],
   );
-  const filteredPlayers = useMemo(() => {
-    if (!model?.calculation) return [];
-    const normalizedSearch = search.trim().toLowerCase();
-    return model.calculation.players.filter((player) => {
-      if (!showOutsideBoard && player.keeperAdjustedAdp === null) return false;
-      if (position !== 'ALL' && player.position !== position) return false;
-      if (!normalizedSearch) return true;
-      return `${player.playerName} ${player.nflTeam ?? ''} ${player.position}`
-        .toLowerCase()
-        .includes(normalizedSearch);
-    });
-  }, [model, position, search, showOutsideBoard]);
-
-  const myOpenPicks =
-    model?.calculation && selectedRosterId !== null
-      ? getOpenDraftPicksForRoster(model.calculation.board, selectedRosterId)
-      : [];
+  const myOpenPicks = useMemo(
+    () =>
+      model?.calculation && selectedRosterId !== null
+        ? getOpenDraftPicksForRoster(model.calculation.board, selectedRosterId).filter(
+            (pick) => !draftTracker?.draftedOverallPicks.has(pick.overallPick),
+          )
+        : [],
+    [model, selectedRosterId, draftTracker],
+  );
   const canLoadMocks =
     season !== undefined &&
     selectedRosterId !== null &&
     season.teams.some((team) => team.rosterId === selectedRosterId) &&
     season.draftSlots.some((slot) => slot.rosterId === selectedRosterId) &&
     (!refreshMocks || season.leagueId === mockDraftSource.leagueId);
-  const selectedMockSamples = (canLoadMocks ? mockCandidates : [])
-    .filter((candidate) => candidate.compatible && selectedMockIds.has(candidate.draftId))
-    .map((candidate) => candidate.sample);
-  const mockAnalysis =
-    model?.calculation && selectedMockSamples.length > 0
-      ? analyzeMockDrafts(
-          model.calculation.players.map((player) => player.playerId),
-          selectedMockSamples,
-          myOpenPicks.map((pick) => pick.overallPick),
-        )
-      : null;
-  const mockAnalysisByPlayer = new Map(
-    mockAnalysis?.players.map((player) => [player.playerId, player]) ?? [],
+  const selectedMockSamples = useMemo(
+    () =>
+      (canLoadMocks ? mockCandidates : [])
+        .filter((candidate) => candidate.compatible && selectedMockIds.has(candidate.draftId))
+        .map((candidate) => candidate.sample),
+    [canLoadMocks, mockCandidates, selectedMockIds],
   );
-  const idpMockAnalysis =
-    selectedMockSamples.length > 0
-      ? analyzeMockDrafts(
-          idpTierSource.players.map((player) => player.playerId),
-          selectedMockSamples,
-          myOpenPicks.map((pick) => pick.overallPick),
-        )
-      : null;
-  const idpPlan =
-    sleeperPlayers && model?.draftInput
-      ? buildIdpDraftPlan({
-          source: idpTierSource,
-          sleeperPlayers,
-          projections: idpAdp,
-          mockAnalysis: idpMockAnalysis,
-          openPicks: myOpenPicks,
-          keeperPlayerIds: new Set(model.draftInput.keepers.map((keeper) => keeper.playerId)),
-        })
-      : null;
-  const inBoardCount =
-    model?.calculation?.players.filter((player) => player.keeperAdjustedAdp !== null).length ?? 0;
+  const mockSpecialistPlayers = useMemo(() => {
+    if (!model?.calculation || !sleeperPlayers) return [];
+    const excludedPlayerIds = new Set([
+      ...model.calculation.players.map((player) => player.playerId),
+      ...model.draftInput.keepers.map((keeper) => keeper.playerId),
+    ]);
+    return buildMockDraftSpecialistPool(selectedMockSamples, sleeperPlayers, excludedPlayerIds);
+  }, [model, selectedMockSamples, sleeperPlayers]);
+  const tablePlayers: DraftIntelTablePlayer[] = useMemo(
+    () =>
+      model?.calculation
+        ? [
+            ...model.calculation.players.map<KeeperAdjustedTablePlayer>((player) => ({
+              ...player,
+              source: 'udk',
+              positionGroup: getDraftIntelPositionGroup(player.position),
+            })),
+            ...mockSpecialistPlayers.map<MockSpecialistTablePlayer>((player) => ({
+              ...player,
+              source: 'mock',
+            })),
+          ]
+        : [],
+    [model, mockSpecialistPlayers],
+  );
+  const mockAnalysis = useMemo(
+    () =>
+      tablePlayers.length > 0 && selectedMockSamples.length > 0
+        ? analyzeMockDrafts(
+            tablePlayers.map((player) => player.playerId),
+            selectedMockSamples,
+            myOpenPicks.map((pick) => pick.overallPick),
+          )
+        : null,
+    [tablePlayers, selectedMockSamples, myOpenPicks],
+  );
+  const mockAnalysisByPlayer = useMemo(
+    () => new Map(mockAnalysis?.players.map((player) => [player.playerId, player]) ?? []),
+    [mockAnalysis],
+  );
+  const positions = useMemo(
+    () =>
+      Array.from(
+        new Set([...POSITION_FILTER_ORDER, ...tablePlayers.map((player) => player.positionGroup)]),
+      ).sort(comparePositionFilters),
+    [tablePlayers],
+  );
+  // Search/position/board filters only, independent of "Hide drafted" - shared by the visible
+  // count and the drafted-hidden count so both describe the same filtered set.
+  const visiblePlayers = useMemo(
+    () =>
+      tablePlayers.filter((player) => {
+        if (player.source === 'udk' && !showOutsideBoard && player.keeperAdjustedAdp === null) {
+          return false;
+        }
+        if (selectedPositions.size > 0 && !selectedPositions.has(player.positionGroup))
+          return false;
+        const normalizedSearch = search.trim().toLowerCase();
+        if (!normalizedSearch) return true;
+        return `${player.playerName} ${player.nflTeam ?? ''} ${player.position} ${player.positionGroup}`
+          .toLowerCase()
+          .includes(normalizedSearch);
+      }),
+    [tablePlayers, showOutsideBoard, selectedPositions, search],
+  );
+  const filteredPlayers = useMemo(
+    () =>
+      visiblePlayers
+        .filter((player) => !hideDrafted || !draftTracker?.draftedByPlayerId.has(player.playerId))
+        .sort((a, b) => {
+          if (a.source !== b.source) return a.source === 'udk' ? -1 : 1;
+          if (a.source === 'udk' && b.source === 'udk') {
+            const aAdjusted = a.keeperAdjustedAdp ?? Number.POSITIVE_INFINITY;
+            const bAdjusted = b.keeperAdjustedAdp ?? Number.POSITIVE_INFINITY;
+            return aAdjusted - bAdjusted || a.playerName.localeCompare(b.playerName);
+          }
+          const aMean = mockAnalysisByPlayer.get(a.playerId)?.meanPick ?? Number.POSITIVE_INFINITY;
+          const bMean = mockAnalysisByPlayer.get(b.playerId)?.meanPick ?? Number.POSITIVE_INFINITY;
+          return aMean - bMean || a.playerName.localeCompare(b.playerName);
+        }),
+    [visiblePlayers, hideDrafted, draftTracker, mockAnalysisByPlayer],
+  );
+  const idpMockAnalysis = useMemo(
+    () =>
+      selectedMockSamples.length > 0
+        ? analyzeMockDrafts(
+            idpTierSource.players.map((player) => player.playerId),
+            selectedMockSamples,
+            myOpenPicks.map((pick) => pick.overallPick),
+          )
+        : null,
+    [selectedMockSamples, idpTierSource, myOpenPicks],
+  );
+  const idpPlan = useMemo(
+    () =>
+      sleeperPlayers && model?.draftInput
+        ? buildIdpDraftPlan({
+            source: idpTierSource,
+            sleeperPlayers,
+            projections: idpAdp,
+            mockAnalysis: idpMockAnalysis,
+            openPicks: myOpenPicks,
+            keeperPlayerIds: new Set(model.draftInput.keepers.map((keeper) => keeper.playerId)),
+            draftedPlayerIds: new Set(draftTracker?.draftedByPlayerId.keys() ?? []),
+          })
+        : null,
+    [sleeperPlayers, model, idpTierSource, idpAdp, idpMockAnalysis, myOpenPicks, draftTracker],
+  );
+  const inBoardCount = useMemo(
+    () =>
+      model?.calculation?.players.filter(
+        (player) =>
+          player.keeperAdjustedAdp !== null &&
+          !draftTracker?.draftedByPlayerId.has(player.playerId),
+      ).length ?? 0,
+    [model, draftTracker],
+  );
+  const draftedRowsCount = useMemo(
+    () =>
+      visiblePlayers.filter((player) => draftTracker?.draftedByPlayerId.has(player.playerId))
+        .length,
+    [visiblePlayers, draftTracker],
+  );
 
   return (
     <section aria-labelledby="keeper-adjusted-adp-heading">
@@ -428,7 +641,7 @@ export function KeeperAdjustedAdpPanel({
       {isLoading && (
         <div className="flex items-center gap-3 rounded-box border border-base-300 bg-base-100 p-5">
           <span className="loading loading-spinner loading-sm" />
-          <span>Refreshing Sleeper keepers and player identities...</span>
+          <span>Refreshing the Sleeper draft and player identities...</span>
         </div>
       )}
 
@@ -464,13 +677,14 @@ export function KeeperAdjustedAdpPanel({
               <div className="stat-desc">Exact occupied picks</div>
             </div>
             <div className="stat rounded-box border border-base-300 bg-base-100 py-4 shadow-sm">
-              <div className="stat-title text-xs">Open draft slots</div>
+              <div className="stat-title text-xs">Draft picks remaining</div>
               <div className="stat-value text-2xl">
-                {model.calculation.openSlots.length.toString()}
+                {(
+                  draftTracker?.remainingPickCount ?? model.calculation.openSlots.length
+                ).toString()}
               </div>
               <div className="stat-desc">
-                {model.draftInput.config.teamCount.toString()} Teams -{' '}
-                {model.draftInput.config.rounds.toString()} rounds
+                Of {model.calculation.openSlots.length.toString()} non-keeper slots
               </div>
             </div>
             <div className="stat rounded-box border border-base-300 bg-base-100 py-4 shadow-sm">
@@ -484,6 +698,21 @@ export function KeeperAdjustedAdpPanel({
               <div className="stat-desc">Available non-keepers</div>
             </div>
           </section>
+
+          {trackedDraft && draftTracker && (
+            <DraftTracker
+              season={trackedDraft}
+              tracker={draftTracker}
+              remainingTeamPicks={myOpenPicks}
+              selectedRosterId={selectedRosterId}
+              isRefreshing={isRefreshingDraft}
+              isSyncEnabled={isDraftSyncEnabled}
+              lastUpdatedAt={lastDraftRefreshAt}
+              refreshIntervalMs={draftRefreshIntervalMs}
+              warning={draftRefreshWarning}
+              onStartSync={refreshLive && draftRefreshIntervalMs > 0 ? startDraftSync : undefined}
+            />
+          )}
 
           {(model.parsed.skippedRows.length > 0 ||
             model.resolved.unmatchedRows.length > 0 ||
@@ -503,14 +732,14 @@ export function KeeperAdjustedAdpPanel({
             aria-labelledby="my-open-picks-heading"
           >
             <h3 id="my-open-picks-heading" className="font-bold">
-              My open snake-draft picks
+              My remaining snake-draft picks
             </h3>
             {selectedRosterId === null ? (
               <p className="mt-2 text-sm text-base-content/60">
                 Choose Your Team in Draft Intel onboarding to calculate your open picks.
               </p>
             ) : myOpenPicks.length === 0 ? (
-              <p className="mt-2 text-sm text-base-content/60">No open picks were found.</p>
+              <p className="mt-2 text-sm text-base-content/60">No remaining picks were found.</p>
             ) : (
               <div className="mt-3 flex flex-wrap gap-2">
                 {myOpenPicks.map((pick) => (
@@ -576,7 +805,7 @@ export function KeeperAdjustedAdpPanel({
             />
           )}
 
-          <div className="mb-3 grid gap-3 rounded-box border border-base-300 bg-base-100 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
+          <div className="mb-3 grid gap-3 rounded-box border border-base-300 bg-base-100 p-3 sm:grid-cols-2 sm:items-end xl:grid-cols-[minmax(0,1fr)_minmax(22rem,auto)_auto_auto]">
             <label className="form-control">
               <span className="label py-1 text-xs font-semibold">Find player</span>
               <input
@@ -589,23 +818,39 @@ export function KeeperAdjustedAdpPanel({
                 }}
               />
             </label>
-            <label className="form-control">
-              <span className="label py-1 text-xs font-semibold">Position</span>
-              <select
-                className="select select-bordered select-sm"
-                value={position}
-                onChange={(event) => {
-                  setPosition(event.target.value);
-                }}
-              >
-                <option value="ALL">All positions</option>
+            <fieldset className="min-w-0">
+              <legend className="label py-1 text-xs font-semibold">Positions</legend>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  className={`btn btn-xs ${selectedPositions.size === 0 ? 'btn-primary' : 'btn-outline'}`}
+                  aria-pressed={selectedPositions.size === 0}
+                  onClick={() => {
+                    setSelectedPositions(new Set());
+                  }}
+                >
+                  All positions
+                </button>
                 {positions.map((candidate) => (
-                  <option key={candidate} value={candidate}>
-                    {candidate}
-                  </option>
+                  <button
+                    key={candidate}
+                    type="button"
+                    className={`btn btn-xs ${selectedPositions.has(candidate) ? 'btn-primary' : 'btn-outline'}`}
+                    aria-pressed={selectedPositions.has(candidate)}
+                    onClick={() => {
+                      setSelectedPositions((current) => {
+                        const next = new Set(current);
+                        if (next.has(candidate)) next.delete(candidate);
+                        else next.add(candidate);
+                        return next;
+                      });
+                    }}
+                  >
+                    {POSITION_FILTER_LABELS[candidate] ?? candidate}
+                  </button>
                 ))}
-              </select>
-            </label>
+              </div>
+            </fieldset>
             <label className="label cursor-pointer justify-start gap-2 rounded-box border border-base-300 px-3 py-2">
               <input
                 type="checkbox"
@@ -617,11 +862,59 @@ export function KeeperAdjustedAdpPanel({
               />
               <span className="label-text whitespace-nowrap text-xs">Show outside board</span>
             </label>
+            <label className="label cursor-pointer justify-start gap-2 rounded-box border border-base-300 px-3 py-2">
+              <input
+                type="checkbox"
+                className="toggle toggle-success toggle-sm"
+                checked={hideDrafted}
+                onChange={(event) => {
+                  setHideDrafted(event.target.checked);
+                }}
+              />
+              <span className="label-text whitespace-nowrap text-xs">Hide drafted</span>
+            </label>
           </div>
 
-          <div className="mb-2 text-xs text-base-content/55">
-            Showing {filteredPlayers.length.toString()} available players. UDK round-pick values are
-            converted to 12-Team overall picks before adjustment.
+          <div className="mb-2 flex items-center justify-between gap-3 text-xs text-base-content/55">
+            <div>
+              Showing {filteredPlayers.length.toString()} {hideDrafted ? 'available ' : ''}players.
+              {hideDrafted && draftedRowsCount > 0
+                ? ` ${draftedRowsCount.toString()} drafted player${draftedRowsCount === 1 ? '' : 's'} hidden.`
+                : ''}{' '}
+              UDK round-pick values are converted to 12-Team overall picks before adjustment.
+            </div>
+            {refreshLive && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-square btn-xs shrink-0"
+                aria-label="Refresh draft now"
+                title="Refresh draft now"
+                disabled={isRefreshingDraft}
+                onClick={() => {
+                  void refreshDraft();
+                }}
+              >
+                {isRefreshingDraft ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6v5h-5" />
+                    <path d="M4 18v-5h5" />
+                    <path d="M6.1 9a7 7 0 0 1 11.5-2.6L20 11" />
+                    <path d="m4 13 2.4 4.6A7 7 0 0 0 17.9 15" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100">
@@ -652,17 +945,18 @@ export function KeeperAdjustedAdpPanel({
               <tbody>
                 {filteredPlayers.map((player) => {
                   const mockStats = mockAnalysisByPlayer.get(player.playerId);
+                  const draftedPick = draftTracker?.draftedByPlayerId.get(player.playerId);
                   const isExpanded = expandedPlayerIds.has(player.playerId);
                   const detailsId = `keeper-adp-details-${player.playerId}`;
                   const deltaClass =
-                    player.adpDelta === null || player.adpDelta === 0
+                    player.source === 'mock' || player.adpDelta === null || player.adpDelta === 0
                       ? 'text-base-content/60'
                       : player.adpDelta < 0
                         ? 'text-success'
                         : 'text-warning';
                   return (
                     <Fragment key={player.playerId}>
-                      <tr>
+                      <tr className={draftedPick ? 'bg-base-200/45 text-base-content/55' : ''}>
                         <td>
                           <div className="flex items-start gap-2">
                             <button
@@ -683,7 +977,24 @@ export function KeeperAdjustedAdpPanel({
                               <span aria-hidden="true">{isExpanded ? '-' : '+'}</span>
                             </button>
                             <div>
-                              <div className="font-semibold">{player.playerName}</div>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-semibold">{player.playerName}</span>
+                                {draftedPick && (
+                                  <span className="badge badge-neutral badge-xs whitespace-nowrap">
+                                    Drafted{' '}
+                                    {formatOverallPickAsRoundPick(
+                                      draftedPick.pickNo,
+                                      model.draftInput.config.teamCount,
+                                    )}{' '}
+                                    #{draftedPick.pickNo.toString()}
+                                  </span>
+                                )}
+                                {player.source === 'mock' && (
+                                  <span className="badge badge-outline badge-xs whitespace-nowrap">
+                                    Mock-only
+                                  </span>
+                                )}
+                              </div>
                               <div className="mt-0.5 flex items-center gap-1.5 text-xs text-base-content/50">
                                 <span
                                   className={`badge badge-xs ${positionBadgeClass[player.position] ?? 'badge-ghost'}`}
@@ -696,15 +1007,19 @@ export function KeeperAdjustedAdpPanel({
                           </div>
                         </td>
                         <td className="text-right font-mono text-xs">
-                          {formatRoundPick(player.baselineRoundPick)}
+                          {player.source === 'udk'
+                            ? formatRoundPick(player.baselineRoundPick)
+                            : '-'}
                         </td>
                         <td className="text-right font-mono text-xs font-bold">
-                          {player.adjustedRoundPick
-                            ? formatRoundPick(player.adjustedRoundPick)
-                            : 'Outside board'}
+                          {player.source === 'mock'
+                            ? '-'
+                            : player.adjustedRoundPick
+                              ? formatRoundPick(player.adjustedRoundPick)
+                              : 'Outside board'}
                         </td>
                         <td className={`text-right font-mono font-bold ${deltaClass}`}>
-                          {player.adpDelta === null
+                          {player.source === 'mock' || player.adpDelta === null
                             ? '-'
                             : `${player.adpDelta > 0 ? '+' : ''}${formatNumber(player.adpDelta)}`}
                         </td>
@@ -755,40 +1070,54 @@ export function KeeperAdjustedAdpPanel({
                               className="border-t border-base-300 px-4 py-3"
                             >
                               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                                <div className="rounded-box bg-base-100 px-3 py-2">
-                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
-                                    Baseline overall ADP
+                                {player.source === 'udk' ? (
+                                  <>
+                                    <div className="rounded-box bg-base-100 px-3 py-2">
+                                      <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                        Baseline overall ADP
+                                      </div>
+                                      <div className="font-mono font-bold">
+                                        {formatNumber(player.baselineAdp)}
+                                      </div>
+                                    </div>
+                                    <div className="rounded-box bg-base-100 px-3 py-2">
+                                      <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                        Keeper-adjusted overall ADP
+                                      </div>
+                                      <div className="font-mono font-bold">
+                                        {player.keeperAdjustedAdp === null
+                                          ? 'Outside board'
+                                          : formatNumber(player.keeperAdjustedAdp)}
+                                      </div>
+                                    </div>
+                                    <div className="rounded-box bg-base-100 px-3 py-2">
+                                      <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                        Pool rank
+                                      </div>
+                                      <div className="font-mono font-bold">
+                                        {formatNumber(player.availablePoolRank)}
+                                      </div>
+                                    </div>
+                                    <div className="rounded-box bg-base-100 px-3 py-2">
+                                      <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                        Keepers ahead
+                                      </div>
+                                      <div className="font-mono font-bold">
+                                        {player.higherRankedKeepersRemoved.toString()}
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="rounded-box bg-base-100 px-3 py-2 sm:col-span-2">
+                                    <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
+                                      Market source
+                                    </div>
+                                    <div className="font-semibold">Selected Sleeper mocks</div>
+                                    <div className="mt-0.5 text-xs text-base-content/55">
+                                      No UDK baseline or keeper adjustment is applied.
+                                    </div>
                                   </div>
-                                  <div className="font-mono font-bold">
-                                    {formatNumber(player.baselineAdp)}
-                                  </div>
-                                </div>
-                                <div className="rounded-box bg-base-100 px-3 py-2">
-                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
-                                    Keeper-adjusted overall ADP
-                                  </div>
-                                  <div className="font-mono font-bold">
-                                    {player.keeperAdjustedAdp === null
-                                      ? 'Outside board'
-                                      : formatNumber(player.keeperAdjustedAdp)}
-                                  </div>
-                                </div>
-                                <div className="rounded-box bg-base-100 px-3 py-2">
-                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
-                                    Pool rank
-                                  </div>
-                                  <div className="font-mono font-bold">
-                                    {formatNumber(player.availablePoolRank)}
-                                  </div>
-                                </div>
-                                <div className="rounded-box bg-base-100 px-3 py-2">
-                                  <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">
-                                    Keepers ahead
-                                  </div>
-                                  <div className="font-mono font-bold">
-                                    {player.higherRankedKeepersRemoved.toString()}
-                                  </div>
-                                </div>
+                                )}
                                 {mockAnalysis && mockStats && (
                                   <div className="rounded-box bg-base-100 px-3 py-2">
                                     <div className="text-[0.65rem] font-semibold uppercase text-base-content/50">

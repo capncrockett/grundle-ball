@@ -266,13 +266,20 @@ If explicit votes are tied on a proposal to change an existing rule and delegate
 
 **Removal.** A manager may be removed for collusion, cheating, serious dishonesty, sustained inactivity, or materially harmful conduct. If removal is decided by league vote, the targeted manager does not vote and removal requires unanimous approval from the other 11 managers. If the Commissioner is the targeted manager, another manager administers the vote.
 
-**Vacant team during the season.** A vacant team's roster is frozen: no adds, drops, waivers, or trades. Completed prior matchup results stand. Until a replacement manager is found, each future matchup involving the vacant team uses the league median score for that week. The league should seek a replacement promptly.
+**Vacant team during the season.** A vacant team's roster is frozen: no adds, drops, waivers, or trades. Completed prior matchup results stand. Until a replacement manager is found, each future matchup involving the vacant team uses the median of the 10 teams not involved in the vacant team's matchup as the vacant team's official score: exclude the vacant team and its opponent, sort the other 10 teams' final scores, and average the 5th- and 6th-lowest. The vacant team's abandoned lineup and the opponent's actual score are never inputs to that median. This is not Sleeper's built-in 12-team league median. The league should seek a replacement promptly.
 
 ## 16. Rule & Vote History
 
 This section is a legal-style changelog, not a second copy of the active rules. Historical wording has been modernized to use "manager" and "team." Passed and failed initiatives are included where the surviving record is reliable.
 
 ### 2026
+
+**Vacant team median clarified to the 10 uninvolved teams**
+
+The existing vacant-team median rule left ambiguous which teams counted toward the median. The league resolved this ambiguity: for a matchup involving a vacant/unmanaged team, the vacant team's official score is the median of the other 10 teams only, excluding both the vacant team and its opponent for that week. With 10 remaining scores, the median is the average of the 5th- and 6th-lowest. This is distinct from Sleeper's built-in 12-team league median and from a median computed over all 12 or 11 teams; neither of those was adopted. The vacant team's abandoned lineup's natural score is never used.
+
+- **Status:** Active
+- **Vote:** Passed
 
 **Keeper Bowl playoff structure**
 

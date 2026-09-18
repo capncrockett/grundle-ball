@@ -5,7 +5,7 @@ import type {
   SleeperRoster,
   SleeperUser,
 } from '../api/sleeper';
-import { loadCurrentDraftSeason } from './currentDraft';
+import { loadCurrentDraftSeason, resetCurrentDraftSeasonCache } from './currentDraft';
 
 const league: SleeperLeague = {
   total_rosters: 1,
@@ -66,6 +66,10 @@ const rosters: SleeperRoster[] = [
 ];
 
 describe('loadCurrentDraftSeason', () => {
+  beforeEach(() => {
+    resetCurrentDraftSeasonCache();
+  });
+
   it('loads the canonical draft and normalizes its keeper picks', async () => {
     const getLeague = jest.fn(() => Promise.resolve(league));
     const getDraft = jest.fn(() => Promise.resolve(draft));
@@ -95,5 +99,23 @@ describe('loadCurrentDraftSeason', () => {
       pickNo: 1,
       isKeeper: true,
     });
+  });
+
+  it('reuses cached league, users, and rosters on a later poll for the same league', async () => {
+    const getLeague = jest.fn(() => Promise.resolve(league));
+    const getDraft = jest.fn(() => Promise.resolve(draft));
+    const getDraftPicks = jest.fn(() => Promise.resolve(picks));
+    const getLeagueUsers = jest.fn(() => Promise.resolve(users));
+    const getLeagueRosters = jest.fn(() => Promise.resolve(rosters));
+    const dependencies = { getLeague, getDraft, getDraftPicks, getLeagueUsers, getLeagueRosters };
+
+    await loadCurrentDraftSeason(league.league_id, dependencies);
+    await loadCurrentDraftSeason(league.league_id, dependencies);
+
+    expect(getLeague).toHaveBeenCalledTimes(1);
+    expect(getLeagueUsers).toHaveBeenCalledTimes(1);
+    expect(getLeagueRosters).toHaveBeenCalledTimes(1);
+    expect(getDraft).toHaveBeenCalledTimes(2);
+    expect(getDraftPicks).toHaveBeenCalledTimes(2);
   });
 });
