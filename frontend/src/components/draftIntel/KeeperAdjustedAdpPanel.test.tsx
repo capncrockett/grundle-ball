@@ -342,7 +342,7 @@ describe('KeeperAdjustedAdpPanel', () => {
     const hideDrafted = screen.getByRole('checkbox', { name: 'Hide drafted' });
     expect(hideDrafted).toBeChecked();
     expect(screen.queryByRole('row', { name: /Available Four/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/2 drafted UDK players hidden/)).toBeVisible();
+    expect(screen.getByText(/2 drafted players hidden/)).toBeVisible();
 
     await user.click(hideDrafted);
 

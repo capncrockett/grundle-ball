@@ -123,7 +123,7 @@ test('production output omits the restricted draft planning features', async () 
   expect(productionText).not.toContain('Mock-only');
   expect(productionText).not.toContain('Selected Sleeper mocks');
   expect(productionText).not.toContain('2026 Grundle post-lock Sleeper league mocks');
-  expect(productionText).not.toContain('1402377586419445760');
+  expect(productionText).not.toContain('1400197747742654464');
   expect(productionText).not.toContain('IDP Draft Plan');
   expect(productionText).not.toContain('Onesie strategy');
   expect(productionText).not.toContain('Scott Bogman 2026 IDP Rankings & Tiers');

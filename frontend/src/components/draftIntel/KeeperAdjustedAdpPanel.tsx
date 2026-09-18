@@ -472,12 +472,15 @@ export function KeeperAdjustedAdpPanel({
         : null,
     [model, trackedDraft],
   );
-  const myOpenPicks =
-    model?.calculation && selectedRosterId !== null
-      ? getOpenDraftPicksForRoster(model.calculation.board, selectedRosterId).filter(
-          (pick) => !draftTracker?.draftedOverallPicks.has(pick.overallPick),
-        )
-      : [];
+  const myOpenPicks = useMemo(
+    () =>
+      model?.calculation && selectedRosterId !== null
+        ? getOpenDraftPicksForRoster(model.calculation.board, selectedRosterId).filter(
+            (pick) => !draftTracker?.draftedOverallPicks.has(pick.overallPick),
+          )
+        : [],
+    [model, selectedRosterId, draftTracker],
+  );
   const canLoadMocks =
     season !== undefined &&
     selectedRosterId !== null &&
@@ -499,81 +502,121 @@ export function KeeperAdjustedAdpPanel({
     ]);
     return buildMockDraftSpecialistPool(selectedMockSamples, sleeperPlayers, excludedPlayerIds);
   }, [model, selectedMockSamples, sleeperPlayers]);
-  const tablePlayers: DraftIntelTablePlayer[] = model?.calculation
-    ? [
-        ...model.calculation.players.map<KeeperAdjustedTablePlayer>((player) => ({
-          ...player,
-          source: 'udk',
-          positionGroup: getDraftIntelPositionGroup(player.position),
-        })),
-        ...mockSpecialistPlayers.map<MockSpecialistTablePlayer>((player) => ({
-          ...player,
-          source: 'mock',
-        })),
-      ]
-    : [];
-  const mockAnalysis =
-    tablePlayers.length > 0 && selectedMockSamples.length > 0
-      ? analyzeMockDrafts(
-          tablePlayers.map((player) => player.playerId),
-          selectedMockSamples,
-          myOpenPicks.map((pick) => pick.overallPick),
-        )
-      : null;
-  const mockAnalysisByPlayer = new Map(
-    mockAnalysis?.players.map((player) => [player.playerId, player]) ?? [],
+  const tablePlayers: DraftIntelTablePlayer[] = useMemo(
+    () =>
+      model?.calculation
+        ? [
+            ...model.calculation.players.map<KeeperAdjustedTablePlayer>((player) => ({
+              ...player,
+              source: 'udk',
+              positionGroup: getDraftIntelPositionGroup(player.position),
+            })),
+            ...mockSpecialistPlayers.map<MockSpecialistTablePlayer>((player) => ({
+              ...player,
+              source: 'mock',
+            })),
+          ]
+        : [],
+    [model, mockSpecialistPlayers],
   );
-  const positions = Array.from(
-    new Set([...POSITION_FILTER_ORDER, ...tablePlayers.map((player) => player.positionGroup)]),
-  ).sort(comparePositionFilters);
-  const filteredPlayers = tablePlayers
-    .filter((player) => {
-      if (hideDrafted && draftTracker?.draftedByPlayerId.has(player.playerId)) return false;
-      if (player.source === 'udk' && !showOutsideBoard && player.keeperAdjustedAdp === null) {
-        return false;
-      }
-      if (selectedPositions.size > 0 && !selectedPositions.has(player.positionGroup)) return false;
-      const normalizedSearch = search.trim().toLowerCase();
-      if (!normalizedSearch) return true;
-      return `${player.playerName} ${player.nflTeam ?? ''} ${player.position} ${player.positionGroup}`
-        .toLowerCase()
-        .includes(normalizedSearch);
-    })
-    .sort((a, b) => {
-      if (a.source !== b.source) return a.source === 'udk' ? -1 : 1;
-      if (a.source === 'udk' || b.source === 'udk') return 0;
-      const aMean = mockAnalysisByPlayer.get(a.playerId)?.meanPick ?? Number.POSITIVE_INFINITY;
-      const bMean = mockAnalysisByPlayer.get(b.playerId)?.meanPick ?? Number.POSITIVE_INFINITY;
-      return aMean - bMean || a.playerName.localeCompare(b.playerName);
-    });
-  const idpMockAnalysis =
-    selectedMockSamples.length > 0
-      ? analyzeMockDrafts(
-          idpTierSource.players.map((player) => player.playerId),
-          selectedMockSamples,
-          myOpenPicks.map((pick) => pick.overallPick),
-        )
-      : null;
-  const idpPlan =
-    sleeperPlayers && model?.draftInput
-      ? buildIdpDraftPlan({
-          source: idpTierSource,
-          sleeperPlayers,
-          projections: idpAdp,
-          mockAnalysis: idpMockAnalysis,
-          openPicks: myOpenPicks,
-          keeperPlayerIds: new Set(model.draftInput.keepers.map((keeper) => keeper.playerId)),
-          draftedPlayerIds: new Set(draftTracker?.draftedByPlayerId.keys() ?? []),
-        })
-      : null;
-  const inBoardCount =
-    model?.calculation?.players.filter(
-      (player) =>
-        player.keeperAdjustedAdp !== null && !draftTracker?.draftedByPlayerId.has(player.playerId),
-    ).length ?? 0;
-  const draftedRowsCount = tablePlayers.filter((player) =>
-    draftTracker?.draftedByPlayerId.has(player.playerId),
-  ).length;
+  const mockAnalysis = useMemo(
+    () =>
+      tablePlayers.length > 0 && selectedMockSamples.length > 0
+        ? analyzeMockDrafts(
+            tablePlayers.map((player) => player.playerId),
+            selectedMockSamples,
+            myOpenPicks.map((pick) => pick.overallPick),
+          )
+        : null,
+    [tablePlayers, selectedMockSamples, myOpenPicks],
+  );
+  const mockAnalysisByPlayer = useMemo(
+    () => new Map(mockAnalysis?.players.map((player) => [player.playerId, player]) ?? []),
+    [mockAnalysis],
+  );
+  const positions = useMemo(
+    () =>
+      Array.from(
+        new Set([...POSITION_FILTER_ORDER, ...tablePlayers.map((player) => player.positionGroup)]),
+      ).sort(comparePositionFilters),
+    [tablePlayers],
+  );
+  // Search/position/board filters only, independent of "Hide drafted" - shared by the visible
+  // count and the drafted-hidden count so both describe the same filtered set.
+  const visiblePlayers = useMemo(
+    () =>
+      tablePlayers.filter((player) => {
+        if (player.source === 'udk' && !showOutsideBoard && player.keeperAdjustedAdp === null) {
+          return false;
+        }
+        if (selectedPositions.size > 0 && !selectedPositions.has(player.positionGroup))
+          return false;
+        const normalizedSearch = search.trim().toLowerCase();
+        if (!normalizedSearch) return true;
+        return `${player.playerName} ${player.nflTeam ?? ''} ${player.position} ${player.positionGroup}`
+          .toLowerCase()
+          .includes(normalizedSearch);
+      }),
+    [tablePlayers, showOutsideBoard, selectedPositions, search],
+  );
+  const filteredPlayers = useMemo(
+    () =>
+      visiblePlayers
+        .filter((player) => !hideDrafted || !draftTracker?.draftedByPlayerId.has(player.playerId))
+        .sort((a, b) => {
+          if (a.source !== b.source) return a.source === 'udk' ? -1 : 1;
+          if (a.source === 'udk' && b.source === 'udk') {
+            const aAdjusted = a.keeperAdjustedAdp ?? Number.POSITIVE_INFINITY;
+            const bAdjusted = b.keeperAdjustedAdp ?? Number.POSITIVE_INFINITY;
+            return aAdjusted - bAdjusted || a.playerName.localeCompare(b.playerName);
+          }
+          const aMean = mockAnalysisByPlayer.get(a.playerId)?.meanPick ?? Number.POSITIVE_INFINITY;
+          const bMean = mockAnalysisByPlayer.get(b.playerId)?.meanPick ?? Number.POSITIVE_INFINITY;
+          return aMean - bMean || a.playerName.localeCompare(b.playerName);
+        }),
+    [visiblePlayers, hideDrafted, draftTracker, mockAnalysisByPlayer],
+  );
+  const idpMockAnalysis = useMemo(
+    () =>
+      selectedMockSamples.length > 0
+        ? analyzeMockDrafts(
+            idpTierSource.players.map((player) => player.playerId),
+            selectedMockSamples,
+            myOpenPicks.map((pick) => pick.overallPick),
+          )
+        : null,
+    [selectedMockSamples, idpTierSource, myOpenPicks],
+  );
+  const idpPlan = useMemo(
+    () =>
+      sleeperPlayers && model?.draftInput
+        ? buildIdpDraftPlan({
+            source: idpTierSource,
+            sleeperPlayers,
+            projections: idpAdp,
+            mockAnalysis: idpMockAnalysis,
+            openPicks: myOpenPicks,
+            keeperPlayerIds: new Set(model.draftInput.keepers.map((keeper) => keeper.playerId)),
+            draftedPlayerIds: new Set(draftTracker?.draftedByPlayerId.keys() ?? []),
+          })
+        : null,
+    [sleeperPlayers, model, idpTierSource, idpAdp, idpMockAnalysis, myOpenPicks, draftTracker],
+  );
+  const inBoardCount = useMemo(
+    () =>
+      model?.calculation?.players.filter(
+        (player) =>
+          player.keeperAdjustedAdp !== null &&
+          !draftTracker?.draftedByPlayerId.has(player.playerId),
+      ).length ?? 0,
+    [model, draftTracker],
+  );
+  const draftedRowsCount = useMemo(
+    () =>
+      visiblePlayers.filter((player) => draftTracker?.draftedByPlayerId.has(player.playerId))
+        .length,
+    [visiblePlayers, draftTracker],
+  );
 
   return (
     <section aria-labelledby="keeper-adjusted-adp-heading">
@@ -836,7 +879,7 @@ export function KeeperAdjustedAdpPanel({
             <div>
               Showing {filteredPlayers.length.toString()} {hideDrafted ? 'available ' : ''}players.
               {hideDrafted && draftedRowsCount > 0
-                ? ` ${draftedRowsCount.toString()} drafted UDK player${draftedRowsCount === 1 ? '' : 's'} hidden.`
+                ? ` ${draftedRowsCount.toString()} drafted player${draftedRowsCount === 1 ? '' : 's'} hidden.`
                 : ''}{' '}
               UDK round-pick values are converted to 12-Team overall picks before adjustment.
             </div>
