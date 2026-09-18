@@ -29,7 +29,7 @@ The official `/playoffs` page resolves and renders the two bracket responses as 
 
 The `/history` page follows each league's `previous_league_id` and uses that league record's canonical `draft_id`. Draft picks marked `is_keeper: true` become keeper designations. Completed seasons are stored in `draftHistoryStore.json`; the active season is refreshed directly in the browser.
 
-The restricted Draft Intel Keeper-Adjusted ADP view uses the same canonical draft flow for current Keeper Designations and exact `pick_no` values. It also uses `/players/nfl` to resolve UDK names to canonical Sleeper player IDs. Sleeper does not supply the Baseline ADP values for this view; those come from the timestamped checked-in UDK CSV.
+The restricted Draft Intel Keeper-Adjusted ADP view uses the same canonical draft flow for current Keeper Designations and exact `pick_no` values. It loads one current snapshot when the view opens. After the user presses "Draft started," the draft tracker refreshes that normalized flow every 15 seconds while the canonical draft is incomplete and the view is visible. A compact table control also refreshes it on demand. Standard selections drive progress, remaining Team picks, drafted badges, and the "Hide drafted" filter; Keeper Designations remain occupied inputs to the ADP calculation rather than completed live selections. The view also uses `/players/nfl` to resolve UDK names and K, Team Defense, and IDP selections from the chosen mocks to canonical Sleeper player IDs and positions. Sleeper does not supply the Baseline ADP values for this view; those come from the timestamped checked-in UDK CSV.
 
 ### League-specific mock drafts
 

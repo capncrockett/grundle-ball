@@ -173,6 +173,8 @@ The calculation removes Keeper Designations from the Baseline ADP pool, subtract
 
 The selected Team's open picks are the standard snake slots assigned to its Sleeper roster ID, excluding its keeper-occupied slots. This is nominal draft-slot ownership and does not infer traded open-pick ownership.
 
+`draftIntel/draftTracker.ts` overlays the live normalized draft without changing the Keeper-Adjusted ADP calculation. It excludes Keeper Designations from live progress, maps each standard Draft Selection by player ID and exact pick, identifies the latest selection and next unfilled open slot, and removes completed slots from the selected Team's remaining picks. The table hides drafted players by default but can reveal them with their actual Draft Selection badge.
+
 ### Observed mock drafts
 
 `draftIntel/mockDraftAnalyzer.ts` defines source-independent Phase 2 models:
@@ -183,11 +185,13 @@ The selected Team's open picks are the standard snake slots assigned to its Slee
 
 A player selected exactly at the Team's pick counts as available when that pick begins. An undrafted player also counts as available. Drafts shorter than a requested pick are excluded from that pick's denominator. Descriptive statistics include only mocks in which the player was selected, while `mockCount` and the selected-mock total expose missing observations. The table rounds observed mean and median overall picks to the nearest slot for `round.pick` display, while range endpoints are exact slots shown with "to" between them.
 
+`draftIntel/mockDraftSpecialists.ts` adds the K, Team Defense, and individual defensive players actually selected in the chosen mocks to the table pool. Sleeper DL, LB, and DB variants share the IDP filter while rows retain their canonical position badge. Position buttons are independent multi-select filters; disengaging every position returns to All positions. These mock-only rows use Observed Mock ADP and per-pick availability; their Baseline, Keeper-Adjusted ADP, and shift fields remain blank because the offensive UDK source does not rank them.
+
 ### IDP Draft Plan
 
 `data/idpTierSource.ts` records the public 2026 FantasyPros Tier 1 and Tier 2 target pool with stable Sleeper player IDs, source rank, and EDGE, interior, or tackle archetype. It is a dated expert-ranking snapshot rather than a live ranking API. The source tier remains categorical and is never averaged with ADP.
 
-`draftIntel/idpDraftPlan.ts` combines those tiers with the selected Team's open picks, the selected compatible mock samples, and Sleeper's 1QB plus IDP ADP. It excludes Keeper Designations, prefers big-play EDGE candidates within the same tier, and then prefers the later responsible draft window. A responsible mock window is the latest open Team pick where at least 70 percent of eligible selected mocks still had the player available. Sleeper ADP supplies a fallback window when no mock sample is selected. A player selected in fewer than half of the chosen mocks is labeled as a streaming option instead of a draft target.
+`draftIntel/idpDraftPlan.ts` combines those tiers with the selected Team's remaining open picks, the selected compatible mock samples, and Sleeper's 1QB plus IDP ADP. It excludes Keeper Designations and players already selected in the live draft, prefers big-play EDGE candidates within the same tier, and then prefers the later responsible draft window. A responsible mock window is the latest open Team pick where at least 70 percent of eligible selected mocks still had the player available. Sleeper ADP supplies a fallback window when no mock sample is selected. A player selected in fewer than half of the chosen mocks is labeled as a streaming option instead of a draft target.
 
 The IDP Plan exposes up to two viable Tier 1 primary targets and two collapsed Tier 2 fallbacks. This is a shortlist for one IDP Draft Selection, not a recommendation to roster every displayed candidate or to compare their expert rank numerically against offensive UDK ranks.
 

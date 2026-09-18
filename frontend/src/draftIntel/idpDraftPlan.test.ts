@@ -155,7 +155,7 @@ describe('buildIdpDraftPlan', () => {
     });
   });
 
-  it('falls back to Sleeper ADP timing and removes keeper-designated IDPs', () => {
+  it('falls back to Sleeper ADP timing and removes unavailable IDPs', () => {
     const plan = buildIdpDraftPlan({
       source,
       sleeperPlayers,
@@ -163,12 +163,14 @@ describe('buildIdpDraftPlan', () => {
       mockAnalysis: null,
       openPicks,
       keeperPlayerIds: new Set(['early-edge']),
+      draftedPlayerIds: new Set(['middle-edge']),
     });
 
     expect(plan.candidates.some((player) => player.playerId === 'early-edge')).toBe(false);
-    expect(plan.candidates.find((player) => player.playerId === 'middle-edge')).toMatchObject({
-      sleeperAdp: 15,
-      targetPick: { overallPick: 10 },
+    expect(plan.candidates.some((player) => player.playerId === 'middle-edge')).toBe(false);
+    expect(plan.candidates.find((player) => player.playerId === 'late-edge')).toMatchObject({
+      sleeperAdp: 20,
+      targetPick: { overallPick: 20 },
       action: 'target',
     });
   });

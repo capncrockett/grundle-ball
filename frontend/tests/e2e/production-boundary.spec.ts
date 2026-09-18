@@ -108,17 +108,22 @@ test('production omits the restricted Draft Intel navigation and route', async (
   await expect(page.getByRole('link', { name: /draft intel/i })).toHaveCount(0);
 });
 
-test('production output omits the restricted ADP and IDP planning features', async () => {
+test('production output omits the restricted draft planning features', async () => {
   const productionText = await readProductionText(distRoot);
 
   expect(productionText).not.toContain('Keeper-Adjusted ADP');
+  expect(productionText).not.toContain('Draft tracker');
+  expect(productionText).not.toContain('Draft started');
+  expect(productionText).not.toContain('Hide drafted');
   expect(productionText).not.toContain('Fantasy Footballers UDK ADP Comparison');
   expect(productionText).not.toContain('2026-08-31T12:05:31-07:00');
   expect(productionText).not.toContain('Post-Keeper Mock Drafts');
   expect(productionText).not.toContain('Mock Drafts to include');
   expect(productionText).not.toContain('Observed Mock ADP');
+  expect(productionText).not.toContain('Mock-only');
+  expect(productionText).not.toContain('Selected Sleeper mocks');
   expect(productionText).not.toContain('2026 Grundle post-lock Sleeper league mocks');
-  expect(productionText).not.toContain('1400197747742654464');
+  expect(productionText).not.toContain('1402377586419445760');
   expect(productionText).not.toContain('IDP Draft Plan');
   expect(productionText).not.toContain('Onesie strategy');
   expect(productionText).not.toContain('Scott Bogman 2026 IDP Rankings & Tiers');

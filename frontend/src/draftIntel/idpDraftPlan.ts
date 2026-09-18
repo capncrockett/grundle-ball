@@ -42,6 +42,7 @@ export type BuildIdpDraftPlanInput = {
   mockAnalysis: MockDraftAnalysis | null;
   openPicks: IdpPlanOpenPick[];
   keeperPlayerIds: ReadonlySet<string>;
+  draftedPlayerIds?: ReadonlySet<string>;
 };
 
 const MOCK_TARGET_AVAILABILITY_PERCENTAGE = 70;
@@ -111,6 +112,7 @@ export function buildIdpDraftPlan({
   mockAnalysis,
   openPicks,
   keeperPlayerIds,
+  draftedPlayerIds = new Set(),
 }: BuildIdpDraftPlanInput): IdpDraftPlan {
   const sortedOpenPicks = [...openPicks].sort((a, b) => a.overallPick - b.overallPick);
   const sleeperAdpByPlayerId = new Map<string, number>();
@@ -127,7 +129,9 @@ export function buildIdpDraftPlan({
   const selectedMockCount = mockAnalysis?.selectedMockCount ?? 0;
 
   const candidates = source.players
-    .filter((player) => !keeperPlayerIds.has(player.playerId))
+    .filter(
+      (player) => !keeperPlayerIds.has(player.playerId) && !draftedPlayerIds.has(player.playerId),
+    )
     .map<IdpPlanPlayer>((player) => {
       const sleeperPlayer = sleeperPlayerById.get(player.playerId);
       const sleeperAdp = sleeperAdpByPlayerId.get(player.playerId) ?? null;

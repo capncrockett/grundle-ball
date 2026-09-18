@@ -90,9 +90,9 @@ The Playwright config loads `.env` from the repository root and then `frontend/.
 - Standings and Matchups page rendering, loading, empty/partial data, and API failures.
 - Matchups retain Sleeper scores when ESPN/player metadata fails and distinguish unavailable completion data from numeric scores, including zero.
 - Historical draftboard season switching, keeper markers, provisional Team designations, and cross-season keeper-ledger grouping.
-- Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, and Draft Intel presentation.
-- Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, the unique 10-ID source batch, pasted URL/ID parsing and deduplication, strict league-mock/post-lock filtering, exact complete-keeper-set checks, selection controls, compact `round.pick` scan rows, expandable player detail, and separate Observed Mock ADP presentation.
-- IDP Tier source integrity, big-play target selection within a tier, 70 percent availability cliffs, Sleeper ADP fallback timing, keeper exclusion, streaming classification, and the compact Tier 1 plus Tier 2 Draft Plan presentation.
+- Keeper-Adjusted ADP pool compression, occupied-slot repayment, multiple keepers, decimal interpolation, finite-board behavior, snake numbering, UDK CSV parsing, Sleeper identity resolution, live draft-tracker progress, on-demand refresh, Draft started polling, drafted-player hiding, and Draft Intel presentation.
+- Mock-draft descriptive statistics, inclusive per-pick availability, undrafted players, sample denominators, the unique 10-ID source batch, pasted URL/ID parsing and deduplication, strict league-mock/post-lock filtering, exact complete-keeper-set checks, K/Defense/IDP mock-only rows, multi-select position buttons, selection controls, compact `round.pick` scan rows, expandable player detail, and separate Observed Mock ADP presentation.
+- IDP Tier source integrity, big-play target selection within a tier, 70 percent availability cliffs, Sleeper ADP fallback timing, keeper and live-selection exclusion, streaming classification, and the compact Tier 1 plus Tier 2 Draft Plan presentation.
 - Constitution rendering, table of contents, source content, and Markdown parsing.
 - Bracket layout/cards, seed assignment, routing-related transforms, and score application.
 - Sleeper transforms, official bracket resolution, player game status, stored matchup-history helpers, standings insights, playoff-race insights, and narratives.
@@ -110,7 +110,7 @@ Jest uses jsdom, React Testing Library, and MSW-backed fixtures. It excludes `fr
 ### Playwright
 
 - `smoke.spec.ts`: primary routes, desktop navigation, compact mobile navigation with all controls inside 375px/390px viewports, Constitution anchors, the Grundle Ball header/footer, and preserved Sleeper scores during a visible ESPN failure.
-- `production-boundary.spec.ts`: the public production build has no Draft Intel navigation, route, UDK source, Keeper-Adjusted ADP, IDP Tier source, IDP Draft Plan, or mock-draft feature text, while local development and protected staging retain the tool.
+- `production-boundary.spec.ts`: the public production build has no Draft Intel navigation, route, UDK source, Keeper-Adjusted ADP, draft tracker, IDP Tier source, IDP Draft Plan, or mock-draft feature text, while local development and protected staging retain the tool.
 - `matchups.spec.ts`: mocked Sleeper/ESPN matchup data and week switching.
 - `standings.spec.ts`: mocked 2026 preseason divisions without fabricated seeds or performance claims.
 - `theme.spec.ts`: theme selection and persistence across reloads.
