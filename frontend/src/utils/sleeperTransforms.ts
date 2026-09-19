@@ -124,6 +124,9 @@ export function mergeRostersAndUsersToTeams(
 export const scoreFor = (matchup: SleeperMatchup): number =>
   typeof matchup.custom_points === 'number' ? matchup.custom_points : matchup.points;
 
+export const isScoreEdited = (matchup: SleeperMatchup): boolean =>
+  typeof matchup.custom_points === 'number';
+
 export function pairMatchups(
   week: number,
   matchups: SleeperMatchup[],
@@ -163,6 +166,8 @@ export function pairMatchups(
         rosterIdB: null,
         pointsA: scoreFor(a),
         pointsB: 0,
+        pointsAEdited: isScoreEdited(a),
+        pointsBEdited: false,
         startersA: finishedA.total,
         startersB: 0,
         playersFinishedA: finishedA.finished,
@@ -183,6 +188,8 @@ export function pairMatchups(
       rosterIdB: b.roster_id,
       pointsA: scoreFor(a),
       pointsB: scoreFor(b),
+      pointsAEdited: isScoreEdited(a),
+      pointsBEdited: isScoreEdited(b),
       startersA: finishedA.total,
       startersB: finishedB.total,
       playersFinishedA: finishedA.finished,
@@ -201,6 +208,8 @@ export function buildLiveMatchData(paired: PairedMatchup): LiveMatchData {
     teamIdB: paired.rosterIdB,
     pointsA: paired.pointsA,
     pointsB: paired.pointsB,
+    pointsAEdited: paired.pointsAEdited,
+    pointsBEdited: paired.pointsBEdited,
     startersA: paired.startersA,
     startersB: paired.startersB,
     playersFinishedA: paired.playersFinishedA,

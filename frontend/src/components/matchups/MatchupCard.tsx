@@ -51,7 +51,18 @@ export function MatchupCard({ live, teamA, teamB, completionAvailable = true }: 
             </div>
 
             <div className="mt-1">
-              <div className="text-2xl font-bold">{live.pointsA.toFixed(2)}</div>
+              <div className="text-2xl font-bold">
+                {live.pointsA.toFixed(2)}
+                {live.pointsAEdited && (
+                  <span
+                    className="text-warning align-top ml-0.5"
+                    title="Manually set by the commissioner (e.g. vacant-team median)"
+                    aria-label="Manually set by the commissioner"
+                  >
+                    *
+                  </span>
+                )}
+              </div>
               <div className="text-xs text-base-content/60">
                 {completionAvailable
                   ? `${live.playersFinishedA.toString()}/${live.startersA.toString()} finished`
@@ -82,7 +93,18 @@ export function MatchupCard({ live, teamA, teamB, completionAvailable = true }: 
             </div>
 
             <div className="mt-1">
-              <div className="text-2xl font-bold">{teamB ? live.pointsB.toFixed(2) : '-'}</div>
+              <div className="text-2xl font-bold">
+                {teamB ? live.pointsB.toFixed(2) : '-'}
+                {teamB && live.pointsBEdited && (
+                  <span
+                    className="text-warning align-top ml-0.5"
+                    title="Manually set by the commissioner (e.g. vacant-team median)"
+                    aria-label="Manually set by the commissioner"
+                  >
+                    *
+                  </span>
+                )}
+              </div>
               {teamB && (
                 <div className="text-xs text-base-content/60">
                   {completionAvailable
@@ -93,6 +115,12 @@ export function MatchupCard({ live, teamA, teamB, completionAvailable = true }: 
             </div>
           </div>
         </div>
+
+        {(live.pointsAEdited || live.pointsBEdited) && (
+          <div className="text-xs text-base-content/60">
+            <span className="text-warning">*</span> Score manually set by the commissioner
+          </div>
+        )}
       </div>
     </div>
   );

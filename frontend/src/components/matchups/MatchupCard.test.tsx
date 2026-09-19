@@ -44,6 +44,8 @@ const mockLiveMatchData: LiveMatchData = {
   teamIdB: 4,
   pointsA: 87.88,
   pointsB: 85.64,
+  pointsAEdited: false,
+  pointsBEdited: false,
   startersA: 9,
   startersB: 9,
   playersFinishedA: 8,
@@ -141,5 +143,25 @@ describe('MatchupCard', () => {
 
     expect(screen.getAllByText('0.00')).toHaveLength(2);
     expect(screen.queryByText('-')).not.toBeInTheDocument();
+  });
+
+  it('marks a manually-edited score with an asterisk and footnote', () => {
+    const editedMatch: LiveMatchData = {
+      ...mockLiveMatchData,
+      pointsB: 113.98,
+      pointsBEdited: true,
+    };
+
+    render(<MatchupCard live={editedMatch} teamA={mockTeamA} teamB={mockTeamB} />);
+
+    expect(screen.getByLabelText('Manually set by the commissioner')).toBeInTheDocument();
+    expect(screen.getByText(/Score manually set by the commissioner/)).toBeInTheDocument();
+  });
+
+  it('does not show an asterisk or footnote when no score was edited', () => {
+    render(<MatchupCard live={mockLiveMatchData} teamA={mockTeamA} teamB={mockTeamB} />);
+
+    expect(screen.queryByLabelText('Manually set by the commissioner')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Score manually set by the commissioner/)).not.toBeInTheDocument();
   });
 });

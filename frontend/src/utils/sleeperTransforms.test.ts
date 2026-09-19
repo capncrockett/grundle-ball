@@ -142,6 +142,8 @@ describe('sleeperTransforms', () => {
 
       expect(paired[0].pointsA).toBe(113.98);
       expect(paired[0].pointsB).toBe(118.06);
+      expect(paired[0].pointsAEdited).toBe(true);
+      expect(paired[0].pointsBEdited).toBe(false);
     });
 
     it('prefers custom_points on a BYE-week matchup with no opponent', () => {
@@ -159,6 +161,15 @@ describe('sleeperTransforms', () => {
       const paired = pairMatchups(1, editedByeMatchup);
 
       expect(paired[0].pointsA).toBe(113.98);
+      expect(paired[0].pointsAEdited).toBe(true);
+    });
+
+    it('marks scores as not edited when custom_points is absent', () => {
+      const paired = pairMatchups(13, mockSleeperMatchupsWeek13);
+
+      const matchup1 = paired.find((p) => p.matchupId === 1);
+      expect(matchup1?.pointsAEdited).toBe(false);
+      expect(matchup1?.pointsBEdited).toBe(false);
     });
   });
 
