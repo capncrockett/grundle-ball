@@ -118,6 +118,12 @@ export function mergeRostersAndUsersToTeams(
 
 // --- Pair matchups by matchup_id ---
 
+// Sleeper reports a manually-edited score (e.g. a commissioner override for a
+// vacant-team median week) via `custom_points`, leaving `points` at the
+// original computed value. Callers must display the override when present.
+export const scoreFor = (matchup: SleeperMatchup): number =>
+  typeof matchup.custom_points === 'number' ? matchup.custom_points : matchup.points;
+
 export function pairMatchups(
   week: number,
   matchups: SleeperMatchup[],
@@ -155,7 +161,7 @@ export function pairMatchups(
         week,
         rosterIdA: a.roster_id,
         rosterIdB: null,
-        pointsA: a.points,
+        pointsA: scoreFor(a),
         pointsB: 0,
         startersA: finishedA.total,
         startersB: 0,
@@ -175,8 +181,8 @@ export function pairMatchups(
       week,
       rosterIdA: a.roster_id,
       rosterIdB: b.roster_id,
-      pointsA: a.points,
-      pointsB: b.points,
+      pointsA: scoreFor(a),
+      pointsB: scoreFor(b),
       startersA: finishedA.total,
       startersB: finishedB.total,
       playersFinishedA: finishedA.finished,

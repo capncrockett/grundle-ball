@@ -13,6 +13,19 @@ The 2025 snapshot is labeled with its actual league and season, storage keys are
 - [x] Add JSON, SQLite, and frontend regression tests with overlapping week numbers across seasons and leagues.
 - [x] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
 
+### Manual Sleeper edit reconciliation (issue #47)
+
+A commissioner manually edited a matchup score in Sleeper to apply the vacant-team median rule from PR #46 (roster 3, a vacant team taken over mid-season and displayed as "Rynando"; previously "jacksfishbreath"), and the app kept showing the pre-edit number.
+
+An earlier pass on this issue (PR #48) concluded the live views had no staleness problem, based on checking the roster-aggregate `fpts` field, which already reflected the edit. That was an incomplete diagnosis: it didn't check the per-week matchups endpoint, which is what `MatchupsPage` and the playoff bracket actually render.
+
+Root cause, confirmed by comparing the app against Sleeper's own UI and the raw API: Sleeper's `/league/{id}/matchups/{week}` response carries a manual edit in a separate `custom_points` field (`points: 135.8, custom_points: 113.98` for the example above) and leaves `points` at the original computed value. `pairMatchups` (`frontend/src/utils/sleeperTransforms.ts`) and `applyMatchupScoresToBracket` (`frontend/src/utils/applyMatchupScores.ts`) both read `points` directly, so a manual override never reached the Matchups page or the live playoff bracket - not a caching or propagation-delay problem, an ignored API field. The backend's `updateMatchupHistory.ts` CLI already preferred `custom_points`, which is why `matchupHistoryStore.json` and Standings' history-derived hints were unaffected.
+
+Fixed by adding a shared `scoreFor()` helper that prefers `custom_points` when present, used by both `pairMatchups` and `applyMatchupScoresToBracket`.
+
+- [x] Prefer `custom_points` over `points` everywhere a live Sleeper matchup score is displayed (Matchups page, live playoff bracket).
+- [ ] Confirm the standings win/loss/PF/PA path (`mergeRostersAndUsersToTeams`, sourced from `/rosters`) doesn't have an equivalent override field being ignored; roster-aggregate `fpts` already reflected this edit, so no evidence of a gap there yet.
+
 ## Release and operations
 
 Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). Every `release/**` push runs the checked-out application locally through both Playwright projects, so protected Vercel staging is an optional environment check rather than a release gate.

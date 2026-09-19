@@ -37,4 +37,35 @@ describe('applyMatchupScoresToBracket', () => {
     expect(updated[1].positions[0]?.currentPoints).toBeUndefined();
     expect(updated[1].positions[1]?.currentPoints).toBeUndefined();
   });
+
+  it('prefers a manually-edited custom_points score over the raw computed points', () => {
+    const slots: BracketSlot[] = [
+      {
+        id: 'champ_r1_g1',
+        bracketId: 'champ',
+        round: 'champ_round_1',
+        label: 'R1',
+        positions: [{ teamId: 1 }, { teamId: 2 }],
+      },
+    ];
+
+    const matchups: SleeperMatchup[] = [
+      {
+        roster_id: 1,
+        matchup_id: 1,
+        points: 135.8,
+        custom_points: 113.98,
+        starters: [],
+        players: [],
+      },
+      { roster_id: 2, matchup_id: 1, points: 118.06, starters: [], players: [] },
+    ];
+
+    const updated = applyMatchupScoresToBracket(slots, matchups, {
+      rounds: ['champ_round_1'],
+    });
+
+    expect(updated[0].positions[0]?.currentPoints).toBe(113.98);
+    expect(updated[0].positions[1]?.currentPoints).toBe(118.06);
+  });
 });
