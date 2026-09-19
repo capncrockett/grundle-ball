@@ -5,7 +5,7 @@ import { getLeague, getLeagueRosters, getLeagueUsers } from '../api/sleeper';
 import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
 import type { Team } from '../models/fantasy';
 import { TeamAvatars } from '../components/common/TeamAvatars';
-import { computeStandingsInsights } from './standingsInsights';
+import { computeStandingsInsights, MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
 import { STANDINGS_GLOSSARY } from './narratives.tsx';
 import {
   findMatchupForTeam,
@@ -298,7 +298,7 @@ export function StandingsPage() {
 
       {!isLoading && !error && teams.length > 0 && (
         <>
-          {insights && (
+          {insights ? (
             <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Standings notes">
               <InsightChip
                 label="Toughest schedule"
@@ -321,6 +321,12 @@ export function StandingsPage() {
                 detail={`Owns #${insights.unluckiestRecord.pfRank.toString()} PF but is seeded #${insights.unluckiestRecord.standingRank.toString()} (diff ${insights.unluckiestRecord.fortuneScore.toString()}). Running into weekly hammers.`}
               />
             </div>
+          ) : (
+            hasStandingsData && (
+              <p className="text-sm text-base-content/60 mb-4">
+                Waiting until week {MIN_GAMES_FOR_INSIGHTS} to generate insights...
+              </p>
+            )
           )}
           {!hasStandingsData ? (
             <section aria-labelledby="preseason-divisions-heading" data-testid="division-preseason">
@@ -389,7 +395,11 @@ export function StandingsPage() {
                 ))}
               </div>
             </section>
-          ) : hasDivisionData && insights ? (
+          ) : !hasDivisionData ? (
+            <div className="alert alert-warning mb-4">
+              <span>Sleeper did not return division assignments for any roster.</span>
+            </div>
+          ) : insights ? (
             <>
               <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Division notes">
                 <InsightChip
@@ -443,9 +453,9 @@ export function StandingsPage() {
               </div>
             </>
           ) : (
-            <div className="alert alert-warning mb-4">
-              <span>Sleeper did not return division assignments for any roster.</span>
-            </div>
+            <p className="text-sm text-base-content/60 mb-4">
+              Waiting until week {MIN_GAMES_FOR_INSIGHTS} to generate insights...
+            </p>
           )}
           {hasStandingsData && (
             <>

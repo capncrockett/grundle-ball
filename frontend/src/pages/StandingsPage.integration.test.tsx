@@ -4,6 +4,7 @@ import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test
 import * as sleeperApi from '../api/sleeper';
 import * as matchupHistory from '../data/matchupHistory';
 import type { StoredMatchup } from '../data/matchupHistoryTypes';
+import { MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
 
 describe('StandingsPage', () => {
   let leagueSpy: jest.SpyInstance;
@@ -229,5 +230,28 @@ describe('StandingsPage', () => {
     expect(within(preseason).getByRole('heading', { name: 'D3' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /^Seed$/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Standings Glossary/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a waiting message instead of a division-data warning during early weeks', async () => {
+    const earlyWeek = mockSleeperRosters.map((roster) => ({
+      ...roster,
+      settings: {
+        ...roster.settings,
+        wins: MIN_GAMES_FOR_INSIGHTS - 1,
+        losses: 0,
+        ties: 0,
+      },
+    }));
+    rostersSpy.mockResolvedValueOnce(earlyWeek);
+
+    render(<StandingsPage />);
+
+    expect(
+      await screen.findAllByText(
+        new RegExp(`Waiting until week ${MIN_GAMES_FOR_INSIGHTS.toString()} to generate insights`),
+      ),
+    ).toHaveLength(2);
+    expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Toughest schedule/i)).not.toBeInTheDocument();
   });
 });
