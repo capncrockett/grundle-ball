@@ -133,6 +133,47 @@ describe('MatchupsPage', () => {
     }
   });
 
+  it('steps between weeks with the arrow buttons', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, ({ params }) =>
+        HttpResponse.json(
+          mockSleeperMatchupsWeek13.map((matchup) => ({
+            ...matchup,
+            points: params.week === '14' ? 200 : matchup.points,
+          })),
+        ),
+      ),
+    );
+
+    render(<MatchupsPage />);
+
+    expect(await screen.findByText(/Big Ol' TDs/i)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Week' })).toHaveValue('13');
+
+    await user.click(screen.getByRole('button', { name: 'Next week' }));
+    expect((await screen.findAllByText('200.00')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('combobox', { name: 'Week' })).toHaveValue('14');
+
+    await user.click(screen.getByRole('button', { name: 'Previous week' }));
+    expect(await screen.findByText('87.88')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Week' })).toHaveValue('13');
+  });
+
+  it('disables the previous-week arrow at week 1', async () => {
+    server.use(
+      http.get(`${SLEEPER_BASE}/state/nfl`, () =>
+        HttpResponse.json({ ...mockNFLState, week: 1, display_week: 1 }),
+      ),
+    );
+
+    render(<MatchupsPage />);
+
+    expect(await screen.findByText(/No matchups found for this week/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous week' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next week' })).toBeEnabled();
+  });
+
   it('shows empty state when no matchups found', async () => {
     server.use(
       http.get(`${SLEEPER_BASE}/league/:leagueId/matchups/:week`, () => HttpResponse.json([])),

@@ -125,8 +125,17 @@ export function MatchupsPage() {
     [teams],
   );
 
+  const MIN_WEEK = 1;
+  const MAX_WEEK = 18;
+
+  const goToWeek = (week: number) => {
+    if (week < MIN_WEEK || week > MAX_WEEK) return;
+    setIsLoading(true);
+    setSelectedWeek(week);
+  };
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Matchups</h1>
@@ -140,28 +149,51 @@ export function MatchupsPage() {
           <label className="label">
             <span className="label-text text-xs">Week</span>
           </label>
-          <select
-            className="select select-bordered select-sm"
-            value={selectedWeek ?? ''}
-            onChange={(e) => {
-              setIsLoading(true);
-              setSelectedWeek(Number(e.target.value));
-            }}
-            aria-label="Week"
-            disabled={selectedWeek == null}
-          >
-            <option disabled value="">
-              Select week
-            </option>
-            {Array.from({ length: 18 }).map((_, idx) => {
-              const w = idx + 1;
-              return (
-                <option key={w} value={w}>
-                  Week {w}
-                </option>
-              );
-            })}
-          </select>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="btn btn-sm btn-square"
+              aria-label="Previous week"
+              onClick={() => {
+                if (selectedWeek != null) goToWeek(selectedWeek - 1);
+              }}
+              disabled={selectedWeek == null || selectedWeek <= MIN_WEEK}
+            >
+              ‹
+            </button>
+            <select
+              className="select select-bordered select-sm"
+              value={selectedWeek ?? ''}
+              onChange={(e) => {
+                goToWeek(Number(e.target.value));
+              }}
+              aria-label="Week"
+              disabled={selectedWeek == null}
+            >
+              <option disabled value="">
+                Select week
+              </option>
+              {Array.from({ length: 18 }).map((_, idx) => {
+                const w = idx + 1;
+                return (
+                  <option key={w} value={w}>
+                    Week {w}
+                  </option>
+                );
+              })}
+            </select>
+            <button
+              type="button"
+              className="btn btn-sm btn-square"
+              aria-label="Next week"
+              onClick={() => {
+                if (selectedWeek != null) goToWeek(selectedWeek + 1);
+              }}
+              disabled={selectedWeek == null || selectedWeek >= MAX_WEEK}
+            >
+              ›
+            </button>
+          </div>
         </div>
       </div>
 
@@ -191,7 +223,7 @@ export function MatchupsPage() {
         </p>
       )}
 
-      <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {!isLoading &&
           liveMatchups.map((live) => {
             const teamA = teamsByRosterId.get(live.teamIdA);
