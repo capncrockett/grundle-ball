@@ -250,7 +250,7 @@ describe('StandingsPage', () => {
       await screen.findAllByText(
         new RegExp(`Waiting until week ${MIN_GAMES_FOR_INSIGHTS.toString()} to generate insights`),
       ),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Toughest schedule/i)).not.toBeInTheDocument();
   });

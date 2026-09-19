@@ -452,11 +452,7 @@ export function StandingsPage() {
                 </table>
               </div>
             </>
-          ) : (
-            <p className="text-sm text-base-content/60 mb-4">
-              Waiting until week {MIN_GAMES_FOR_INSIGHTS} to generate insights...
-            </p>
-          )}
+          ) : null}
           {hasStandingsData && (
             <>
               <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[70vh]">
