@@ -115,7 +115,7 @@ const REWARD_TITLE_MOBILE_OVERRIDES: Partial<Record<BracketSlot['id'], string>> 
 
 const TEAM_NAME_CLASS = 'bracket-team-name font-semibold text-[0.65rem] md:text-sm leading-tight';
 const SCORE_CLASS = 'bracket-score text-[0.7rem] md:text-base font-semibold text-base-content/80';
-export const BRACKET_TILE_BODY_HEIGHT_CLASS = 'h-[130px] md:h-[150px]';
+export const BRACKET_TILE_BODY_HEIGHT_CLASS = 'h-[152px] md:h-[172px]';
 
 type RewardOutcomeLine = {
   label: 'W' | 'L';
@@ -148,11 +148,11 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
   const renderPlaceholderRow = (label: string, options?: { invisibleAvatar?: boolean }) => {
     const invisibleAvatar = options?.invisibleAvatar ?? false;
     const avatarClassName = invisibleAvatar
-      ? 'rounded-full invisible md:scale-125 shrink-0'
-      : 'rounded-full bg-base-300/60 md:scale-125 shrink-0';
+      ? 'rounded-full invisible md:scale-125 shrink-0 ml-2'
+      : 'rounded-full bg-base-300/60 md:scale-125 shrink-0 ml-2';
 
     return (
-      <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+      <div className="px-2 pt-2 pb-1 md:px-3 md:pt-2.5 md:pb-1.5 max-w-full overflow-hidden min-w-0">
         <div className="flex justify-between items-start gap-2 min-w-0">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <div className={avatarClassName} style={{ width: 32, height: 32 }} aria-hidden />
@@ -173,13 +173,13 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
   };
 
   const renderByeRow = () => (
-    <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+    <div className="px-2 pt-2 pb-1 md:px-3 md:pt-2.5 md:pb-1.5 max-w-full overflow-hidden min-w-0">
       {/* Top section: empty avatar space left, scores right */}
       <div className="flex justify-between items-start gap-2 min-w-0">
         {/* Empty avatar placeholder to keep layout consistent */}
         <div className="flex items-center gap-1 md:gap-2 min-w-0">
           <div
-            className="rounded-full invisible md:scale-125 shrink-0"
+            className="rounded-full invisible md:scale-125 shrink-0 ml-2"
             style={{ width: 32, height: 32 }}
             aria-hidden
           />
@@ -222,7 +222,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
   const currentPoints = mode === 'score' ? pos.currentPoints : undefined;
 
   return (
-    <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+    <div className="px-2 pt-2 pb-1 md:px-3 md:pt-2.5 md:pb-1.5 max-w-full overflow-hidden min-w-0">
       {/* Top section: avatar left, scores right */}
       <div className="flex justify-between items-start gap-2 min-w-0">
         {/* Avatar (top-left) */}
@@ -234,7 +234,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
             userDisplayName={team.ownerDisplayName}
             showUserAvatar={false}
             size="md"
-            className="md:scale-125"
+            className="ml-2 shrink-0 md:scale-125"
           />
           {seedBadge}
         </div>

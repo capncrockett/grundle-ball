@@ -55,7 +55,7 @@ interface BoardLayout {
   placementGames: ResolvedBracketMatchup[];
 }
 
-const CARD_BODY_HEIGHT_CLASS = 'h-[130px] md:h-[150px]';
+const CARD_BODY_HEIGHT_CLASS = 'h-[152px] md:h-[172px]';
 const COLUMN_GAP_CLASS = 'gap-3 md:gap-10';
 const COLUMN_HEIGHT_CLASS = 'min-h-[600px] md:min-h-[760px]';
 const TEAM_NAME_CLASS = 'font-semibold text-[0.65rem] md:text-sm leading-tight truncate';
@@ -218,7 +218,7 @@ const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
         : 'TBD';
 
   return (
-    <div className="min-w-0 max-w-full overflow-hidden py-1.5 md:py-2">
+    <div className="min-w-0 max-w-full overflow-hidden px-2 pt-2 pb-1 md:px-3 md:pt-2.5 md:pb-1.5">
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1 md:gap-2">
           {team ? (
@@ -226,7 +226,7 @@ const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
               teamName={label}
               teamAvatarUrl={team.teamAvatarUrl}
               size="md"
-              className="shrink-0 md:scale-125"
+              className="ml-2 shrink-0 md:scale-125"
             />
           ) : (
             <div className="invisible h-8 w-8 shrink-0 rounded-full md:scale-125" aria-hidden />
