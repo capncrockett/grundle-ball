@@ -16,6 +16,21 @@ import {
 } from '../data/matchupHistory';
 import { LEAGUE_ID } from '../config/league';
 
+const InsightChip = ({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) => (
+  <span className="badge badge-outline gap-1 py-3 h-auto max-w-full cursor-help" title={detail}>
+    <span className="font-semibold text-base-content/70">{label}:</span>
+    <span className="truncate">{value}</span>
+  </span>
+);
+
 const formatRecord = (record: Team['record']): string => {
   const base = `${record.wins.toString()}-${record.losses.toString()}`;
   return record.ties ? `${base}-${record.ties.toString()}` : base;
@@ -284,47 +299,27 @@ export function StandingsPage() {
       {!isLoading && !error && teams.length > 0 && (
         <>
           {insights && (
-            <div className="grid gap-3 md:grid-cols-2 mb-4">
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h3 className="card-title text-sm">Toughest Schedule (PA)</h3>
-                  <p className="text-sm">
-                    {insights.toughestSchedule.teamName} is eating{' '}
-                    {insights.toughestSchedule.paPerGame.toFixed(1)} PA per week (league avg{' '}
-                    {insights.leagueAvgPaPerGame.toFixed(1)}).
-                  </p>
-                </div>
-              </div>
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h3 className="card-title text-sm">Easiest Schedule (PA)</h3>
-                  <p className="text-sm">
-                    {insights.easiestSchedule.teamName} sees only{' '}
-                    {insights.easiestSchedule.paPerGame.toFixed(1)} PA per week.
-                  </p>
-                </div>
-              </div>
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h3 className="card-title text-sm">Luckiest Record</h3>
-                  <p className="text-sm">
-                    {insights.luckiestRecord.teamName} is seeded #
-                    {insights.luckiestRecord.standingRank} but sits #
-                    {insights.luckiestRecord.pfRank} in PF (diff{' '}
-                    {insights.luckiestRecord.fortuneScore}). Low PA and timing are doing work.
-                  </p>
-                </div>
-              </div>
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <h3 className="card-title text-sm">Unluckiest Record</h3>
-                  <p className="text-sm">
-                    {insights.unluckiestRecord.teamName} owns #{insights.unluckiestRecord.pfRank} PF
-                    but is seeded #{insights.unluckiestRecord.standingRank} (diff{' '}
-                    {insights.unluckiestRecord.fortuneScore}). Running into weekly hammers.
-                  </p>
-                </div>
-              </div>
+            <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Standings notes">
+              <InsightChip
+                label="Toughest schedule"
+                value={insights.toughestSchedule.teamName}
+                detail={`${insights.toughestSchedule.teamName} is eating ${insights.toughestSchedule.paPerGame.toFixed(1)} PA per week (league avg ${insights.leagueAvgPaPerGame.toFixed(1)}).`}
+              />
+              <InsightChip
+                label="Easiest schedule"
+                value={insights.easiestSchedule.teamName}
+                detail={`${insights.easiestSchedule.teamName} sees only ${insights.easiestSchedule.paPerGame.toFixed(1)} PA per week.`}
+              />
+              <InsightChip
+                label="Luckiest"
+                value={insights.luckiestRecord.teamName}
+                detail={`Seeded #${insights.luckiestRecord.standingRank.toString()} but sits #${insights.luckiestRecord.pfRank.toString()} in PF (diff ${insights.luckiestRecord.fortuneScore.toString()}). Low PA and timing are doing work.`}
+              />
+              <InsightChip
+                label="Unluckiest"
+                value={insights.unluckiestRecord.teamName}
+                detail={`Owns #${insights.unluckiestRecord.pfRank.toString()} PF but is seeded #${insights.unluckiestRecord.standingRank.toString()} (diff ${insights.unluckiestRecord.fortuneScore.toString()}). Running into weekly hammers.`}
+              />
             </div>
           )}
           {!hasStandingsData ? (
@@ -396,32 +391,17 @@ export function StandingsPage() {
             </section>
           ) : hasDivisionData && insights ? (
             <>
-              <div className="grid gap-3 md:grid-cols-2 mb-4">
-                <div className="card bg-base-200">
-                  <div className="card-body p-4">
-                    <h3 className="card-title text-sm">Highest-Scoring Division</h3>
-                    <div className="text-sm inline-flex items-center gap-2">
-                      <span>
-                        {insights.highestAvgPfDivision?.divisionName ?? 'Division unknown'} is
-                        averaging {insights.highestAvgPfDivision?.avgPfPerGame.toFixed(1) ?? '-'} PF
-                        per week; top seed is{' '}
-                        {insights.highestAvgPfDivision?.topSeed.teamName ?? '-'}.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="card bg-base-200">
-                  <div className="card-body p-4">
-                    <h3 className="card-title text-sm">Softest Division (PA)</h3>
-                    <div className="text-sm inline-flex items-center gap-2">
-                      <span>
-                        {insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'} is seeing
-                        only {insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '-'} PA per
-                        week.
-                      </span>
-                    </div>
-                  </div>
-                </div>
+              <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Division notes">
+                <InsightChip
+                  label="Top division"
+                  value={insights.highestAvgPfDivision?.divisionName ?? 'Division unknown'}
+                  detail={`${insights.highestAvgPfDivision?.divisionName ?? 'Division unknown'} is averaging ${insights.highestAvgPfDivision?.avgPfPerGame.toFixed(1) ?? '-'} PF per week; top seed is ${insights.highestAvgPfDivision?.topSeed.teamName ?? '-'}.`}
+                />
+                <InsightChip
+                  label="Softest division"
+                  value={insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'}
+                  detail={`${insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'} is seeing only ${insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '-'} PA per week.`}
+                />
               </div>
               <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[60vh] mb-6 border border-base-300 rounded-lg">
                 <table className="table table-compact w-full">

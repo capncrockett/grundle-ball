@@ -43,27 +43,21 @@ describe('StandingsPage', () => {
     });
   });
 
-  it('renders insights cards with fixture data', async () => {
+  it('renders insight chips with fixture data', async () => {
     render(<StandingsPage />);
 
-    const toughestCardHeading = await screen.findByText(/Toughest Schedule/i);
-    const toughestCard = toughestCardHeading.closest('.card');
-    expect(toughestCard).toBeInTheDocument();
-    if (toughestCard instanceof HTMLElement) {
-      expect(
-        within(toughestCard).getByText(/Team Twelve is eating 130\.8 PA per week/i),
-      ).toBeInTheDocument();
-      expect(within(toughestCard).getByText(/118\.4/)).toBeInTheDocument();
-    }
+    const notes = await screen.findByRole('list', { name: 'Standings notes' });
+    const toughestChip = within(notes).getByText('Team Twelve').closest('[title]');
+    expect(toughestChip).toHaveAttribute(
+      'title',
+      expect.stringMatching(/Team Twelve is eating 130\.8 PA per week \(league avg 118\.4\)/i),
+    );
 
-    const easiestCardHeading = await screen.findByText(/Easiest Schedule/i);
-    const easiestCard = easiestCardHeading.closest('.card');
-    expect(easiestCard).toBeInTheDocument();
-    if (easiestCard instanceof HTMLElement) {
-      expect(
-        within(easiestCard).getByText(/Big Ol' TDs sees only 107\.7 PA per week/i),
-      ).toBeInTheDocument();
-    }
+    const easiestChip = within(notes).getByText("Big Ol' TDs").closest('[title]');
+    expect(easiestChip).toHaveAttribute(
+      'title',
+      expect.stringMatching(/Big Ol' TDs sees only 107\.7 PA per week/i),
+    );
   });
 
   it('flags stat-correction risk when a small margin flip changes seeding', async () => {

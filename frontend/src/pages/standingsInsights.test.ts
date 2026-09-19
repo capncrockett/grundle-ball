@@ -1,4 +1,4 @@
-import { computeStandingsInsights } from './standingsInsights';
+import { computeStandingsInsights, MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
 import { computeSeeds, mergeRostersAndUsersToTeams } from '../utils/sleeperTransforms';
 import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 
@@ -17,6 +17,17 @@ describe('computeStandingsInsights', () => {
     }));
 
     const insights = computeStandingsInsights(zeroed);
+
+    expect(insights).toBeNull();
+  });
+
+  it('returns null when games played is below the noise threshold (e.g. week 1)', () => {
+    const earlyWeek = buildTeams().map((team) => ({
+      ...team,
+      record: { wins: MIN_GAMES_FOR_INSIGHTS - 1, losses: 0, ties: 0 },
+    }));
+
+    const insights = computeStandingsInsights(earlyWeek);
 
     expect(insights).toBeNull();
   });

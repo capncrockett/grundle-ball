@@ -1,5 +1,9 @@
 import type { Team } from '../models/fantasy';
 
+// Schedule-difficulty and luck comparisons are noise with only a game or two
+// of sample size (e.g. week 1); wait until every team has a meaningful sample.
+export const MIN_GAMES_FOR_INSIGHTS = 3;
+
 export type DerivedTeamWithInsights = Team & {
   gamesPlayed: number;
   pfPerGame: number;
@@ -61,9 +65,13 @@ export function computeStandingsInsights(teams: Team[]): StandingsInsights {
     };
   });
 
-  const totalGamesPlayed = derived.reduce((sum, team) => sum + team.gamesPlayed, 0);
-  // Skip insights until at least one game has been played (avoid preseason noise).
-  if (totalGamesPlayed === 0) {
+  const minGamesPlayed = derived.reduce(
+    (min, team) => Math.min(min, team.gamesPlayed),
+    Number.POSITIVE_INFINITY,
+  );
+  // Skip insights until every team has a large enough sample (avoid preseason
+  // and early-week noise, e.g. a single blowout deciding "toughest schedule").
+  if (minGamesPlayed < MIN_GAMES_FOR_INSIGHTS) {
     return null;
   }
 
