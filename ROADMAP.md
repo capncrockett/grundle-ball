@@ -13,15 +13,20 @@ The 2025 snapshot is labeled with its actual league and season, storage keys are
 - [x] Add JSON, SQLite, and frontend regression tests with overlapping week numbers across seasons and leagues.
 - [x] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
 
-### Manual Sleeper edit reconciliation (decided 2026-09-18, issue #47)
+### Manual Sleeper edit reconciliation (issue #47)
 
-A commissioner's manual Sleeper score edit (the vacant-team median rule from PR #46) appeared not to be reflected in the app. Investigation traced this to the live Sleeper API's own recompute lag, not app-side staleness:
+A commissioner manually edited a matchup score in Sleeper to apply the vacant-team median rule from PR #46 (roster 3, a vacant team taken over mid-season and displayed as "Rynando"; previously "jacksfishbreath"), and the app kept showing the pre-edit number.
 
-- `StandingsPage` and `MatchupsPage` read `getLeague`/`getLeagueUsers`/`getLeagueRosters`/`getLeagueMatchupsForWeek` live with `cache: 'no-store'` on every load; there is no app-side cache on either path that could serve a stale value.
-- `matchupHistoryStore.json`'s only consumer, `StandingsPage`'s best/worst seed-range and stat-correction hint, is scoped by both `leagueId` and `season` (`getStoredMatchups`). The 2025 snapshot is stamped with the prior season's Sleeper `league_id` (`1251950356187840512`), which differs from the 2026 league's id (`1385053148233621511`) because Sleeper mints a new `league_id` per season. The scoping added earlier in this section already makes the feature go inert for a new season instead of leaking prior-season numbers.
-- Confirmed live: fetching the 2026 league directly showed the edited roster's `fpts` matching the constitution example, i.e. Sleeper had already propagated the edit by the time of the check.
+An earlier pass on this issue (PR #48) concluded the live views had no staleness problem, based on checking the roster-aggregate `fpts` field, which already reflected the edit. That was an incomplete diagnosis: it didn't check the per-week matchups endpoint, which is what `MatchupsPage` and the playoff bracket actually render.
 
-Decision: no scheduled sync worker. A periodic re-fetch would guard a view (Standings/Matchups) that is already live and uncached; the actual gap was `matchupHistoryStore.json` having no 2026 rows yet, which only affects the best/worst-seed hint, not win/loss/PF/PA. That gap is closed by running the existing `npm run fetch:matchups -w frontend -- --week=N` CLI after each week's Wednesday stat corrections finalize (manual, not scheduled - vacant-team weeks needing this hint are rare). This supersedes the "Deploy/run the fetcher on a schedule" backlog item in `backend/TODO.md`.
+Root cause, confirmed by comparing the app against Sleeper's own UI and the raw API: Sleeper's `/league/{id}/matchups/{week}` response carries a manual edit in a separate `custom_points` field (`points: 135.8, custom_points: 113.98` for the example above) and leaves `points` at the original computed value. `pairMatchups` (`frontend/src/utils/sleeperTransforms.ts`) and `applyMatchupScoresToBracket` (`frontend/src/utils/applyMatchupScores.ts`) both read `points` directly, so a manual override never reached the Matchups page or the live playoff bracket - not a caching or propagation-delay problem, an ignored API field. The backend's `updateMatchupHistory.ts` CLI already preferred `custom_points`, which is why `matchupHistoryStore.json` and Standings' history-derived hints were unaffected.
+
+Fixed by adding a shared `scoreFor()` helper that prefers `custom_points` when present, used by both `pairMatchups` and `applyMatchupScoresToBracket`.
+
+- [x] Prefer `custom_points` over `points` everywhere a live Sleeper matchup score is displayed (Matchups page, live playoff bracket).
+- [ ] Confirm the standings win/loss/PF/PA path (`mergeRostersAndUsersToTeams`, sourced from `/rosters`) doesn't have an equivalent override field being ignored; roster-aggregate `fpts` already reflected this edit, so no evidence of a gap there yet.
+
+Decision: still no scheduled sync worker. `StandingsPage` and `MatchupsPage` fetch live with `cache: 'no-store'`, so there is no app-side cache for a scheduled worker to guard against; the gap above was the ignored `custom_points` field, not staleness. The only remaining path that can go stale is `matchupHistoryStore.json`'s season/league-scoped best/worst-seed hint, closed by running the existing `npm run fetch:matchups -w frontend -- --week=N` CLI after each week's Wednesday stat corrections finalize (manual, not scheduled - vacant-team weeks needing this hint are rare). This supersedes the "Deploy/run the fetcher on a schedule" backlog item in `backend/TODO.md`.
 
 ## Release and operations
 

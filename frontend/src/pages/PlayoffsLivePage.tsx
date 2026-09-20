@@ -5,7 +5,7 @@ import {
   getNFLState,
   getLeagueMatchupsForWeek,
 } from '../api/sleeper';
-import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
+import { mergeRostersAndUsersToTeams, computeSeeds, scoreFor } from '../utils/sleeperTransforms';
 import { applyMatchupScoresToBracket } from '../utils/applyMatchupScores';
 import type { Team } from '../models/fantasy';
 import type { BracketSlot, BracketSlotId } from '../bracket/types';
@@ -127,7 +127,7 @@ export default function PlayoffsLivePage() {
 
         const byeWeekPoints = new Map<number, number>();
         round1Matchups.forEach((matchup) => {
-          byeWeekPoints.set(matchup.roster_id, matchup.points);
+          byeWeekPoints.set(matchup.roster_id, scoreFor(matchup));
         });
         setByeWeekPointsByTeamId(byeWeekPoints);
 

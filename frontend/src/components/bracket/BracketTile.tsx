@@ -115,7 +115,7 @@ const REWARD_TITLE_MOBILE_OVERRIDES: Partial<Record<BracketSlot['id'], string>> 
 
 const TEAM_NAME_CLASS = 'bracket-team-name font-semibold text-[0.65rem] md:text-sm leading-tight';
 const SCORE_CLASS = 'bracket-score text-[0.7rem] md:text-base font-semibold text-base-content/80';
-export const BRACKET_TILE_BODY_HEIGHT_CLASS = 'h-[130px] md:h-[150px]';
+export const BRACKET_TILE_BODY_HEIGHT_CLASS = 'h-[125px] md:h-[146px]';
 
 type RewardOutcomeLine = {
   label: 'W' | 'L';
@@ -152,7 +152,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
       : 'rounded-full bg-base-300/60 md:scale-125 shrink-0';
 
     return (
-      <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+      <div className="py-1 md:py-1.5 max-w-full overflow-hidden min-w-0">
         <div className="flex justify-between items-start gap-2 min-w-0">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <div className={avatarClassName} style={{ width: 32, height: 32 }} aria-hidden />
@@ -173,7 +173,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
   };
 
   const renderByeRow = () => (
-    <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+    <div className="py-1 md:py-1.5 max-w-full overflow-hidden min-w-0">
       {/* Top section: empty avatar space left, scores right */}
       <div className="flex justify-between items-start gap-2 min-w-0">
         {/* Empty avatar placeholder to keep layout consistent */}
@@ -222,7 +222,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
   const currentPoints = mode === 'score' ? pos.currentPoints : undefined;
 
   return (
-    <div className="py-1.5 md:py-2 max-w-full overflow-hidden min-w-0">
+    <div className="py-1 md:py-1.5 max-w-full overflow-hidden min-w-0">
       {/* Top section: avatar left, scores right */}
       <div className="flex justify-between items-start gap-2 min-w-0">
         {/* Avatar (top-left) */}
@@ -234,7 +234,7 @@ const TeamRow: FC<TeamRowProps> = ({ team, pos, mode, round, hasBye }) => {
             userDisplayName={team.ownerDisplayName}
             showUserAvatar={false}
             size="md"
-            className="md:scale-125"
+            className="shrink-0 md:scale-125"
           />
           {seedBadge}
         </div>
@@ -302,14 +302,14 @@ export const BracketTile: FC<BracketTileProps> = ({
   const rewardTitle = slot.rewardTitle ? renderRewardTitle(slot.id, slot.rewardTitle) : undefined;
 
   const cardClassName = [
-    'card card-compact bg-base-100 w-full max-w-full min-w-0 h-full overflow-hidden border border-base-300',
+    'card card-compact rounded-[2px] bg-base-100 w-full max-w-full min-w-0 h-full overflow-hidden border border-base-300',
     involvesHighlight ? 'ring-2 ring-primary shadow-lg' : 'shadow-sm',
   ].join(' ');
 
   const renderFront = (showReward: boolean) => (
     <div className={cardClassName}>
       <div
-        className={`card-body gap-1.5 p-2 md:p-3 ${BRACKET_TILE_BODY_HEIGHT_CLASS} flex flex-col overflow-hidden`}
+        className={`card-body gap-1.5 p-1 md:p-1.5 ${BRACKET_TILE_BODY_HEIGHT_CLASS} flex flex-col overflow-hidden`}
       >
         <div className="divide-y divide-base-300 flex-1 min-h-0">
           {slot.positions.map((pos, idx) => {
@@ -361,7 +361,7 @@ export const BracketTile: FC<BracketTileProps> = ({
   const renderBack = () => (
     <div className={cardClassName}>
       <div
-        className={`card-body gap-2 p-2 md:p-3 ${BRACKET_TILE_BODY_HEIGHT_CLASS} flex flex-col overflow-hidden`}
+        className={`card-body gap-2 p-1 md:p-1.5 ${BRACKET_TILE_BODY_HEIGHT_CLASS} flex flex-col overflow-hidden`}
       >
         <div className="text-sm font-bold text-base-content">{rewardTitle ?? roundLabel}</div>
         <div className="flex-1 flex flex-col justify-between">

@@ -55,7 +55,7 @@ interface BoardLayout {
   placementGames: ResolvedBracketMatchup[];
 }
 
-const CARD_BODY_HEIGHT_CLASS = 'h-[130px] md:h-[150px]';
+const CARD_BODY_HEIGHT_CLASS = 'h-[125px] md:h-[146px]';
 const COLUMN_GAP_CLASS = 'gap-3 md:gap-10';
 const COLUMN_HEIGHT_CLASS = 'min-h-[600px] md:min-h-[760px]';
 const TEAM_NAME_CLASS = 'font-semibold text-[0.65rem] md:text-sm leading-tight truncate';
@@ -218,7 +218,7 @@ const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
         : 'TBD';
 
   return (
-    <div className="min-w-0 max-w-full overflow-hidden py-1.5 md:py-2">
+    <div className="min-w-0 max-w-full overflow-hidden py-1 md:py-1.5">
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1 md:gap-2">
           {team ? (
@@ -249,8 +249,8 @@ interface BracketCardProps {
 }
 
 const BracketCard: FC<BracketCardProps> = ({ card, teamsById }) => (
-  <div className="card card-compact h-full w-full min-w-0 max-w-full overflow-hidden border border-base-300 bg-base-100 shadow-sm">
-    <div className={`card-body gap-1.5 p-2 md:p-3 ${CARD_BODY_HEIGHT_CLASS}`}>
+  <div className="card card-compact rounded-[2px] h-full w-full min-w-0 max-w-full overflow-hidden border border-base-300 bg-base-100 shadow-sm">
+    <div className={`card-body gap-1.5 p-1 md:p-1.5 ${CARD_BODY_HEIGHT_CLASS}`}>
       <div className="min-h-0 flex-1 divide-y divide-base-300">
         <SideRow side={card.sideA} teamsById={teamsById} />
         <SideRow side={card.sideB} teamsById={teamsById} />

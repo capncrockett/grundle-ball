@@ -118,6 +118,59 @@ describe('sleeperTransforms', () => {
       expect(matchup1?.startersA).toBe(9);
       expect(matchup1?.startersB).toBe(9);
     });
+
+    it('prefers a manually-edited custom_points score over the raw computed points', () => {
+      const editedMatchup = [
+        {
+          roster_id: 1,
+          matchup_id: 1,
+          points: 135.8,
+          custom_points: 113.98,
+          starters: ['p1', 'p2'],
+          players: ['p1', 'p2'],
+        },
+        {
+          roster_id: 2,
+          matchup_id: 1,
+          points: 118.06,
+          starters: ['p3', 'p4'],
+          players: ['p3', 'p4'],
+        },
+      ];
+
+      const paired = pairMatchups(1, editedMatchup);
+
+      expect(paired[0].pointsA).toBe(113.98);
+      expect(paired[0].pointsB).toBe(118.06);
+      expect(paired[0].pointsAEdited).toBe(true);
+      expect(paired[0].pointsBEdited).toBe(false);
+    });
+
+    it('prefers custom_points on a BYE-week matchup with no opponent', () => {
+      const editedByeMatchup = [
+        {
+          roster_id: 1,
+          matchup_id: 1,
+          points: 135.8,
+          custom_points: 113.98,
+          starters: ['p1', 'p2'],
+          players: ['p1', 'p2'],
+        },
+      ];
+
+      const paired = pairMatchups(1, editedByeMatchup);
+
+      expect(paired[0].pointsA).toBe(113.98);
+      expect(paired[0].pointsAEdited).toBe(true);
+    });
+
+    it('marks scores as not edited when custom_points is absent', () => {
+      const paired = pairMatchups(13, mockSleeperMatchupsWeek13);
+
+      const matchup1 = paired.find((p) => p.matchupId === 1);
+      expect(matchup1?.pointsAEdited).toBe(false);
+      expect(matchup1?.pointsBEdited).toBe(false);
+    });
   });
 
   describe('computeSeeds', () => {

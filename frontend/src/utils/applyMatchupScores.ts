@@ -2,6 +2,7 @@
 
 import type { SleeperMatchup } from '../api/sleeper';
 import type { BracketSlot } from '../bracket/types';
+import { scoreFor } from './sleeperTransforms';
 
 /**
  * Applies matchup scores (current points) to bracket slots.
@@ -40,7 +41,7 @@ export function applyMatchupScoresToBracket(
 
       return {
         ...pos,
-        currentPoints: matchup.points,
+        currentPoints: scoreFor(matchup),
       };
     };
 

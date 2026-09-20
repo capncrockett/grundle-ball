@@ -118,6 +118,15 @@ export function mergeRostersAndUsersToTeams(
 
 // --- Pair matchups by matchup_id ---
 
+// Sleeper reports a manually-edited score (e.g. a commissioner override for a
+// vacant-team median week) via `custom_points`, leaving `points` at the
+// original computed value. Callers must display the override when present.
+export const scoreFor = (matchup: SleeperMatchup): number =>
+  typeof matchup.custom_points === 'number' ? matchup.custom_points : matchup.points;
+
+export const isScoreEdited = (matchup: SleeperMatchup): boolean =>
+  typeof matchup.custom_points === 'number';
+
 export function pairMatchups(
   week: number,
   matchups: SleeperMatchup[],
@@ -155,8 +164,10 @@ export function pairMatchups(
         week,
         rosterIdA: a.roster_id,
         rosterIdB: null,
-        pointsA: a.points,
+        pointsA: scoreFor(a),
         pointsB: 0,
+        pointsAEdited: isScoreEdited(a),
+        pointsBEdited: false,
         startersA: finishedA.total,
         startersB: 0,
         playersFinishedA: finishedA.finished,
@@ -175,8 +186,10 @@ export function pairMatchups(
       week,
       rosterIdA: a.roster_id,
       rosterIdB: b.roster_id,
-      pointsA: a.points,
-      pointsB: b.points,
+      pointsA: scoreFor(a),
+      pointsB: scoreFor(b),
+      pointsAEdited: isScoreEdited(a),
+      pointsBEdited: isScoreEdited(b),
       startersA: finishedA.total,
       startersB: finishedB.total,
       playersFinishedA: finishedA.finished,
@@ -195,6 +208,8 @@ export function buildLiveMatchData(paired: PairedMatchup): LiveMatchData {
     teamIdB: paired.rosterIdB,
     pointsA: paired.pointsA,
     pointsB: paired.pointsB,
+    pointsAEdited: paired.pointsAEdited,
+    pointsBEdited: paired.pointsBEdited,
     startersA: paired.startersA,
     startersB: paired.startersB,
     playersFinishedA: paired.playersFinishedA,

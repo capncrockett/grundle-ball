@@ -36,6 +36,10 @@ export interface PairedMatchup {
   rosterIdB: number | null; // handle odd cases / byes
   pointsA: number;
   pointsB: number;
+  /** True when pointsA is a commissioner override (e.g. vacant-team median), not the raw computed score. */
+  pointsAEdited: boolean;
+  /** True when pointsB is a commissioner override (e.g. vacant-team median), not the raw computed score. */
+  pointsBEdited: boolean;
   startersA: number; // count of starters for team A
   startersB: number; // count of starters for team B
   playersFinishedA: number; // count of players who have finished their games
@@ -47,6 +51,10 @@ export interface LiveMatchData {
   teamIdB: number | null;
   pointsA: number;
   pointsB: number;
+  /** True when pointsA is a commissioner override (e.g. vacant-team median), not the raw computed score. */
+  pointsAEdited: boolean;
+  /** True when pointsB is a commissioner override (e.g. vacant-team median), not the raw computed score. */
+  pointsBEdited: boolean;
   startersA: number; // count of starters for team A
   startersB: number; // count of starters for team B
   playersFinishedA: number; // count of players who have finished their games
