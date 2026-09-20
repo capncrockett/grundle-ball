@@ -134,6 +134,30 @@ describe('PlayoffsPage', () => {
     );
   });
 
+  it('falls back to the default playoff week when Sleeper reports an unconfigured 0', async () => {
+    // Some linked leagues (e.g. the Megalabowl mirror) report
+    // `playoff_week_start: 0` rather than omitting the field entirely when
+    // their commissioner hasn't configured it. `0` is still a `number`, so
+    // it must be treated the same as "not configured" instead of literally
+    // producing "Week 0".
+    server.use(
+      http.get(`${SLEEPER_BASE}/league/:leagueId`, () =>
+        HttpResponse.json({
+          ...mockSleeperLeague,
+          settings: { playoff_week_start: 0, playoff_teams: 6 },
+        }),
+      ),
+      http.get(`${SLEEPER_BASE}/league/:leagueId/winners_bracket`, () => HttpResponse.json([])),
+      http.get(`${SLEEPER_BASE}/league/:leagueId/losers_bracket`, () => HttpResponse.json([])),
+    );
+
+    renderWithRouter(<PlayoffsPage />);
+
+    expect(await screen.findByTestId('playoffs-not-started')).toHaveTextContent(
+      /begin the bracket in Week 15/i,
+    );
+  });
+
   it('shows error message when data fails to load', async () => {
     server.use(...errorHandlers);
 

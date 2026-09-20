@@ -74,7 +74,8 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
   );
   const isProvisional = hasBracket && !hasCompletedGame && !hasBracketResult;
   const playoffWeekStart =
-    typeof league?.settings.playoff_week_start === 'number'
+    typeof league?.settings.playoff_week_start === 'number' &&
+    league.settings.playoff_week_start > 0
       ? league.settings.playoff_week_start
       : 15;
   const playoffTeams =

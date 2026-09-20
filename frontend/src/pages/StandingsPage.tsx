@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { getLeague, getLeagueRosters, getLeagueUsers } from '../api/sleeper';
+import type { SleeperLeague } from '../api/sleeper';
 import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
 import type { Team } from '../models/fantasy';
 import { TeamAvatars } from '../components/common/TeamAvatars';
@@ -75,6 +76,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
   const [regularSeasonWeeks, setRegularSeasonWeeks] = useState<number>(14);
   const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null);
   const [leagueSeason, setLeagueSeason] = useState<string | null>(null);
+  const [league, setLeague] = useState<SleeperLeague | null>(null);
 
   const winPoints = (team: Team): number => team.record.wins + team.record.ties * 0.5;
 
@@ -228,12 +230,14 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
         ]);
 
         const totalWeeks =
-          typeof league.settings.playoff_week_start === 'number'
+          typeof league.settings.playoff_week_start === 'number' &&
+          league.settings.playoff_week_start > 0
             ? Math.max(1, league.settings.playoff_week_start - 1)
             : 14;
         setRegularSeasonWeeks(totalWeeks);
         setActiveLeagueId(league.league_id);
         setLeagueSeason(league.season);
+        setLeague(league);
 
         const merged = mergeRostersAndUsersToTeams(rosters, users, league);
         const hasCompletedGames = merged.some(
@@ -268,6 +272,20 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
     (team) => team.record.wins + team.record.losses + team.record.ties > 0,
   );
   const preseasonDivisions = useMemo(() => groupTeamsByDivision(teams), [teams]);
+
+  // Sleeper reports `settings.divisions` only for leagues actually configured
+  // with divisions. A league genuinely built without divisions (e.g. the
+  // Megalabowl mirror) omits it entirely, which looks identical to
+  // `hasDivisionData` being false for a division-having league that simply
+  // hasn't returned roster assignments yet. Distinguish "no divisions by
+  // design" from "division data is missing" using that settings field, so a
+  // divisionless league doesn't get a misleading "did not return division
+  // assignments" warning.
+  const leagueHasDivisionsConfigured =
+    typeof league?.settings.divisions === 'number' && league.settings.divisions > 0;
+  const isDivisionlessLeague = !hasDivisionData && !leagueHasDivisionsConfigured;
+  const showDivisionDataWarning = !hasDivisionData && leagueHasDivisionsConfigured;
+  const showDivisionColumn = !isDivisionlessLeague;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -330,45 +348,29 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
           )}
           {!hasStandingsData ? (
             <section aria-labelledby="preseason-divisions-heading" data-testid="division-preseason">
-              {!hasDivisionData && (
+              {showDivisionDataWarning && (
                 <div className="alert alert-warning mb-4">
                   <span>Sleeper did not return division assignments for any roster.</span>
                 </div>
               )}
               <div className="mb-4">
                 <h2 id="preseason-divisions-heading" className="text-lg font-semibold">
-                  {leagueSeason ? `${leagueSeason} ` : ''}Preseason Divisions
+                  {leagueSeason ? `${leagueSeason} ` : ''}
+                  {isDivisionlessLeague ? 'Preseason Rosters' : 'Preseason Divisions'}
                 </h2>
                 <p className="text-sm text-base-content/60">
-                  Division assignments are live. Seeds, ranges, and performance stats will appear
-                  once completed games create real standings.
+                  {isDivisionlessLeague
+                    ? 'This league does not use divisions. Seeds, ranges, and performance stats will appear once completed games create real standings.'
+                    : 'Division assignments are live. Seeds, ranges, and performance stats will appear once completed games create real standings.'}
                 </p>
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                {preseasonDivisions.map((division) => (
-                  <div
-                    key={division.divisionId ?? 'unassigned'}
-                    className="card border border-base-300 bg-base-200"
-                  >
-                    <div className="card-body gap-3 p-4">
-                      <div className="flex items-center gap-3">
-                        {division.divisionAvatarUrl ? (
-                          <div className="avatar">
-                            <div className="w-10 rounded">
-                              <img src={division.divisionAvatarUrl} alt="" />
-                            </div>
-                          </div>
-                        ) : null}
-                        <div>
-                          <h3 className="card-title text-base">{division.divisionName}</h3>
-                          <p className="text-xs text-base-content/60">
-                            {division.members.length}{' '}
-                            {division.members.length === 1 ? 'team' : 'teams'}
-                          </p>
-                        </div>
-                      </div>
-                      <ul className="divide-y divide-base-300">
-                        {division.members.map((team) => (
+              {isDivisionlessLeague ? (
+                <div className="card border border-base-300 bg-base-200">
+                  <div className="card-body gap-3 p-4">
+                    <ul className="divide-y divide-base-300">
+                      {[...teams]
+                        .sort((a, b) => a.teamName.localeCompare(b.teamName))
+                        .map((team) => (
                           <li
                             key={team.sleeperRosterId}
                             className="flex items-center gap-2 py-2 first:pt-0 last:pb-0"
@@ -389,17 +391,67 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                             </div>
                           </li>
                         ))}
-                      </ul>
-                    </div>
+                    </ul>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-3">
+                  {preseasonDivisions.map((division) => (
+                    <div
+                      key={division.divisionId ?? 'unassigned'}
+                      className="card border border-base-300 bg-base-200"
+                    >
+                      <div className="card-body gap-3 p-4">
+                        <div className="flex items-center gap-3">
+                          {division.divisionAvatarUrl ? (
+                            <div className="avatar">
+                              <div className="w-10 rounded">
+                                <img src={division.divisionAvatarUrl} alt="" />
+                              </div>
+                            </div>
+                          ) : null}
+                          <div>
+                            <h3 className="card-title text-base">{division.divisionName}</h3>
+                            <p className="text-xs text-base-content/60">
+                              {division.members.length}{' '}
+                              {division.members.length === 1 ? 'team' : 'teams'}
+                            </p>
+                          </div>
+                        </div>
+                        <ul className="divide-y divide-base-300">
+                          {division.members.map((team) => (
+                            <li
+                              key={team.sleeperRosterId}
+                              className="flex items-center gap-2 py-2 first:pt-0 last:pb-0"
+                            >
+                              <TeamAvatars
+                                teamName={team.teamName}
+                                teamAvatarUrl={team.teamAvatarUrl}
+                                userAvatarUrl={team.userAvatarUrl}
+                                userDisplayName={team.ownerDisplayName}
+                                showUserAvatar={false}
+                                size="sm"
+                              />
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-medium">{team.teamName}</div>
+                                <div className="truncate text-xs text-base-content/60">
+                                  {team.ownerDisplayName}
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
-          ) : !hasDivisionData ? (
+          ) : showDivisionDataWarning ? (
             <div className="alert alert-warning mb-4">
               <span>Sleeper did not return division assignments for any roster.</span>
             </div>
-          ) : insights ? (
+          ) : isDivisionlessLeague ? null : insights ? (
             <>
               <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Division notes">
                 <InsightChip
@@ -461,7 +513,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                     <tr>
                       <th>Seed</th>
                       <th>Team</th>
-                      <th>Division</th>
+                      {showDivisionColumn && <th>Division</th>}
                       <th>B/W</th>
                       <th>Owner</th>
                       <th>Record</th>
@@ -510,7 +562,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                               </span>
                             </div>
                           </td>
-                          <td>{team.divisionName ?? 'Unassigned'}</td>
+                          {showDivisionColumn && <td>{team.divisionName ?? 'Unassigned'}</td>}
                           <td className="text-sm text-base-content/80">
                             {bw.label}
                             {bw.statCorrectionRisk && (
