@@ -13,6 +13,16 @@ The 2025 snapshot is labeled with its actual league and season, storage keys are
 - [x] Add JSON, SQLite, and frontend regression tests with overlapping week numbers across seasons and leagues.
 - [x] Add CLI argument/upstream-data regression coverage proving an alternate `--league` is stamped with that league's resolved season.
 
+### Manual Sleeper edit reconciliation (decided 2026-09-18, issue #47)
+
+A commissioner's manual Sleeper score edit (the vacant-team median rule from PR #46) appeared not to be reflected in the app. Investigation traced this to the live Sleeper API's own recompute lag, not app-side staleness:
+
+- `StandingsPage` and `MatchupsPage` read `getLeague`/`getLeagueUsers`/`getLeagueRosters`/`getLeagueMatchupsForWeek` live with `cache: 'no-store'` on every load; there is no app-side cache on either path that could serve a stale value.
+- `matchupHistoryStore.json`'s only consumer, `StandingsPage`'s best/worst seed-range and stat-correction hint, is scoped by both `leagueId` and `season` (`getStoredMatchups`). The 2025 snapshot is stamped with the prior season's Sleeper `league_id` (`1251950356187840512`), which differs from the 2026 league's id (`1385053148233621511`) because Sleeper mints a new `league_id` per season. The scoping added earlier in this section already makes the feature go inert for a new season instead of leaking prior-season numbers.
+- Confirmed live: fetching the 2026 league directly showed the edited roster's `fpts` matching the constitution example, i.e. Sleeper had already propagated the edit by the time of the check.
+
+Decision: no scheduled sync worker. A periodic re-fetch would guard a view (Standings/Matchups) that is already live and uncached; the actual gap was `matchupHistoryStore.json` having no 2026 rows yet, which only affects the best/worst-seed hint, not win/loss/PF/PA. That gap is closed by running the existing `npm run fetch:matchups -w frontend -- --week=N` CLI after each week's Wednesday stat corrections finalize (manual, not scheduled - vacant-team weeks needing this hint are rare). This supersedes the "Deploy/run the fetcher on a schedule" backlog item in `backend/TODO.md`.
+
 ## Release and operations
 
 Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). Every `release/**` push runs the checked-out application locally through both Playwright projects, so protected Vercel staging is an optional environment check rather than a release gate.

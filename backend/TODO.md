@@ -37,7 +37,7 @@
 - Decide consumption path for the frontend:
   1. Mirror DB writes back to JSON so UI stays file-based, or
   2. Add a tiny API route/serverless function to serve matchup history from DB and point the UI at it.
-- Deploy/run the fetcher on a schedule (GitHub Actions/Vercel Cron) between MNF end and Wednesday stat corrections.
+- ~~Deploy/run the fetcher on a schedule (GitHub Actions/Vercel Cron) between MNF end and Wednesday stat corrections.~~ Superseded 2026-09-18 (issue #47): Standings/Matchups already read Sleeper live and uncached, so a scheduled worker would guard a view that isn't stale. The only path fed by this store is the best/worst-seed hint, which is already season/league-scoped and safely goes inert instead of showing stale numbers. Run the CLI manually after Wednesday stat corrections when that hint matters (vacant-team weeks are rare); see `ROADMAP.md`'s "Manual Sleeper edit reconciliation" note for the full investigation.
 - Extend the existing JSON/SQLite tests with hosted-adapter parity once an adapter is selected.
 - If league configuration moves to environment variables or a neutral shared module, keep the updater and browser build on one validated default while preserving the CLI override.
 
