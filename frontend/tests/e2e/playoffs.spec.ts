@@ -72,8 +72,12 @@ test.describe('Playoffs bracket layout', () => {
     // The card's top-left corner is a curve, not a right angle: a child can
     // sit inside the card's rectangular bounding box while still being
     // visually clipped by that curve. Clearing the corner's own radius on
-    // both axes is a sufficient (if conservative) guarantee the avatar's
-    // square box never crosses into the curved region.
+    // both axes is a sufficient guarantee the avatar's square box never
+    // crosses into the curved region. A tighter check (only one axis needs
+    // to clear the radius, verified against the exact circle the curve
+    // traces) was tried and reverted: it judged the original, confirmed-
+    // clipped layout as safe, so real corner-radius rendering (anti-
+    // aliasing/softening at the edge) is less forgiving than the pure math.
     const cornerRadius = await card.evaluate((el) => {
       const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius);
       return Number.isNaN(radius) ? 0 : radius;
