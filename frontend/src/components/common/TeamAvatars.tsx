@@ -2,6 +2,8 @@
 
 import type { FC } from 'react';
 
+type AvatarSize = 'sm' | 'md' | 'lg';
+
 interface TeamAvatarsProps {
   teamName: string;
   teamAvatarUrl?: string | null;
@@ -10,14 +12,28 @@ interface TeamAvatarsProps {
   /** Whether to render the small manager avatar overlay. Defaults to true. */
   showUserAvatar?: boolean;
   /** Visual size preset. */
-  size?: 'sm' | 'md' | 'lg';
+  size?: AvatarSize;
+  /**
+   * Larger preset applied at the `md` breakpoint and up, in place of `size`.
+   * Renders the true pixel dimensions for that breakpoint via Tailwind width/
+   * height classes rather than a `transform: scale()` on `size`, which is
+   * what produces a compositing seam on the rounded, overflow-hidden,
+   * ring-bordered avatar circle at desktop widths.
+   */
+  mdSize?: AvatarSize;
   className?: string;
 }
 
-const SIZE_PRESETS: Record<NonNullable<TeamAvatarsProps['size']>, { main: number; sub: number }> = {
-  sm: { main: 24, sub: 12 },
-  md: { main: 32, sub: 14 },
-  lg: { main: 40, sub: 16 },
+const SIZE_PRESETS: Record<AvatarSize, { main: number; sub: number; boxClass: string }> = {
+  sm: { main: 24, sub: 12, boxClass: 'w-6 h-6' },
+  md: { main: 32, sub: 14, boxClass: 'w-8 h-8' },
+  lg: { main: 40, sub: 16, boxClass: 'w-10 h-10' },
+};
+
+const MD_BOX_CLASS: Record<AvatarSize, string> = {
+  sm: 'md:w-6 md:h-6',
+  md: 'md:w-8 md:h-8',
+  lg: 'md:w-10 md:h-10',
 };
 
 export const TeamAvatars: FC<TeamAvatarsProps> = ({
@@ -27,9 +43,12 @@ export const TeamAvatars: FC<TeamAvatarsProps> = ({
   userDisplayName,
   showUserAvatar = false,
   size = 'md',
+  mdSize,
   className = '',
 }) => {
-  const { main, sub } = SIZE_PRESETS[size];
+  const { sub, boxClass } = SIZE_PRESETS[size];
+  const mdBoxClass = mdSize ? MD_BOX_CLASS[mdSize] : '';
+  const sizeClassName = `${boxClass} ${mdBoxClass}`.trim();
   const shouldShowUserAvatar =
     showUserAvatar && userAvatarUrl != null && userAvatarUrl !== teamAvatarUrl;
   const initial = teamName.charAt(0).toUpperCase() || '?';
@@ -37,14 +56,12 @@ export const TeamAvatars: FC<TeamAvatarsProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center ${className}`}
-      style={{ width: main, height: main }}
+      className={`relative inline-flex items-center justify-center ${sizeClassName} ${className}`}
       aria-label={teamName}
     >
       <div className="avatar">
         <div
-          className="rounded-full bg-base-300 overflow-hidden ring-1 ring-base-200"
-          style={{ width: main, height: main }}
+          className={`rounded-full bg-base-300 overflow-hidden ring-1 ring-base-200 ${sizeClassName}`}
         >
           {teamAvatarUrl ? (
             <img src={teamAvatarUrl} alt={teamName} />
