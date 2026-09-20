@@ -70,8 +70,10 @@ These skills are based on [mattpocock/skills](https://github.com/mattpocock/skil
 2. Prefer DaisyUI components/layout primitives over custom UI chrome.
 3. Constitution content edits go through `frontend/src/content/constitution.md` (PR-reviewed).
 4. When terminology is being decided or renamed, use **grill-with-docs** / **domain-modeling** and update `CONTEXT.md` as terms resolve.
-5. Do not commit unless asked. When committing, include:
-   `Co-Authored-By: Oz <oz-agent@warp.dev>`
+5. Do not commit unless asked. When committing, attribute the work to the coding agent's model and effort/reasoning level actually used for that session, e.g.:
+   `Co-Authored-By: Claude Sonnet 5 (xhigh) <noreply@anthropic.com>`
+   `Co-Authored-By: Codex (high) <noreply@openai.com>`
+   Do not attribute commits to "Oz" or Warp; that tooling is no longer in use here. A commit missing a recognized model co-author trailer risks tripping this repo's "require extra approval for unattributed changes" branch ruleset, so include one on every commit an agent makes.
 6. Classify releases by the declared public and operational contract in `docs/versioning.md`. Release branches use `release/MAJOR.MINOR.PATCH`, and the root `package.json` version is canonical.
 7. Before committing maintained frontend code or content, run `npm run format:write`, then verify `npm run format`. Husky and lint-staged also format supported staged text files during `git commit`; CI enforces the full frontend formatting check on pull requests and `release/**` pushes.
 8. Never use Unicode em dashes or en dashes anywhere in the repository. Use the ASCII hyphen-minus (`-`) instead.
