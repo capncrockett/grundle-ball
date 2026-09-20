@@ -44,6 +44,10 @@ _Avoid_: Team DEF, unconstrained 2024-2025 draft habit
 The private suite of Grundle League draft-preparation tools, including historical pattern analysis and league-specific ADP analysis. It is available on localhost and the protected staging deployment, but excluded from the public production app.
 _Avoid_: Public dashboard feature
 
+**Megalabowl**:
+A separate, one-time redraft Sleeper league (a Fantasy Footballers listener super-league) mirrored read-only inside Grundle Ball at `/local/megalabowl`, reusing Draft Intel's own gating so it is available on localhost and the protected staging deployment but excluded from the public production app. It is not part of the Grundle League and has no keepers.
+_Avoid_: Grundle League, Keeper Bowl
+
 **Baseline ADP**:
 An external market estimate of when a player would be selected before Grundle League Keeper Designations change the available player pool and draftboard.
 _Avoid_: Keeper-Adjusted ADP, keeper cost

@@ -76,7 +76,7 @@ test.describe('Happy path smoke', () => {
     await expect(page.getByText(/^GB$/)).toBeVisible();
     await expect(page.getByText(/^Grundle Ball$/)).toBeHidden();
     const hostname = new URL(String(testInfo.project.use.baseURL)).hostname;
-    await expect(page.locator('nav a:visible')).toHaveCount(isDraftIntelHost(hostname) ? 7 : 6);
+    await expect(page.locator('nav a:visible')).toHaveCount(isDraftIntelHost(hostname) ? 8 : 6);
     for (const width of [375, 390]) {
       await page.setViewportSize({ width, height: 844 });
       await expect(page.locator('header nav')).toBeInViewport({ ratio: 1 });
@@ -96,6 +96,17 @@ test.describe('Happy path smoke', () => {
 
     await expect(page.getByRole('heading', { name: /^draft intel$/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /^draft intel$/i })).toBeVisible();
+  });
+
+  test('exposes Megalabowl on its approved local or staging host', async ({ page }, testInfo) => {
+    const hostname = new URL(String(testInfo.project.use.baseURL)).hostname;
+    test.skip(!isDraftIntelHost(hostname), 'Megalabowl is excluded from this deployment');
+
+    await page.goto('/local/megalabowl');
+
+    await expect(page).toHaveURL(/\/local\/megalabowl\/standings$/);
+    await expect(page.getByRole('heading', { name: /^standings$/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^megalabowl$/i })).toBeVisible();
   });
 
   test('constitution TOC jumps to section anchors', async ({ page }) => {

@@ -21,7 +21,7 @@ import { SleeperBracketBoard } from '../components/sleeperBracket/SleeperBracket
 import type { Team } from '../models/fantasy';
 import { LEAGUE_ID } from '../config/league';
 
-export default function PlayoffsPage() {
+export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
   const [winners, setWinners] = useState<ResolvedBracketMatchup[]>([]);
@@ -36,11 +36,11 @@ export default function PlayoffsPage() {
         setError(null);
 
         const [leagueData, users, rosters, winnersBracket, losersBracket] = await Promise.all([
-          getLeague(LEAGUE_ID),
-          getLeagueUsers(LEAGUE_ID),
-          getLeagueRosters(LEAGUE_ID),
-          getWinnersBracket(LEAGUE_ID),
-          getLosersBracket(LEAGUE_ID),
+          getLeague(leagueId),
+          getLeagueUsers(leagueId),
+          getLeagueRosters(leagueId),
+          getWinnersBracket(leagueId),
+          getLosersBracket(leagueId),
         ]);
 
         const merged = mergeRostersAndUsersToTeams(rosters, users, leagueData);
@@ -57,7 +57,7 @@ export default function PlayoffsPage() {
     }
 
     void load();
-  }, []);
+  }, [leagueId]);
 
   const teamsById = useMemo(() => {
     const map = new Map<number, Team>();

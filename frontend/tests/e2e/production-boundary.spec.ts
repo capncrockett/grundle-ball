@@ -108,6 +108,28 @@ test('production omits the restricted Draft Intel navigation and route', async (
   await expect(page.getByRole('link', { name: /draft intel/i })).toHaveCount(0);
 });
 
+test('production omits the restricted Megalabowl navigation and route', async ({ page }) => {
+  await page.goto(`${productionOrigin}/`);
+
+  await expect(page.getByRole('banner')).toBeVisible();
+  await expect(page.getByRole('link', { name: /megalabowl/i })).toHaveCount(0);
+
+  await page.goto(`${productionOrigin}/local/megalabowl/standings`);
+
+  await expect(page.getByRole('banner')).toBeVisible();
+  await expect(
+    page.getByText(/staging-only mirror of a separate, linked Sleeper league/i),
+  ).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /megalabowl/i })).toHaveCount(0);
+});
+
+test('production output omits the restricted Megalabowl mirror', async () => {
+  const productionText = await readProductionText(distRoot);
+
+  expect(productionText).not.toContain('Megalabowl');
+  expect(productionText).not.toContain('1402702919295377408');
+});
+
 test('production output omits the restricted draft planning features', async () => {
   const productionText = await readProductionText(distRoot);
 

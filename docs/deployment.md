@@ -47,6 +47,8 @@ Draft Intel uses two deployment gates:
 
 The hostname check is not authentication. Keep Vercel Deployment Protection enabled for staging and use its normal authenticated session when opening Draft Intel on a phone.
 
+The Megalabowl mirror (a second, staging-only Sleeper league mirrored at `/local/megalabowl`) reuses this exact gate rather than defining its own; there is no separate `__MEGALABOWL_BUILD__` Vite define. Its nav link and routes are included and rendered under the same conditions as Draft Intel, so it is likewise excluded from the public production build and origin.
+
 `VITE_LEAGUE_ID` is not implemented. The confirmed 2026 league ID is centralized in `frontend/src/config/league.ts`; all frontend pages use it, and the Node history updater imports it as its default. Before adding a Vercel variable, define how both the Vite build and the Node updater will receive and validate the same configuration instead of creating separate defaults; see `frontend/TODO.md`.
 
 ## GitHub Actions and release flow

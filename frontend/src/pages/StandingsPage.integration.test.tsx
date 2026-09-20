@@ -32,6 +32,17 @@ describe('StandingsPage', () => {
     expect(row).toHaveTextContent(/\b1\b/);
   });
 
+  it('threads a custom leagueId through to the Sleeper API calls', async () => {
+    const customLeagueId = 'megalabowl-test-league';
+
+    render(<StandingsPage leagueId={customLeagueId} />);
+
+    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
+    expect(leagueSpy).toHaveBeenCalledWith(customLeagueId);
+    expect(usersSpy).toHaveBeenCalledWith(customLeagueId);
+    expect(rostersSpy).toHaveBeenCalledWith(customLeagueId);
+  });
+
   it('requests stored history for the active Sleeper league and season', async () => {
     const historySpy = jest.spyOn(matchupHistory, 'getStoredMatchups');
 
