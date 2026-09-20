@@ -26,6 +26,8 @@ Fixed by adding a shared `scoreFor()` helper that prefers `custom_points` when p
 - [x] Prefer `custom_points` over `points` everywhere a live Sleeper matchup score is displayed (Matchups page, live playoff bracket).
 - [ ] Confirm the standings win/loss/PF/PA path (`mergeRostersAndUsersToTeams`, sourced from `/rosters`) doesn't have an equivalent override field being ignored; roster-aggregate `fpts` already reflected this edit, so no evidence of a gap there yet.
 
+Decision: still no scheduled sync worker. `StandingsPage` and `MatchupsPage` fetch live with `cache: 'no-store'`, so there is no app-side cache for a scheduled worker to guard against; the gap above was the ignored `custom_points` field, not staleness. The only remaining path that can go stale is `matchupHistoryStore.json`'s season/league-scoped best/worst-seed hint, closed by running the existing `npm run fetch:matchups -w frontend -- --week=N` CLI after each week's Wednesday stat corrections finalize (manual, not scheduled - vacant-team weeks needing this hint are rare). This supersedes the "Deploy/run the fetcher on a schedule" backlog item in `backend/TODO.md`.
+
 ## Release and operations
 
 Production root availability is verified at `https://grundle-ball.vercel.app` (HTTP 200 with the Grundle Ball title). Every `release/**` push runs the checked-out application locally through both Playwright projects, so protected Vercel staging is an optional environment check rather than a release gate.
