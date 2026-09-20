@@ -68,7 +68,7 @@ const groupTeamsByDivision = (teams: Team[]): DivisionRosterGroup[] => {
     });
 };
 
-export function StandingsPage() {
+export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -222,9 +222,9 @@ export function StandingsPage() {
         setError(null);
 
         const [league, users, rosters] = await Promise.all([
-          getLeague(LEAGUE_ID),
-          getLeagueUsers(LEAGUE_ID),
-          getLeagueRosters(LEAGUE_ID),
+          getLeague(leagueId),
+          getLeagueUsers(leagueId),
+          getLeagueRosters(leagueId),
         ]);
 
         const totalWeeks =
@@ -250,7 +250,7 @@ export function StandingsPage() {
     }
 
     void load();
-  }, []);
+  }, [leagueId]);
 
   const latestCompletedWeek = useMemo(
     () => getLatestCompletedWeek(storedMatchups),

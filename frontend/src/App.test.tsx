@@ -120,6 +120,20 @@ describe('App routing + nav', () => {
     expect(draftIntelLink).toHaveAttribute('href', '/local/draft-intel');
   });
 
+  it('renders the Megalabowl mirror through its restricted route on an approved host', async () => {
+    renderWithRouter(<App />, { route: '/local/megalabowl/standings' });
+
+    expect(await screen.findByText('Standings Page')).toBeInTheDocument();
+    expect(
+      screen.getByText(/staging-only mirror of a separate, linked Sleeper league/i),
+    ).toBeInTheDocument();
+
+    const banner = screen.getByRole('banner');
+    const megalabowlLink = within(banner).getByRole('link', { name: /megalabowl/i });
+    expect(megalabowlLink).toHaveClass('btn-active');
+    expect(megalabowlLink).toHaveAttribute('href', '/local/megalabowl');
+  });
+
   it('shows only the useful deployment details in the footer', () => {
     renderWithRouter(<App />, { route: '/standings' });
 

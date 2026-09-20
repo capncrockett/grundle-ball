@@ -10,6 +10,7 @@ import {
   mockPlayoffWinnersBracket,
   mockPlayoffLosersBracket,
 } from '../test/fixtures/sleeper';
+import * as sleeperApi from '../api/sleeper';
 
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 
@@ -38,6 +39,34 @@ describe('PlayoffsPage', () => {
     expect(screen.getAllByTestId('sleeper-bracket-grid')).toHaveLength(2);
     expect(screen.getAllByText('Week 15')).toHaveLength(2);
     expect(screen.getAllByText('Finals')).toHaveLength(2);
+  });
+
+  it('threads a custom leagueId through to the Sleeper API calls', async () => {
+    const leagueSpy = jest.spyOn(sleeperApi, 'getLeague');
+    const usersSpy = jest.spyOn(sleeperApi, 'getLeagueUsers');
+    const rostersSpy = jest.spyOn(sleeperApi, 'getLeagueRosters');
+    const winnersSpy = jest.spyOn(sleeperApi, 'getWinnersBracket');
+    const losersSpy = jest.spyOn(sleeperApi, 'getLosersBracket');
+    const customLeagueId = 'megalabowl-test-league';
+
+    try {
+      renderWithRouter(<PlayoffsPage leagueId={customLeagueId} />);
+
+      expect(
+        await screen.findByRole('heading', { name: /championship bracket/i }),
+      ).toBeInTheDocument();
+      expect(leagueSpy).toHaveBeenCalledWith(customLeagueId);
+      expect(usersSpy).toHaveBeenCalledWith(customLeagueId);
+      expect(rostersSpy).toHaveBeenCalledWith(customLeagueId);
+      expect(winnersSpy).toHaveBeenCalledWith(customLeagueId);
+      expect(losersSpy).toHaveBeenCalledWith(customLeagueId);
+    } finally {
+      leagueSpy.mockRestore();
+      usersSpy.mockRestore();
+      rostersSpy.mockRestore();
+      winnersSpy.mockRestore();
+      losersSpy.mockRestore();
+    }
   });
 
   it('marks Sleeper bracket seeds as provisional before games are played', async () => {

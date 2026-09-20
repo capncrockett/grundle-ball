@@ -7,6 +7,7 @@ import { errorHandlers } from '../test/mocks/handlers';
 import { mockNFLState, mockSleeperMatchupsWeek13 } from '../test/fixtures/sleeper';
 import { mockESPNScoreboard } from '../test/fixtures/espn';
 import * as espn from '../api/espn';
+import * as sleeperApi from '../api/sleeper';
 
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 const ESPN_BASE = 'https://site.api.espn.com';
@@ -18,6 +19,26 @@ describe('MatchupsPage', () => {
     expect(await screen.findByText(/Big Ol' TDs/i)).toBeInTheDocument();
     expect(screen.getByText(/Glaurung & Foes/i)).toBeInTheDocument();
     expect(screen.getByText(/11-2/)).toBeInTheDocument();
+  });
+
+  it('threads a custom leagueId through to the Sleeper API calls', async () => {
+    const usersSpy = jest.spyOn(sleeperApi, 'getLeagueUsers');
+    const rostersSpy = jest.spyOn(sleeperApi, 'getLeagueRosters');
+    const matchupsSpy = jest.spyOn(sleeperApi, 'getLeagueMatchupsForWeek');
+    const customLeagueId = 'megalabowl-test-league';
+
+    try {
+      render(<MatchupsPage leagueId={customLeagueId} />);
+
+      expect(await screen.findByText(/Big Ol' TDs/i)).toBeInTheDocument();
+      expect(usersSpy).toHaveBeenCalledWith(customLeagueId);
+      expect(rostersSpy).toHaveBeenCalledWith(customLeagueId);
+      expect(matchupsSpy).toHaveBeenCalledWith(customLeagueId, 13);
+    } finally {
+      usersSpy.mockRestore();
+      rostersSpy.mockRestore();
+      matchupsSpy.mockRestore();
+    }
   });
 
   it('shows loading spinner while fetching', async () => {
