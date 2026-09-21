@@ -243,6 +243,86 @@ describe('StandingsPage', () => {
     expect(screen.queryByText(/Standings Glossary/i)).not.toBeInTheDocument();
   });
 
+  it('computes a full-season best/worst range when Sleeper reports an unconfigured 0 for playoff_week_start', async () => {
+    // Some linked leagues (e.g. the Megalabowl mirror) report
+    // `playoff_week_start: 0` rather than omitting the field when their
+    // commissioner hasn't configured it. `0` is still a `number`, so it must
+    // be treated the same as "not configured" (14-week season), not taken
+    // literally as "1 week remaining."
+    leagueSpy.mockResolvedValueOnce({
+      ...mockSleeperLeague,
+      settings: { playoff_week_start: 0 },
+    });
+    const earlyWeek = mockSleeperRosters.map((roster) => ({
+      ...roster,
+      settings: { ...roster.settings, wins: 2, losses: 0, ties: 0 },
+    }));
+    rostersSpy.mockResolvedValueOnce(earlyWeek);
+
+    render(<StandingsPage />);
+
+    const rows = await screen.findAllByRole('row');
+    const dataRows = rows.filter((row) => within(row).queryAllByRole('cell').length > 0);
+    expect(dataRows.length).toBe(mockSleeperRosters.length);
+    // With every roster tied 2-0, a correctly-computed 12-games-remaining
+    // season puts every team's best/worst seed range at the full 1-12 span.
+    // A `playoff_week_start: 0` bug that reads as "1-week season" would
+    // instead collapse every row to its current, already-decided seed.
+    dataRows.forEach((row) => {
+      expect(row).toHaveTextContent('1-12');
+    });
+  });
+
+  it('hides the division warning and grouping for a league with no divisions configured', async () => {
+    const divisionless = mockSleeperRosters.map((roster) => ({
+      ...roster,
+      division_id: undefined,
+      division: undefined,
+    }));
+    rostersSpy.mockResolvedValueOnce(divisionless);
+
+    render(<StandingsPage />);
+
+    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
+    expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: /^Division$/i })).not.toBeInTheDocument();
+  });
+
+  it('shows preseason rosters (not a division grouping) for a divisionless league', async () => {
+    const divisionlessZeroed = mockSleeperRosters.map((roster) => ({
+      ...roster,
+      division_id: undefined,
+      division: undefined,
+      settings: {
+        ...roster.settings,
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        fpts: 0,
+        fpts_decimal: 0,
+        fpts_against: 0,
+        fpts_against_decimal: 0,
+      },
+    }));
+    leagueSpy.mockResolvedValueOnce({
+      ...mockSleeperLeague,
+      status: 'pre_draft',
+      season: '2026',
+      season_type: 'pre',
+      metadata: undefined,
+    });
+    rostersSpy.mockResolvedValueOnce(divisionlessZeroed);
+
+    render(<StandingsPage />);
+
+    const preseason = await screen.findByTestId('division-preseason');
+    expect(preseason).toHaveTextContent(/2026 Preseason Rosters/i);
+    expect(preseason).toHaveTextContent(/does not use divisions/i);
+    expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'D1' })).not.toBeInTheDocument();
+    expect(within(preseason).getByText(/Big Ol' TDs/i)).toBeInTheDocument();
+  });
+
   it('shows a waiting message instead of a division-data warning during early weeks', async () => {
     const earlyWeek = mockSleeperRosters.map((roster) => ({
       ...roster,

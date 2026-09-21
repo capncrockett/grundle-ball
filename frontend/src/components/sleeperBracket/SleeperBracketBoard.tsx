@@ -55,7 +55,10 @@ interface BoardLayout {
   placementGames: ResolvedBracketMatchup[];
 }
 
-const CARD_BODY_HEIGHT_CLASS = 'h-[125px] md:h-[146px]';
+// The desktop avatar now renders at its true 40px box (mdSize="lg") instead
+// of a `scale(1.25)` paint-only effect on a 32px box, so it actually adds to
+// row layout height at md and up - the card needs the extra room too.
+const CARD_BODY_HEIGHT_CLASS = 'h-[125px] md:h-[162px]';
 const COLUMN_GAP_CLASS = 'gap-3 md:gap-10';
 const COLUMN_HEIGHT_CLASS = 'min-h-[600px] md:min-h-[760px]';
 const TEAM_NAME_CLASS = 'font-semibold text-[0.65rem] md:text-sm leading-tight truncate';
@@ -226,10 +229,11 @@ const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
               teamName={label}
               teamAvatarUrl={team.teamAvatarUrl}
               size="md"
-              className="shrink-0 md:scale-125"
+              mdSize="lg"
+              className="shrink-0"
             />
           ) : (
-            <div className="invisible h-8 w-8 shrink-0 rounded-full md:scale-125" aria-hidden />
+            <div className="invisible h-8 w-8 shrink-0 rounded-full md:h-10 md:w-10" aria-hidden />
           )}
         </div>
         <div className={SCORE_CLASS}>-</div>
