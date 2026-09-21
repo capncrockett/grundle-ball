@@ -7,7 +7,7 @@ import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTrans
 import type { Team } from '../models/fantasy';
 import { TeamAvatars } from '../components/common/TeamAvatars';
 import { computeStandingsInsights, MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
-import { STANDINGS_GLOSSARY } from './narratives.tsx';
+import { STANDINGS_GLOSSARY, MEGALABOWL_STANDINGS_GLOSSARY } from './narratives.tsx';
 import {
   findMatchupForTeam,
   getLatestCompletedWeek,
@@ -15,7 +15,11 @@ import {
   getStoredMatchups,
   normalizeTeamName,
 } from '../data/matchupHistory';
-import { LEAGUE_ID } from '../config/league';
+import { LEAGUE_ID, MEGALABOWL_LEAGUE_ID } from '../config/league';
+import {
+  computeMegalabowlPlayoffOdds,
+  MEGALABOWL_PLAYOFF_FIELD_SIZE,
+} from './megalabowlPlayoffOdds';
 
 const InsightChip = ({
   label,
@@ -202,16 +206,22 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
   const teamBadges = (
     team: Team,
     bw: { best: number; worst: number; statCorrectionRisk: boolean },
+    isMegalabowl: boolean,
   ): string[] => {
     const badges = new Set<string>();
     const seed = team.seed ?? team.rank;
-    if (bw.worst <= 1) {
-      badges.add('*');
-      badges.add('z');
-    } else if (bw.worst <= 2) {
-      badges.add('z');
+    // Megalabowl has no divisions and no bracket bye, so the `*`/`y`/`z`
+    // codes (No. 1 seed, clinched division, clinched bye) don't apply -
+    // see MEGALABOWL_STANDINGS_GLOSSARY.
+    if (!isMegalabowl) {
+      if (bw.worst <= 1) {
+        badges.add('*');
+        badges.add('z');
+      } else if (bw.worst <= 2) {
+        badges.add('z');
+      }
+      if (bw.worst <= 3) badges.add('y');
     }
-    if (bw.worst <= 3) badges.add('y');
     if (bw.worst <= 6) badges.add('x');
     if (seed === 6) badges.add('6');
     return Array.from(badges);
@@ -267,6 +277,12 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
   }, [latestCompletedWeek, storedMatchups]);
 
   const insights = computeStandingsInsights(teams);
+  const isMegalabowl = leagueId === MEGALABOWL_LEAGUE_ID;
+  const standingsGlossary = isMegalabowl ? MEGALABOWL_STANDINGS_GLOSSARY : STANDINGS_GLOSSARY;
+  const megalabowlPlayoffOdds = useMemo(
+    () => (isMegalabowl ? computeMegalabowlPlayoffOdds(teams) : []),
+    [isMegalabowl, teams],
+  );
   const hasDivisionData = teams.some((team) => team.divisionId !== null);
   const hasStandingsData = teams.some(
     (team) => team.record.wins + team.record.losses + team.record.ties > 0,
@@ -547,11 +563,11 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                               <span className="flex items-center gap-1">
                                 {team.teamName}
                                 <span className="flex items-center gap-0.5 text-[0.6rem] text-base-content/60">
-                                  {teamBadges(team, bw).map((code) => (
+                                  {teamBadges(team, bw, isMegalabowl).map((code) => (
                                     <span
                                       key={code}
                                       title={
-                                        STANDINGS_GLOSSARY.find((g) => g.code === code)
+                                        standingsGlossary.find((g) => g.code === code)
                                           ?.description ?? ''
                                       }
                                     >
@@ -601,7 +617,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                 <div className="card-body p-4 space-y-1">
                   <h3 className="card-title text-sm">Standings Glossary</h3>
                   <ul className="text-sm leading-snug space-y-1">
-                    {STANDINGS_GLOSSARY.map((entry) => (
+                    {standingsGlossary.map((entry) => (
                       <li key={entry.code}>
                         <span className="font-semibold">{entry.code}</span> - {entry.description}
                       </li>
@@ -609,6 +625,44 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                   </ul>
                 </div>
               </div>
+              {isMegalabowl && insights && megalabowlPlayoffOdds.length > 0 && (
+                <div
+                  className="card bg-base-200 mt-4"
+                  data-testid="megalabowl-playoff-odds"
+                  aria-label="Megalabowl playoff odds"
+                >
+                  <div className="card-body p-4 space-y-2">
+                    <h3 className="card-title text-sm">Megalabowl Playoff Odds (Projected)</h3>
+                    <p className="text-xs text-base-content/60">
+                      Best/worst scoring rank among the current top {MEGALABOWL_PLAYOFF_FIELD_SIZE}{' '}
+                      seeds, based on each team&apos;s season scoring average +/-35%. Megalabowl
+                      playoff advancement (weeks 15-17) is score-only across every league&apos;s
+                      6-seeds pooled together, so this is an in-league estimate only - it does not
+                      yet account for the other leagues in that pool.
+                    </p>
+                    <table className="table table-sm w-full">
+                      <thead>
+                        <tr>
+                          <th>Seed</th>
+                          <th>Team</th>
+                          <th>Avg PF/Week</th>
+                          <th>Odds Range</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {megalabowlPlayoffOdds.map((entry) => (
+                          <tr key={entry.sleeperRosterId}>
+                            <td>{entry.seed}</td>
+                            <td>{entry.teamName}</td>
+                            <td>{entry.avgPointsPerGame.toFixed(2)}</td>
+                            <td>{entry.label}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

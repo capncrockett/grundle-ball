@@ -5,6 +5,7 @@ import * as sleeperApi from '../api/sleeper';
 import * as matchupHistory from '../data/matchupHistory';
 import type { StoredMatchup } from '../data/matchupHistoryTypes';
 import { MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
+import { MEGALABOWL_LEAGUE_ID } from '../config/league';
 
 describe('StandingsPage', () => {
   let leagueSpy: jest.SpyInstance;
@@ -321,6 +322,46 @@ describe('StandingsPage', () => {
     expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'D1' })).not.toBeInTheDocument();
     expect(within(preseason).getByText(/Big Ol' TDs/i)).toBeInTheDocument();
+  });
+
+  it('does not show the Megalabowl playoff odds card for the main league', async () => {
+    render(<StandingsPage />);
+
+    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('megalabowl-playoff-odds')).not.toBeInTheDocument();
+  });
+
+  it('shows the Megalabowl playoff odds card, ranking only the top 6 seeds, for the Megalabowl leagueId', async () => {
+    render(<StandingsPage leagueId={MEGALABOWL_LEAGUE_ID} />);
+
+    const card = await screen.findByTestId('megalabowl-playoff-odds');
+    expect(within(card).getByText(/Megalabowl Playoff Odds/i)).toBeInTheDocument();
+
+    const rows = within(card).getAllByRole('row');
+    // header row + one row per top-6 seed
+    expect(rows.length).toBe(7);
+    expect(within(card).getByText("Big Ol' TDs")).toBeInTheDocument();
+    expect(within(card).queryByText('Team Nine')).not.toBeInTheDocument();
+  });
+
+  it('swaps in the Megalabowl-specific glossary and suppresses division/bye badges for the Megalabowl leagueId', async () => {
+    render(<StandingsPage leagueId={MEGALABOWL_LEAGUE_ID} />);
+
+    const rows = await screen.findAllByRole('row');
+    const row = rows.find((candidate) => within(candidate).queryByText(/Big Ol' TDs/i));
+    expect(row).toBeDefined();
+    if (row instanceof HTMLElement) {
+      // Megalabowl has no divisions or bracket bye, so these main-league
+      // badges/tooltips must not appear even for the No. 1 seed.
+      expect(within(row).queryByTitle(/Clinched Division/i)).not.toBeInTheDocument();
+      expect(within(row).queryByTitle(/Clinched First-Round Bye/i)).not.toBeInTheDocument();
+      expect(within(row).queryByTitle(/Clinched No\. 1 Overall Seed/i)).not.toBeInTheDocument();
+    }
+
+    expect(screen.queryByText(/Clinched Division/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Clinched First-Round Bye/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Megalabowl playoff pool/i)).toBeInTheDocument();
+    expect(screen.getByText(/6th and final Megalabowl playoff seed/i)).toBeInTheDocument();
   });
 
   it('shows a waiting message instead of a division-data warning during early weeks', async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { getLeagueRosters, getLeagueUsers } from '../api/sleeper';
+import { getLeagueRosters, getLeagueUsers, getNFLState } from '../api/sleeper';
 import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
 import { applyGameOutcomesToBracket } from '../bracket/state';
 import type { Team } from '../models/fantasy';
@@ -169,7 +169,11 @@ function PlayoffsIfTodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [mode, setMode] = useState<BracketMode>('score');
-  const narratives = useMemo(() => buildPlayoffNarratives(teams), [teams]);
+  const [currentWeek, setCurrentWeek] = useState<number | null>(null);
+  const narratives = useMemo(
+    () => (currentWeek == null ? null : buildPlayoffNarratives(teams, currentWeek)),
+    [teams, currentWeek],
+  );
 
   useEffect(() => {
     async function load() {
@@ -177,10 +181,12 @@ function PlayoffsIfTodayPage() {
         setIsLoading(true);
         setError(null);
 
-        const [users, rosters] = await Promise.all([
+        const [users, rosters, nflState] = await Promise.all([
           getLeagueUsers(LEAGUE_ID),
           getLeagueRosters(LEAGUE_ID),
+          getNFLState(),
         ]);
+        setCurrentWeek(nflState.week);
 
         const merged = mergeRostersAndUsersToTeams(rosters, users);
         const withSeeds = computeSeeds(merged);
