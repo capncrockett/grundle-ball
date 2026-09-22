@@ -21,6 +21,16 @@ import {
   MEGALABOWL_PLAYOFF_FIELD_SIZE,
 } from './megalabowlPlayoffOdds';
 
+// Duplicated from App.tsx's __DRAFT_INTEL_BUILD__ check rather than
+// imported: Vite's define only literal-folds this expression (and lets
+// Rollup dead-code-eliminate everything downstream of it) when it appears
+// directly in the file that uses it. Importing a shared constant from
+// another module defeated that folding in testing - Draft Intel's own
+// lazy-loaded chunk stopped being eliminated - so this is intentionally
+// copy-pasted, not refactored away.
+const MEGALABOWL_BUILD_ENABLED =
+  typeof __DRAFT_INTEL_BUILD__ === 'undefined' || __DRAFT_INTEL_BUILD__;
+
 const InsightChip = ({
   label,
   value,
@@ -277,7 +287,11 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
   }, [latestCompletedWeek, storedMatchups]);
 
   const insights = computeStandingsInsights(teams);
-  const isMegalabowl = leagueId === MEGALABOWL_LEAGUE_ID;
+  // Gated on the same build-time constant as the Megalabowl route/nav, not
+  // just the leagueId check below - StandingsPage is also the public
+  // /standings route, so without this, Megalabowl-only copy and data ship
+  // in the production bundle even though its route stays hidden.
+  const isMegalabowl = MEGALABOWL_BUILD_ENABLED && leagueId === MEGALABOWL_LEAGUE_ID;
   const standingsGlossary = isMegalabowl ? MEGALABOWL_STANDINGS_GLOSSARY : STANDINGS_GLOSSARY;
   const megalabowlPlayoffOdds = useMemo(
     () => (isMegalabowl ? computeMegalabowlPlayoffOdds(teams) : []),
