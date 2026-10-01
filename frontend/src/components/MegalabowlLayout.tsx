@@ -2,16 +2,15 @@
 //
 // Wraps the Megalabowl mirror: a staging-only view of a separate, linked
 // Sleeper league (a Fantasy Footballers listener super-league), reusing the
-// Grundle League's own Standings/Matchups/Playoffs pages against a second
-// league id. Restricted to localhost and the protected staging deployment
-// via the same gate as Draft Intel; see frontend/src/draftIntelAccess.ts.
+// Grundle League's own Standings/Playoffs pages against a second league id.
+// Restricted to localhost and the protected staging deployment via the same
+// gate as Draft Intel; see frontend/src/draftIntelAccess.ts.
 
 import type { FC, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const TABS = [
   { to: '/local/megalabowl/standings', label: 'Standings' },
-  { to: '/local/megalabowl/matchups', label: 'Matchups' },
   { to: '/local/megalabowl/playoffs', label: 'Playoffs' },
 ];
 

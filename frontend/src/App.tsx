@@ -227,14 +227,6 @@ export default function App() {
                 }
               />
               <Route
-                path="/local/megalabowl/matchups"
-                element={
-                  <MegalabowlLayout>
-                    <MatchupsPage leagueId={MEGALABOWL_LEAGUE_ID} />
-                  </MegalabowlLayout>
-                }
-              />
-              <Route
                 path="/local/megalabowl/playoffs"
                 element={
                   <MegalabowlLayout>

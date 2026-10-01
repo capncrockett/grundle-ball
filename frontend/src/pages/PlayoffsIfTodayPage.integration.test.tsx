@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import PlayoffsIfTodayPage from './PlayoffsIfTodayPage';
 import { errorHandlers } from '../test/mocks/handlers';
 import { server } from '../test/server';
+import { mockNFLState } from '../test/fixtures/sleeper';
 
 describe('PlayoffsIfTodayPage', () => {
   it('renders bracket preview and toggles modes', async () => {
@@ -30,6 +32,25 @@ describe('PlayoffsIfTodayPage', () => {
     fireEvent.change(teamSelect, { target: { value: '1' } });
 
     expect(await screen.findByText(/Head-to-head/i)).toBeInTheDocument();
+  });
+
+  it('hides the narratives before week 2 has fully wrapped', async () => {
+    server.use(
+      http.get('https://api.sleeper.app/v1/state/nfl', () =>
+        HttpResponse.json({ ...mockNFLState, week: 2 }),
+      ),
+    );
+
+    render(<PlayoffsIfTodayPage />);
+
+    expect(
+      await screen.findByRole('heading', { name: /if the season ended today/i }),
+    ).toBeInTheDocument();
+    // Bracket itself still renders; only the narrative call-outs are gated.
+    expect(await screen.findByRole('combobox')).toBeInTheDocument();
+    expect(screen.queryByText(/Bubble Watch/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Bye Chase/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Division Races/i)).not.toBeInTheDocument();
   });
 
   it('surfaces API errors', async () => {
