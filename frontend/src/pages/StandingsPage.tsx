@@ -495,7 +495,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                   detail={`${insights.lowestAvgPaDivision?.divisionName ?? 'Division unknown'} is seeing only ${insights.lowestAvgPaDivision?.avgPaPerGame.toFixed(1) ?? '-'} PA per week.`}
                 />
               </div>
-              <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[60vh] mb-6 border border-base-300 rounded-lg">
+              <div className="overflow-auto overscroll-x-contain touch-pan-x touch-pan-y max-h-[60vh] mb-6 border border-base-300 rounded-lg">
                 <table className="table table-compact w-full">
                   <thead className="sticky top-0 z-10 bg-base-200">
                     <tr>
@@ -537,7 +537,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
           ) : null}
           {hasStandingsData && (
             <>
-              <div className="overflow-auto overscroll-x-contain touch-pan-y max-h-[70vh]">
+              <div className="overflow-auto overscroll-x-contain touch-pan-x touch-pan-y max-h-[70vh]">
                 <table className="table table-zebra w-full">
                   <thead className="sticky top-0 z-10 bg-base-200">
                     <tr>
