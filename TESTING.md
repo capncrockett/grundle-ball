@@ -45,7 +45,7 @@ npm run typecheck
 npm run build -w frontend
 ```
 
-The shared runner stops on the first failed command and exits nonzero. It does not rewrite formatting, install dependencies, or refresh history. See the [agent workflow](docs/agent-workflow.md) for the task-to-test map and exact command scopes.
+The shared runner stops on the first failed command and exits nonzero. It does not rewrite formatting, install dependencies, or refresh history. Verification and the npm Playwright scripts reject overlapping independent runs in the same checkout before starting work; nested browser tests inherit the verification runner's ownership. The local browser build is covered by the same guard. See the [agent workflow](docs/agent-workflow.md) for the task-to-test map, command scopes, and stale-lock recovery behavior.
 
 ### Playwright against local development
 

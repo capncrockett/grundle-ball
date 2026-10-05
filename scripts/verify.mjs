@@ -1,6 +1,7 @@
-import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { acquireVerification } from './verification-lock.mjs';
+import { runCommand } from './run-command.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
@@ -33,20 +34,17 @@ export function verificationPlan(args) {
   return checks;
 }
 
-function executeCheck(args) {
+function executeCheck(args, lease) {
   // npm supplies its CLI path on every supported platform. Avoid cmd.exe/shell quoting.
   if (!process.env.npm_execpath) throw new Error('Run this command through npm run verify.');
-  return spawnSync(process.execPath, [process.env.npm_execpath, ...args], {
-    cwd: root,
-    stdio: 'inherit',
-  });
+  return runCommand(process.execPath, [process.env.npm_execpath, ...args], { cwd: root, lease });
 }
 
-export function runChecks(checks, execute = executeCheck, log = console.log) {
+export async function runChecks(checks, execute, log = console.log) {
   const started = Date.now();
   for (const [index, [name, args]] of checks.entries()) {
     log(`\n[${index + 1}/${checks.length}] ${name}: npm ${args.join(' ')}`);
-    const result = execute(args);
+    const result = await execute(args);
     if (result.error || result.status !== 0) {
       log(
         `\nFAILED: ${name}${result.error ? ` (${result.error.message})` : ''}. Later checks were not run.`,
@@ -65,7 +63,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (args.includes('--list')) {
       for (const [name, command] of plan) console.log(`${name}: npm ${command.join(' ')}`);
     } else {
-      process.exitCode = runChecks(plan);
+      const lease = acquireVerification(root, `npm run verify ${args.join(' ')}`.trim());
+      try {
+        process.exitCode = await runChecks(plan, (command) => executeCheck(command, lease));
+      } finally {
+        lease.release();
+      }
     }
   } catch (error) {
     console.error(error.message);

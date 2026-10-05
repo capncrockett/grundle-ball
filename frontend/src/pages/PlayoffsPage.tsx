@@ -8,20 +8,32 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   getLeague,
+  getNFLState,
   getLeagueRosters,
   getLeagueUsers,
   getLosersBracket,
   getWinnersBracket,
 } from '../api/sleeper';
 import type { SleeperLeague } from '../api/sleeper';
-import { mergeRostersAndUsersToTeams } from '../utils/sleeperTransforms';
+import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
 import { resolveBracketMatchups } from '../sleeperBracket/resolveBracket';
 import type { ResolvedBracketMatchup } from '../sleeperBracket/types';
 import { SleeperBracketBoard } from '../components/sleeperBracket/SleeperBracketBoard';
 import type { Team } from '../models/fantasy';
+import {
+  buildIfTodayBracket,
+  buildIfTodayToiletBowl,
+  seasonAverage,
+} from '../sleeperBracket/ifToday';
+import { PlayoffRacePanels } from '../components/PlayoffRacePanels';
+import { buildPlayoffNarratives } from './narratives';
 import { LEAGUE_ID } from '../config/league';
 
 export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
+  const [view, setView] = useState<'live' | 'if-today'>('live');
+  const [currentWeek, setCurrentWeek] = useState<number | null>(null);
+  const [previewWarning, setPreviewWarning] = useState<string | null>(null);
+  const [bracketError, setBracketError] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
   const [winners, setWinners] = useState<ResolvedBracketMatchup[]>([]);
@@ -30,33 +42,51 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         setIsLoading(true);
         setError(null);
+        setBracketError(null);
+        setPreviewWarning(null);
+        setCurrentWeek(null);
 
-        const [leagueData, users, rosters, winnersBracket, losersBracket] = await Promise.all([
+        const [leagueData, users, rosters, brackets, nflState] = await Promise.all([
           getLeague(leagueId),
           getLeagueUsers(leagueId),
           getLeagueRosters(leagueId),
-          getWinnersBracket(leagueId),
-          getLosersBracket(leagueId),
+          Promise.all([getWinnersBracket(leagueId), getLosersBracket(leagueId)])
+            .then((data) => ({ data, error: null }))
+            .catch(() => ({ data: [[], []], error: 'Sleeper bracket data is unavailable.' })),
+          getNFLState().catch(() => null),
         ]);
-
+        if (cancelled) return;
+        setBracketError(brackets.error);
+        setCurrentWeek(nflState?.season === leagueData.season ? nflState.week : null);
+        if (!nflState || nflState.season !== leagueData.season) {
+          setPreviewWarning(
+            'Race updates are unavailable for this season. The standings preview is still available.',
+          );
+        }
+        const [winnersBracket, losersBracket] = brackets.data;
         const merged = mergeRostersAndUsersToTeams(rosters, users, leagueData);
         setLeague(leagueData);
         setTeams(merged);
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, [leagueId]);
 
   const teamsById = useMemo(() => {
@@ -82,16 +112,126 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
     typeof league?.settings.playoff_teams === 'number' ? league.settings.playoff_teams : 6;
   const totalRosters = league?.total_rosters ?? teams.length;
 
+  const seededTeams = useMemo(() => computeSeeds(teams), [teams]);
+  const preview = useMemo(() => buildIfTodayBracket(seededTeams), [seededTeams]);
+  const toiletPreview = useMemo(() => buildIfTodayToiletBowl(seededTeams), [seededTeams]);
+  const lastPlaceRosterId = toiletPreview.find((game) => game.placement === 11)?.loserRosterId;
+  const lastPlaceTeam = seededTeams.find((team) => team.sleeperRosterId === lastPlaceRosterId);
+  const previewTeams = useMemo(
+    () => new Map(seededTeams.map((team) => [team.sleeperRosterId, team])),
+    [seededTeams],
+  );
+  const averages = useMemo(
+    () => new Map(seededTeams.map((team) => [team.sleeperRosterId, seasonAverage(team)])),
+    [seededTeams],
+  );
+  const narratives = useMemo(
+    () =>
+      currentWeek == null || !hasCompletedGame
+        ? null
+        : buildPlayoffNarratives(seededTeams, currentWeek),
+    [seededTeams, currentWeek, hasCompletedGame],
+  );
+  const supportsPreview = leagueId === LEAGUE_ID && playoffTeams === 6;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Playoffs</h1>
         <p className="text-sm text-base-content/60">
           {league ? `${league.season} official bracket` : 'The official bracket'}, mirrored directly
-          from Sleeper &mdash; no house rules.
+          from Sleeper. Use If Today to preview the current playoff race.
         </p>
       </div>
 
+      {supportsPreview && (
+        <div className="join" aria-label="Playoff view">
+          <button
+            className={`btn join-item ${view === 'live' ? 'btn-primary' : ''}`}
+            aria-pressed={view === 'live'}
+            onClick={() => {
+              setView('live');
+            }}
+          >
+            Live Playoffs
+          </button>
+          <button
+            className={`btn join-item ${view === 'if-today' ? 'btn-primary' : ''}`}
+            aria-pressed={view === 'if-today'}
+            onClick={() => {
+              setView('if-today');
+            }}
+          >
+            If Today
+          </button>
+        </div>
+      )}
+      {!isLoading && !error && view === 'if-today' && supportsPreview && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-xl font-bold">If the Season Ended Today</h2>
+            <p className="text-sm text-base-content/70">
+              Current league seeds, with every Championship and Toilet Bowl game projected using
+              season-long average points per week. Equal averages favor the better seed. This is a
+              hypothetical preview, not Sleeper results.
+            </p>
+          </div>
+          {previewWarning && <div className="alert alert-warning">{previewWarning}</div>}
+          {!hasCompletedGame ? (
+            <div className="alert">
+              The preview will be available once regular-season games have been played.
+            </div>
+          ) : preview.length === 0 ? (
+            <div className="alert">Not enough teams to seed the six-team playoff preview.</div>
+          ) : (
+            <>
+              <PlayoffRacePanels narratives={narratives} />
+              <SleeperBracketBoard
+                title="Projected Championship Bracket"
+                subtitle="Seeds 1-6 - projected weekly averages"
+                matchups={preview}
+                teamsById={previewTeams}
+                projectedScores={averages}
+                weekStart={playoffWeekStart}
+              />
+              {toiletPreview.length > 0 ? (
+                <div className="space-y-4 pt-6">
+                  <div
+                    className="alert border border-warning/60 bg-warning/10"
+                    data-testid="projected-last-place"
+                  >
+                    <div>
+                      <h3 className="font-bold">
+                        Projected King (Last Place): {lastPlaceTeam?.teamName}
+                      </h3>
+                      <p className="text-sm">
+                        The loser advances toward last place; the final loser finishes 12th and
+                        receives pick 1.01. Based on season averages, not a confirmed finish.
+                      </p>
+                    </div>
+                  </div>
+                  <SleeperBracketBoard
+                    title="Projected Toilet Bowl"
+                    subtitle="Seeds 7-12 - losers advance; seeds 11 and 12 receive byes"
+                    matchups={toiletPreview}
+                    teamsById={previewTeams}
+                    projectedScores={averages}
+                    weekStart={playoffWeekStart}
+                    advance="loser"
+                  />
+                </div>
+              ) : (
+                <div className="alert">
+                  Not enough teams to seed the six-team Toilet Bowl preview.
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+      {view === 'live' && !isLoading && !error && bracketError && (
+        <div className="alert alert-error">Failed to load the playoff bracket: {bracketError}</div>
+      )}
       {isLoading && (
         <div className="flex justify-center py-10">
           <span className="loading loading-spinner loading-lg" />
@@ -104,7 +244,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         </div>
       )}
 
-      {!isLoading && !error && !hasBracket && (
+      {view === 'live' && !isLoading && !error && !bracketError && !hasBracket && (
         <div className="alert" data-testid="playoffs-not-started">
           <span>
             Playoffs haven&apos;t been seeded yet. Sleeper is configured to begin the bracket in
@@ -117,7 +257,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         </div>
       )}
 
-      {!isLoading && !error && isProvisional && (
+      {view === 'live' && !isLoading && !error && !bracketError && isProvisional && (
         <div className="alert alert-info" data-testid="playoffs-provisional">
           <span>
             Sleeper has published the {league?.season ?? 'current'} bracket structure, but these
@@ -126,7 +266,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         </div>
       )}
 
-      {!isLoading && !error && hasBracket && (
+      {view === 'live' && !isLoading && !error && !bracketError && hasBracket && (
         <div className="space-y-10">
           {winners.length > 0 && (
             <SleeperBracketBoard

@@ -31,3 +31,6 @@ playwright-report/
 .vercel
 .env*.local
 .env
+
+# Shared verification ownership
+.verification-lock/
