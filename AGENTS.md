@@ -9,6 +9,7 @@ Grundle Ball is a companion dashboard. Keep improvements within the user's reque
 1. Check `git status --short --branch` and preserve unrelated work. Run `npm run doctor` to diagnose local prerequisites without changing the checkout.
 2. Read the relevant directory entry point: [frontend/AGENTS.md](frontend/AGENTS.md) or [backend/AGENTS.md](backend/AGENTS.md). The [task map](docs/agent-workflow.md#task-map) connects each feature to its implementation and tests.
 3. Use focused tests while iterating. `npm run verify:quick` runs static/tooling checks; `npm run verify` adds all unit/integration tests and the production build. `npm run verify -- --e2e` includes the browser gate.
+   Verification and the frontend npm Playwright scripts share an executable ownership guard. Use those entry points, wait for the owning run to finish, and never bypass a rejection by deleting its active lock or invoking Playwright directly. See the workflow for interruption and stale-lock recovery.
 4. Hand off the actual diff and completed verification. Commit only when asked, as specified below.
 
 See [the development workflow](docs/agent-workflow.md) for command behavior, fixture use, browser prerequisites, and release handoffs.
