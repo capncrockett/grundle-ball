@@ -18,6 +18,7 @@ interface SleeperBracketBoardProps {
   placementOffset?: number;
   placementOrder?: 'forward' | 'reverse';
   weekStart?: number;
+  advance?: 'winner' | 'loser';
 }
 
 type DisplaySide = BracketSide | { kind: 'bye' };
@@ -89,7 +90,11 @@ function matchupCard(matchup: ResolvedBracketMatchup): DisplayCard {
   };
 }
 
-function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number): BoardLayout {
+function buildBoardLayout(
+  matchups: ResolvedBracketMatchup[],
+  weekStart?: number,
+  advance: 'winner' | 'loser' = 'winner',
+): BoardLayout {
   const rounds = groupMatchupsByRound(matchups);
   const firstRound = rounds.at(0);
   const secondRound = rounds.at(1);
@@ -104,7 +109,9 @@ function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number
     (matchup) => matchup.placement != null,
   );
   const finalGames = [...(finalRound?.matchups ?? [])].sort(
-    (a, b) => (a.placement ?? Number.MAX_SAFE_INTEGER) - (b.placement ?? Number.MAX_SAFE_INTEGER),
+    (a, b) =>
+      ((a.placement ?? Number.MAX_SAFE_INTEGER) - (b.placement ?? Number.MAX_SAFE_INTEGER)) *
+      (advance === 'loser' ? -1 : 1),
   );
   const championshipGame = finalGames.at(0);
   const secondaryFinal = finalGames.at(1);
@@ -183,7 +190,7 @@ function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number
         })),
       },
       {
-        title: 'Finals',
+        title: advance === 'loser' ? 'Last Place' : 'Finals',
         subtitle: weekLabel(finalRound?.round, 3),
         itemsContainerClassName: 'justify-between',
         items: [
@@ -299,8 +306,12 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
   placementOrder = 'forward',
   weekStart,
   projectedScores,
+  advance = 'winner',
 }) => {
-  const layout = useMemo(() => buildBoardLayout(matchups, weekStart), [matchups, weekStart]);
+  const layout = useMemo(
+    () => buildBoardLayout(matchups, weekStart, advance),
+    [matchups, weekStart, advance],
+  );
   const placementCount = useMemo(() => {
     const highestPlacement = Math.max(0, ...matchups.map((matchup) => matchup.placement ?? 0));
     return highestPlacement === 0 ? 0 : highestPlacement + 1;

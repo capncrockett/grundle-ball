@@ -9,15 +9,33 @@ type NarrativeAccordionProps = {
 
 function NarrativeAccordion({ title, subtitle, children }: NarrativeAccordionProps) {
   return (
-    <details className="bg-base-200 border border-base-300 rounded-lg shadow-sm">
-      <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none">
+    <details className="group bg-base-100 border-2 border-base-content/30 rounded-lg shadow-md transition-colors hover:border-primary/70 open:border-primary/70">
+      <summary className="flex items-center justify-between gap-3 rounded-lg px-4 py-3 cursor-pointer select-none hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-semibold leading-snug">{title}</span>
           {subtitle && (
             <span className="text-xs text-base-content/70 leading-tight">{subtitle}</span>
           )}
         </div>
-        <span className="text-[0.65rem] uppercase tracking-wide text-base-content/60">Expand</span>
+        <span className="flex shrink-0 items-center gap-2 text-primary">
+          <span className="hidden md:inline text-[0.65rem] font-semibold uppercase tracking-wide md:group-open:hidden">
+            Expand
+          </span>
+          <span className="hidden md:group-open:inline text-[0.65rem] font-semibold uppercase tracking-wide">
+            Collapse
+          </span>
+          <svg
+            data-testid="race-chevron"
+            className="h-5 w-5 transition-transform group-open:rotate-180"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </summary>
       <div className="px-4 pb-4 text-sm leading-snug space-y-2">{children}</div>
     </details>
@@ -27,7 +45,7 @@ function NarrativeAccordion({ title, subtitle, children }: NarrativeAccordionPro
 export function PlayoffRacePanels({ narratives }: { narratives: PlayoffNarratives | null }) {
   if (!narratives) return null;
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
+    <div className="grid items-start gap-3 lg:grid-cols-3">
       {narratives.bubble && (
         <NarrativeAccordion title={narratives.bubble.heading}>
           <p className="text-base-content/90">{narratives.bubble.summary}</p>

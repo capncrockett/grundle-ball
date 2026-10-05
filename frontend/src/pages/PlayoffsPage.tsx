@@ -20,7 +20,11 @@ import { resolveBracketMatchups } from '../sleeperBracket/resolveBracket';
 import type { ResolvedBracketMatchup } from '../sleeperBracket/types';
 import { SleeperBracketBoard } from '../components/sleeperBracket/SleeperBracketBoard';
 import type { Team } from '../models/fantasy';
-import { buildIfTodayBracket, seasonAverage } from '../sleeperBracket/ifToday';
+import {
+  buildIfTodayBracket,
+  buildIfTodayToiletBowl,
+  seasonAverage,
+} from '../sleeperBracket/ifToday';
 import { PlayoffRacePanels } from '../components/PlayoffRacePanels';
 import { buildPlayoffNarratives } from './narratives';
 import { LEAGUE_ID } from '../config/league';
@@ -110,6 +114,9 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
 
   const seededTeams = useMemo(() => computeSeeds(teams), [teams]);
   const preview = useMemo(() => buildIfTodayBracket(seededTeams), [seededTeams]);
+  const toiletPreview = useMemo(() => buildIfTodayToiletBowl(seededTeams), [seededTeams]);
+  const lastPlaceRosterId = toiletPreview.find((game) => game.placement === 11)?.loserRosterId;
+  const lastPlaceTeam = seededTeams.find((team) => team.sleeperRosterId === lastPlaceRosterId);
   const previewTeams = useMemo(
     () => new Map(seededTeams.map((team) => [team.sleeperRosterId, team])),
     [seededTeams],
@@ -164,9 +171,9 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
           <div>
             <h2 className="text-xl font-bold">If the Season Ended Today</h2>
             <p className="text-sm text-base-content/70">
-              Current league seeds, with every championship game projected using season-long average
-              points per week. Equal averages favor the better seed. This is a hypothetical preview,
-              not Sleeper results.
+              Current league seeds, with every Championship and Toilet Bowl game projected using
+              season-long average points per week. Equal averages favor the better seed. This is a
+              hypothetical preview, not Sleeper results.
             </p>
           </div>
           {previewWarning && <div className="alert alert-warning">{previewWarning}</div>}
@@ -187,23 +194,37 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
                 projectedScores={averages}
                 weekStart={playoffWeekStart}
               />
-              <div className="card bg-base-200">
-                <div className="card-body">
-                  <h3 className="card-title">Outside the Playoffs</h3>
-                  <ul>
-                    {seededTeams
-                      .filter((team) => (team.seed ?? 0) > 6)
-                      .map((team) => (
-                        <li key={team.sleeperRosterId}>
-                          {team.seed}. {team.teamName}
-                        </li>
-                      ))}
-                  </ul>
-                  <p className="text-sm text-base-content/70">
-                    See Live Playoffs for Sleeper's official consolation bracket.
-                  </p>
+              {toiletPreview.length > 0 ? (
+                <div className="space-y-4 pt-6">
+                  <div
+                    className="alert border border-warning/60 bg-warning/10"
+                    data-testid="projected-last-place"
+                  >
+                    <div>
+                      <h3 className="font-bold">
+                        Projected King (Last Place): {lastPlaceTeam?.teamName}
+                      </h3>
+                      <p className="text-sm">
+                        The loser advances toward last place; the final loser finishes 12th and
+                        receives pick 1.01. Based on season averages, not a confirmed finish.
+                      </p>
+                    </div>
+                  </div>
+                  <SleeperBracketBoard
+                    title="Projected Toilet Bowl"
+                    subtitle="Seeds 7-12 - losers advance; seeds 11 and 12 receive byes"
+                    matchups={toiletPreview}
+                    teamsById={previewTeams}
+                    projectedScores={averages}
+                    weekStart={playoffWeekStart}
+                    advance="loser"
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="alert">
+                  Not enough teams to seed the six-team Toilet Bowl preview.
+                </div>
+              )}
             </>
           )}
         </div>

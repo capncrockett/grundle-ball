@@ -53,6 +53,13 @@ describe('PlayoffsPage', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Consolation Bracket' })).not.toBeInTheDocument();
     expect(screen.queryByText(/^TBD$/)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Projected Toilet Bowl' })).toBeInTheDocument();
+    expect(screen.getByTestId('projected-last-place')).toHaveTextContent(
+      'Projected King (Last Place):',
+    );
+    expect(screen.getByText(/Decides 11th \/ 12th/)).toBeInTheDocument();
+    expect(screen.getByText(/Decides 7th \/ 8th/)).toBeInTheDocument();
+    expect(screen.queryByText('Outside the Playoffs')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Live Playoffs' }));
     expect(screen.getByRole('heading', { name: 'Consolation Bracket' })).toBeInTheDocument();
     expect(screen.getAllByText(/^TBD$/).length).toBeGreaterThan(0);

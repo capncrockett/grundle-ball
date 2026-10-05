@@ -118,7 +118,7 @@ frontend/
 
 - `/` redirects to `/standings`.
 - `/standings` shows ranked teams, league-specific seeds, division summaries, and playoff-race insights.
-- `/playoffs` shows Sleeper's official winners and consolation brackets, plus an If Today championship preview with Bubble Watch, Bye Chase, and Division Races for Grundle League.
+- `/playoffs` shows Sleeper's official winners and consolation brackets, plus If Today Championship and Toilet Bowl previews with Bubble Watch, Bye Chase, and Division Races for Grundle League.
 - `/matchups` shows a selectable week of scores and finished-starter counts.
 - `/history` shows canonical annual draftboards and Team-specific keeper history.
 - `/local/draft-intel` provides completed-draft patterns, Keeper-Adjusted ADP, mock observations, and an IDP plan. Vite includes it for local development and approved staging builds; runtime access requires localhost or the exact protected staging hostname.
@@ -162,7 +162,7 @@ Projected totals and win probability are not currently part of `LiveMatchData`. 
 3. `resolveBracketMatchups()` resolves direct participants, winner/loser placeholders, results, and placement metadata.
 4. `SleeperBracketBoard` uses the Beta boards' proven three-column sizing, vertical distribution, card geometry, and responsive SVG winner connectors while leaving Sleeper's matchup graph untouched. Loser-fed placement games remain explicit without adding crossing connector clutter.
 
-The If Today switch uses current league-specific seeds and season weekly scoring averages in `sleeperBracket/ifToday.ts`, independently of published bracket results. Seeds 1-2 receive byes; round one pairs 3 vs 6 and 4 vs 5. Equal averages favor the better seed. Race panels share the Beta renderer and week-three gate; previews require completed games. NFL state failures suppress race updates without blocking bracket views. Other league mirrors retain their official view.
+The If Today switch uses current league-specific seeds and season weekly scoring averages in `sleeperBracket/ifToday.ts`, independently of published bracket results. Seeds 1-2 receive byes; round one pairs 3 vs 6 and 4 vs 5. The Toilet Bowl includes seeds 7-12, byes for 11-12, and loser-fed paths toward 12th place, with the projected last-place team called out. Equal averages favor the better seed. Race panels share the Beta renderer and week-three gate; previews require completed games. NFL state failures suppress race updates without blocking bracket views. Other league mirrors retain their official view.
 
 Do not feed official bracket data through the custom `bracket/` routing engine.
 

@@ -21,6 +21,29 @@ export function buildIfTodayBracket(teams: Team[]) {
     { r: 3, m: 6, t1_from: { w: 3 }, t2_from: { w: 4 }, p: 1 },
     { r: 3, m: 7, t1_from: { l: 3 }, t2_from: { l: 4 }, p: 3 },
   ];
+  return projectGames(games, teams);
+}
+
+/** Constitution section 11: losers advance; seeds 11-12 receive byes. */
+export function buildIfTodayToiletBowl(teams: Team[]) {
+  const bySeed = new Map(teams.map((team) => [team.seed, team]));
+  if ([7, 8, 9, 10, 11, 12].some((seed) => !bySeed.has(seed))) return [];
+  const roster = (seed: number) => bySeed.get(seed)?.sleeperRosterId;
+  return projectGames(
+    [
+      { r: 1, m: 1, t1: roster(8), t2: roster(9) },
+      { r: 1, m: 2, t1: roster(7), t2: roster(10) },
+      { r: 2, m: 3, t1: roster(12), t2_from: { l: 1 } },
+      { r: 2, m: 4, t1: roster(11), t2_from: { l: 2 } },
+      { r: 2, m: 5, t1_from: { w: 1 }, t2_from: { w: 2 }, p: 7 },
+      { r: 3, m: 6, t1_from: { l: 3 }, t2_from: { l: 4 }, p: 11 },
+      { r: 3, m: 7, t1_from: { w: 3 }, t2_from: { w: 4 }, p: 9 },
+    ],
+    teams,
+  );
+}
+
+function projectGames(games: SleeperPlayoffMatchup[], teams: Team[]) {
   const byRoster = new Map(teams.map((team) => [team.sleeperRosterId, team]));
   for (const game of games) {
     const source = (from: { w?: number; l?: number } | null | undefined) => {

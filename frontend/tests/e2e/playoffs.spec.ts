@@ -9,7 +9,9 @@ import {
 import { LEAGUE_ID } from '../../src/config/league';
 
 test.describe('Playoffs bracket layout', () => {
-  test('team avatar stays fully inside its bracket card', async ({ page }) => {
+  test('preview race controls and Toilet Bowl fit, and live avatars stay inside cards', async ({
+    page,
+  }, testInfo) => {
     // The bare league route is anchored with a regex (path ends right after
     // the league id, optional query string only) so it can never also match
     // the /users, /rosters, /winners_bracket, /losers_bracket sub-paths,
@@ -65,12 +67,34 @@ test.describe('Playoffs bracket layout', () => {
       const panel = page
         .locator('details')
         .filter({ has: page.locator('summary', { hasText: title }) });
-      await panel.locator('summary').click();
+      const summary = panel.locator('summary');
+      await expect(summary.getByTestId('race-chevron')).toBeVisible();
+      if (testInfo.project.name === 'iphone-12') {
+        await expect(summary.getByText('Expand', { exact: true })).toBeHidden();
+      } else {
+        await expect(summary.getByText('Expand', { exact: true })).toBeVisible();
+      }
+      await summary.click();
+      await expect(panel).toHaveAttribute('open', '');
+      if (testInfo.project.name !== 'iphone-12') {
+        await expect(summary.getByText('Collapse', { exact: true })).toBeVisible();
+        await expect(summary.getByText('Expand', { exact: true })).toBeHidden();
+      }
       await expect(panel.locator('ul').first()).toBeVisible();
     }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
+    await expect(
+      page.getByRole('heading', { name: 'Projected Toilet Bowl', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId('projected-last-place')).toContainText(
+      'Projected King (Last Place):',
+    );
+    const toilet = page.getByRole('region', { name: 'Projected Toilet Bowl', exact: true });
+    await expect(toilet.getByText('BYE', { exact: true })).toHaveCount(2);
+    await expect(toilet.getByText('Last Place', { exact: true })).toBeVisible();
+    await expect(toilet.getByText(/Decides 11th \/ 12th/)).toBeVisible();
     await page.getByRole('button', { name: 'Live Playoffs', exact: true }).click();
 
     // Roster 1 (user1, "Big Ol' TDs") has a round-1 bye in the winners bracket
