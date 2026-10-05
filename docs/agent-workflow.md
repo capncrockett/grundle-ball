@@ -38,6 +38,18 @@ Repository and documentation checks include untracked, non-ignored files and omi
 
 The non-browser suite uses local fixtures. Playwright includes live-service smoke checks as well as deterministic route fixtures; distinguish an upstream/network failure from a code regression. Run the browser gate for visible UI changes, routing, build boundaries, and release handoffs. For a tiny documentation-only edit, the focused docs/repository checks are sufficient during iteration.
 
+### macOS validation handoff
+
+Status: native macOS validation is pending. The guard has passed local Windows verification and Ubuntu CI. All supported operating systems use the same guarded npm entry points. The command runner uses Windows process-tree termination on Windows and POSIX process-group signals on macOS/Linux; Linux results do not establish native macOS behavior.
+
+The next agent on a Mac should validate the existing implementation before changing it:
+
+1. Record the macOS version, CPU architecture, Node version, date, and tested commit. Use Node 24, run `npm run doctor`, and install dependencies/browser binaries as described in [TESTING.md](../TESTING.md) if needed.
+2. Run `npm run test:tooling`, then `npm run verify -- --e2e`. The tooling suite covers concurrent acquisition, inherited ownership, stale recovery with surviving children, unreadable records, retained ownership, failures, and real POSIX interruption.
+3. While the full gate is active, use a second terminal to run `npm run verify:quick` and `npm run test:e2e:local -w frontend`. Both must exit nonzero before checks or builds and identify the owner. `npm run verify -- --list` must still succeed. Let the owning gate finish and confirm `.verification-lock/` is removed.
+4. Start a separate local browser run through `npm run test:e2e:local -w frontend`, interrupt it with Ctrl-C once Playwright and its server are active, and confirm nonzero exit, stopped owned npm/Vite/browser processes, and successful subsequent guarded execution. Inspect only this run's process tree; never delete active ownership to force another run. Report any surviving descendants even if the wrapper exits or the lock disappears.
+5. Replace this pending status with the recorded environment and actual results. If anything fails, preserve the error and process evidence here and fix the guard with regression coverage. Do not mark macOS validated based solely on Linux CI or code inspection.
+
 ## Task map
 
 All test paths below are relative to the frontend workspace. Run focused Jest tests as:
