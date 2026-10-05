@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import PlayoffsPage from './PlayoffsPage';
 import { renderWithRouter } from '../test/testUtils';
@@ -39,6 +39,67 @@ describe('PlayoffsPage', () => {
     expect(screen.getAllByTestId('sleeper-bracket-grid')).toHaveLength(2);
     expect(screen.getAllByText('Week 15')).toHaveLength(2);
     expect(screen.getAllByText('Finals')).toHaveLength(2);
+  });
+
+  it('switches to the current race and back without replacing official results', async () => {
+    renderWithRouter(<PlayoffsPage />);
+    await screen.findByRole('heading', { name: 'Championship Bracket' });
+    fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+    expect(await screen.findByText('Bubble Watch')).toBeInTheDocument();
+    expect(screen.getByText('Bye Chase')).toBeInTheDocument();
+    expect(screen.getByText('Division Races')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Consolation Bracket' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^TBD$/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Live Playoffs' }));
+    expect(screen.getByRole('heading', { name: 'Consolation Bracket' })).toBeInTheDocument();
+    expect(screen.getAllByText(/^TBD$/).length).toBeGreaterThan(0);
+  });
+
+  it('keeps the preview available when the published bracket fails', async () => {
+    server.use(
+      http.get(
+        `${SLEEPER_BASE}/league/:leagueId/winners_bracket`,
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    renderWithRouter(<PlayoffsPage />);
+    await screen.findByText(/Sleeper bracket data is unavailable/);
+    fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+    expect(
+      screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps live and preview brackets when NFL state fails, without race claims', async () => {
+    server.use(
+      http.get(`${SLEEPER_BASE}/state/nfl`, () => new HttpResponse(null, { status: 500 })),
+    );
+    renderWithRouter(<PlayoffsPage />);
+    await screen.findByRole('heading', { name: 'Championship Bracket' });
+    fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+    expect(screen.getByText(/Race updates are unavailable/)).toBeInTheDocument();
+    expect(screen.queryByText('Bubble Watch')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
+    ).toBeInTheDocument();
+  });
+
+  it('gates race claims before week three', async () => {
+    server.use(
+      http.get(`${SLEEPER_BASE}/state/nfl`, () =>
+        HttpResponse.json({ season: mockSleeperLeague.season, week: 2 }),
+      ),
+    );
+    renderWithRouter(<PlayoffsPage />);
+    await screen.findByRole('heading', { name: 'Championship Bracket' });
+    fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+    expect(screen.queryByText('Bubble Watch')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
+    ).toBeInTheDocument();
   });
 
   it('threads a custom leagueId through to the Sleeper API calls', async () => {
@@ -111,6 +172,9 @@ describe('PlayoffsPage', () => {
     expect(
       await screen.findByRole('heading', { name: /championship bracket/i }),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+    expect(screen.getByText(/once regular-season games/)).toBeInTheDocument();
+    expect(screen.queryByText('Bubble Watch')).not.toBeInTheDocument();
     expect(screen.queryByText(/^Seed \d+$/i)).not.toBeInTheDocument();
   });
 

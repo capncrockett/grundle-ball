@@ -50,7 +50,28 @@ test.describe('Playoffs bracket layout', () => {
       }),
     );
 
+    await page.route('**/state/nfl**', (route) =>
+      route.fulfill({ json: { season: mockSleeperLeague.season, week: 13 } }),
+    );
     await page.goto('/playoffs');
+    await expect(
+      page.getByRole('heading', { name: 'Championship Bracket', exact: true }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'If Today', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Projected Championship Bracket', exact: true }),
+    ).toBeVisible();
+    for (const title of ['Bubble Watch', 'Bye Chase', 'Division Races']) {
+      const panel = page
+        .locator('details')
+        .filter({ has: page.locator('summary', { hasText: title }) });
+      await panel.locator('summary').click();
+      await expect(panel.locator('ul').first()).toBeVisible();
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.getByRole('button', { name: 'Live Playoffs', exact: true }).click();
 
     // Roster 1 (user1, "Big Ol' TDs") has a round-1 bye in the winners bracket
     // fixture, so its card renders a real team avatar next to a BYE row.
