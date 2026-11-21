@@ -14,9 +14,11 @@ interface SleeperBracketBoardProps {
   subtitle?: string;
   matchups: ResolvedBracketMatchup[];
   teamsById: Map<number, Team>;
+  projectedScores?: Map<number, number>;
   placementOffset?: number;
   placementOrder?: 'forward' | 'reverse';
   weekStart?: number;
+  advance?: 'winner' | 'loser';
 }
 
 type DisplaySide = BracketSide | { kind: 'bye' };
@@ -88,7 +90,11 @@ function matchupCard(matchup: ResolvedBracketMatchup): DisplayCard {
   };
 }
 
-function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number): BoardLayout {
+function buildBoardLayout(
+  matchups: ResolvedBracketMatchup[],
+  weekStart?: number,
+  advance: 'winner' | 'loser' = 'winner',
+): BoardLayout {
   const rounds = groupMatchupsByRound(matchups);
   const firstRound = rounds.at(0);
   const secondRound = rounds.at(1);
@@ -103,7 +109,9 @@ function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number
     (matchup) => matchup.placement != null,
   );
   const finalGames = [...(finalRound?.matchups ?? [])].sort(
-    (a, b) => (a.placement ?? Number.MAX_SAFE_INTEGER) - (b.placement ?? Number.MAX_SAFE_INTEGER),
+    (a, b) =>
+      ((a.placement ?? Number.MAX_SAFE_INTEGER) - (b.placement ?? Number.MAX_SAFE_INTEGER)) *
+      (advance === 'loser' ? -1 : 1),
   );
   const championshipGame = finalGames.at(0);
   const secondaryFinal = finalGames.at(1);
@@ -113,7 +121,12 @@ function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number
   semifinalGames.forEach((semifinal) => {
     const sourceId = sourceMatchIds(semifinal).at(0);
     const sourceMatchup = sourceId == null ? undefined : firstRoundById.get(sourceId);
-    const directTeam = [semifinal.sideA, semifinal.sideB].find((side) => side.kind === 'team');
+    const directTeam =
+      !semifinal.raw.t1_from && semifinal.sideA.kind === 'team'
+        ? semifinal.sideA
+        : !semifinal.raw.t2_from && semifinal.sideB.kind === 'team'
+          ? semifinal.sideB
+          : undefined;
     const semifinalItemId = matchItemId(semifinal.matchId);
 
     if (directTeam) {
@@ -177,7 +190,7 @@ function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number
         })),
       },
       {
-        title: 'Finals',
+        title: advance === 'loser' ? 'Last Place' : 'Finals',
         subtitle: weekLabel(finalRound?.round, 3),
         itemsContainerClassName: 'justify-between',
         items: [
@@ -209,9 +222,10 @@ function buildBoardLayout(matchups: ResolvedBracketMatchup[], weekStart?: number
 interface SideRowProps {
   side: DisplaySide;
   teamsById: Map<number, Team>;
+  projectedScores?: Map<number, number>;
 }
 
-const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
+const SideRow: FC<SideRowProps> = ({ side, teamsById, projectedScores }) => {
   const team = side.kind === 'team' ? teamsById.get(side.rosterId) : undefined;
   const label =
     side.kind === 'team'
@@ -236,7 +250,11 @@ const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
             <div className="invisible h-8 w-8 shrink-0 rounded-full md:h-10 md:w-10" aria-hidden />
           )}
         </div>
-        <div className={SCORE_CLASS}>-</div>
+        <div className={SCORE_CLASS}>
+          {side.kind === 'team' && projectedScores
+            ? (projectedScores.get(side.rosterId)?.toFixed(2) ?? '-')
+            : '-'}
+        </div>
       </div>
       <div className="mt-1 min-w-0">
         <div className={TEAM_NAME_CLASS} title={label}>
@@ -250,14 +268,15 @@ const SideRow: FC<SideRowProps> = ({ side, teamsById }) => {
 interface BracketCardProps {
   card: DisplayCard;
   teamsById: Map<number, Team>;
+  projectedScores?: Map<number, number>;
 }
 
-const BracketCard: FC<BracketCardProps> = ({ card, teamsById }) => (
+const BracketCard: FC<BracketCardProps> = ({ card, teamsById, projectedScores }) => (
   <div className="card card-compact rounded-[2px] h-full w-full min-w-0 max-w-full overflow-hidden border border-base-300 bg-base-100 shadow-sm">
     <div className={`card-body gap-1.5 p-1 md:p-1.5 ${CARD_BODY_HEIGHT_CLASS}`}>
       <div className="min-h-0 flex-1 divide-y divide-base-300">
-        <SideRow side={card.sideA} teamsById={teamsById} />
-        <SideRow side={card.sideB} teamsById={teamsById} />
+        <SideRow side={card.sideA} teamsById={teamsById} projectedScores={projectedScores} />
+        <SideRow side={card.sideB} teamsById={teamsById} projectedScores={projectedScores} />
       </div>
     </div>
   </div>
@@ -286,8 +305,13 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
   placementOffset = 0,
   placementOrder = 'forward',
   weekStart,
+  projectedScores,
+  advance = 'winner',
 }) => {
-  const layout = useMemo(() => buildBoardLayout(matchups, weekStart), [matchups, weekStart]);
+  const layout = useMemo(
+    () => buildBoardLayout(matchups, weekStart, advance),
+    [matchups, weekStart, advance],
+  );
   const placementCount = useMemo(() => {
     const highestPlacement = Math.max(0, ...matchups.map((matchup) => matchup.placement ?? 0));
     return highestPlacement === 0 ? 0 : highestPlacement + 1;
@@ -430,7 +454,11 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
                             {String(matchupWeek(item.card.matchup))}
                           </div>
                         )}
-                        <BracketCard card={item.card} teamsById={teamsById} />
+                        <BracketCard
+                          card={item.card}
+                          teamsById={teamsById}
+                          projectedScores={projectedScores}
+                        />
                       </>
                     ) : (
                       <div
@@ -454,7 +482,11 @@ export const SleeperBracketBoard: FC<SleeperBracketBoardProps> = ({
                 <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-wide text-base-content/60 md:text-xs">
                   {placementLabel(matchup)} · Week {String(matchupWeek(matchup))}
                 </div>
-                <BracketCard card={matchupCard(matchup)} teamsById={teamsById} />
+                <BracketCard
+                  card={matchupCard(matchup)}
+                  teamsById={teamsById}
+                  projectedScores={projectedScores}
+                />
               </div>
             ))}
           </div>

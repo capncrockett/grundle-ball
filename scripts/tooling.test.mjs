@@ -106,10 +106,10 @@ test('repository checks detect lockfile drift and prohibited punctuation in new 
   assert.match(result.stderr, /new\.ts:1: use ASCII/);
 });
 
-test('verification stops after a failed command and does not report a pass', () => {
+test('verification stops after a failed command and does not report a pass', async () => {
   const executed = [];
   const messages = [];
-  const status = runChecks(
+  const status = await runChecks(
     [
       ['First', ['first']],
       ['Failing', ['fail']],
@@ -127,9 +127,9 @@ test('verification stops after a failed command and does not report a pass', () 
   assert.ok(messages.every((message) => !message.includes('PASS:')));
 });
 
-test('verification treats a terminated subprocess as a failure', () => {
+test('verification treats a terminated subprocess as a failure', async () => {
   assert.equal(
-    runChecks(
+    await runChecks(
       [['Stopped', []]],
       () => ({ status: null, signal: 'SIGTERM' }),
       () => {},
