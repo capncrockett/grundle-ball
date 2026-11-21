@@ -14,6 +14,8 @@ import { isDraftIntelHost } from './draftIntelAccess';
 import { MEGALABOWL_LEAGUE_ID } from './config/league';
 
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+// Public but unlisted: no nav link. See frontend/src/config/league.ts SISTER_LEAGUE.
+const SisterLeaguePage = lazy(() => import('./pages/SisterLeaguePage'));
 const draftIntelBuildEnabled =
   typeof __DRAFT_INTEL_BUILD__ === 'undefined' || __DRAFT_INTEL_BUILD__;
 const draftIntelEnabled =
@@ -236,6 +238,20 @@ export default function App() {
               />
             </>
           )}
+          <Route
+            path="/sister-league"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-16">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
+                }
+              >
+                <SisterLeaguePage />
+              </Suspense>
+            }
+          />
           <Route path="/constitution" element={<ConstitutionPage />} />
           <Route
             path="/beta/grundle-bowl"

@@ -28,6 +28,12 @@ jest.mock('./pages/HistoryPage', () => ({
   HistoryPage: () => <div>History Page</div>,
 }));
 
+jest.mock('./pages/SisterLeaguePage', () => ({
+  __esModule: true,
+  default: () => <div>Sister League Page</div>,
+  SisterLeaguePage: () => <div>Sister League Page</div>,
+}));
+
 jest.mock('./pages/DraftIntelPage', () => ({
   __esModule: true,
   default: () => <div>Draft Intel Page</div>,
@@ -107,6 +113,14 @@ describe('App routing + nav', () => {
     const historyLink = within(banner).getByRole('link', { name: /history/i });
     expect(historyLink).toHaveClass('btn-active');
     expect(historyLink).toHaveAttribute('href', '/history');
+  });
+
+  it('renders the unlisted Sister League route without a nav link', async () => {
+    renderWithRouter(<App />, { route: '/sister-league' });
+
+    expect(await screen.findByText('Sister League Page')).toBeInTheDocument();
+    const banner = screen.getByRole('banner');
+    expect(within(banner).queryByRole('link', { name: /sister/i })).not.toBeInTheDocument();
   });
 
   it('renders Draft Intel through its restricted route on an approved host', async () => {

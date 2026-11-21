@@ -1,0 +1,137 @@
+{
+  "leagueId": "346160653",
+  "seasonId": 2026,
+  "leagueName": "GL 2026 League",
+  "fetchedAt": "2026-11-21T06:28:39.727Z",
+  "currentMatchupPeriod": 11,
+  "regularSeasonWeeks": 14,
+  "playoffTeamCount": 6,
+  "teams": [
+    {
+      "id": 9,
+      "name": "V's Spirited Team",
+      "wins": 8,
+      "losses": 2,
+      "ties": 0,
+      "pointsFor": 1185.9,
+      "seed": 1
+    },
+    {
+      "id": 10,
+      "name": "Las Chivas",
+      "wins": 8,
+      "losses": 2,
+      "ties": 0,
+      "pointsFor": 1151.66,
+      "seed": 2
+    },
+    {
+      "id": 18,
+      "name": "C's Cool Team",
+      "wins": 7,
+      "losses": 3,
+      "ties": 0,
+      "pointsFor": 1296.88,
+      "seed": 3
+    },
+    {
+      "id": 1,
+      "name": "All Too Swift",
+      "wins": 7,
+      "losses": 3,
+      "ties": 0,
+      "pointsFor": 1254.68,
+      "seed": 4
+    },
+    {
+      "id": 15,
+      "name": "Team Blue82",
+      "wins": 7,
+      "losses": 3,
+      "ties": 0,
+      "pointsFor": 1132.58,
+      "seed": 5
+    },
+    {
+      "id": 7,
+      "name": "Diamond Dogs",
+      "wins": 7,
+      "losses": 3,
+      "ties": 0,
+      "pointsFor": 1129.4,
+      "seed": 6
+    },
+    {
+      "id": 11,
+      "name": "B the Crusher",
+      "wins": 5,
+      "losses": 5,
+      "ties": 0,
+      "pointsFor": 1195.62,
+      "seed": 7
+    },
+    {
+      "id": 13,
+      "name": "The Brigade",
+      "wins": 5,
+      "losses": 5,
+      "ties": 0,
+      "pointsFor": 1017.48,
+      "seed": 8
+    },
+    {
+      "id": 14,
+      "name": "Maybe this year",
+      "wins": 4,
+      "losses": 6,
+      "ties": 0,
+      "pointsFor": 977.44,
+      "seed": 9
+    },
+    {
+      "id": 8,
+      "name": "Team Earwig",
+      "wins": 4,
+      "losses": 6,
+      "ties": 0,
+      "pointsFor": 857.08,
+      "seed": 10
+    },
+    {
+      "id": 17,
+      "name": "King Tet",
+      "wins": 3,
+      "losses": 7,
+      "ties": 0,
+      "pointsFor": 1057.32,
+      "seed": 11
+    },
+    {
+      "id": 3,
+      "name": "H's Im New HereTeam",
+      "wins": 3,
+      "losses": 7,
+      "ties": 0,
+      "pointsFor": 846.02,
+      "seed": 12
+    },
+    {
+      "id": 19,
+      "name": "M's llama drama",
+      "wins": 1,
+      "losses": 9,
+      "ties": 0,
+      "pointsFor": 830.72,
+      "seed": 13
+    },
+    {
+      "id": 2,
+      "name": "S's Smart Team",
+      "wins": 1,
+      "losses": 9,
+      "ties": 0,
+      "pointsFor": 565.12,
+      "seed": 14
+    }
+  ]
+}
