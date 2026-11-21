@@ -11,7 +11,7 @@ Grundle Ball is deployed as a static Vite SPA on Vercel. This document separates
 - Build output: `frontend/dist`.
 - Production: `https://grundle-ball.vercel.app`.
 - Protected staging and Draft Intel target: `https://grundle-ball-staging.vercel.app`.
-- The root package and GitHub Actions use Node 24.x; the Vercel project should use the same major version unless a release explicitly validates a different one.
+- The root package and GitHub Actions use Node 26.x; the Vercel project should use the same major version unless a release explicitly validates a different one.
 
 Live checks performed during the rebrand audit established only host-level state:
 
@@ -56,7 +56,7 @@ The Megalabowl mirror (a second, staging-only Sleeper league mirrored at `/local
 Classify the release and select its version using [`versioning.md`](versioning.md). The root `package.json` version is canonical.
 
 1. Branch from `main` as `release/MAJOR.MINOR.PATCH`, then set the same version in the root package and lockfile.
-2. GitHub Actions uses Node 24.x to run formatting, root frontend/backend lint and typecheck, plus the frontend Jest suite. These checks run for pull requests and `release/**` pushes.
+2. GitHub Actions uses Node 26.x to run formatting, root frontend/backend lint and typecheck, plus the frontend Jest suite. These checks run for pull requests and `release/**` pushes.
 3. Playwright starts and tests the checked-out app for `release/**` pushes, pull requests targeting `main`, and manual dispatches.
 4. Require the release-branch workflows to pass, then merge to `main`.
 5. Allow the configured Vercel production deployment to build.
@@ -92,7 +92,7 @@ Repository-backed items:
 - [x] New staging hostname exists behind Vercel protection; legacy Keeper Bowl hosts return 404.
 - [x] Draft Intel build/runtime gates allow localhost and protected staging while excluding public production.
 - [x] GitHub Actions run Jest, backend Node tests, the production Vite build, and conditional local Playwright jobs.
-- [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 24.x.
+- [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 26.x.
 - [x] Vite embeds the Vercel environment and Git branch, the footer links to the public repository, and the app renders Vercel Speed Insights.
 - [x] The hosted constitution PDF is present at `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`.
 

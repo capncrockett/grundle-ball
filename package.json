@@ -1,9 +1,9 @@
 {
   "name": "grundle-ball",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "private": true,
   "engines": {
-    "node": "24.x"
+    "node": "26.x"
   },
   "workspaces": [
     "frontend",
@@ -28,9 +28,6 @@
   "devDependencies": {
     "husky": "9.1.7",
     "lightningcss": "^1.33.0",
-    "lint-staged": "17.4.1"
-  },
-  "dependencies": {
-    "pnpm": "^12.8.1"
+    "lint-staged": "17.6.1"
   }
 }

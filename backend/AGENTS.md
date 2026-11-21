@@ -20,7 +20,7 @@ npm run lint -w backend
 npm run typecheck -w backend
 ```
 
-Use Node 24 and the existing temporary JSON/SQLite fixtures. `npm run doctor` checks the native SQLite module without opening a disk database. Tests must not rewrite checked-in snapshots or fetch live league data.
+Use Node 26 and the existing temporary JSON/SQLite fixtures. `npm run doctor` checks the native SQLite module without opening a disk database. Tests must not rewrite checked-in snapshots or fetch live league data.
 
 Before handoff, run `npm run verify`. If a requested task refreshes history, inspect the generated diff for the intended league/season/week and run the relevant frontend history tests too. The [task map](../docs/agent-workflow.md#task-map) lists them.
 

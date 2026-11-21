@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { acquireVerification } from './verification-lock.mjs';
 import { runCommand } from './run-command.mjs';
@@ -56,7 +55,7 @@ export async function runChecks(checks, execute, log = console.log) {
   return 0;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (import.meta.main) {
   try {
     const args = process.argv.slice(2);
     const plan = verificationPlan(args);

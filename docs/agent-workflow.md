@@ -15,7 +15,7 @@ The doctor checks the Node version declared in the root package, installed toolc
 
 For machine-readable output, use `npm run --silent doctor -- --json`. Exit code 1 means a required prerequisite failed. Browser startup and OS dependencies are proven by running Playwright, not by binary presence alone.
 
-On a fresh checkout, use Node 24 and `npm ci` from the root. [TESTING.md](../TESTING.md) covers browser installation. Application development requires no Sleeper credentials, deployed backend, or production environment variables. Avoid reading `.env` values when checking setup; the local verification path does not need them.
+On a fresh checkout, use Node 26 and `npm ci` from the root. [TESTING.md](../TESTING.md) covers browser installation. Application development requires no Sleeper credentials, deployed backend, or production environment variables. Avoid reading `.env` values when checking setup; the local verification path does not need them.
 
 ## Verification commands
 
@@ -44,7 +44,7 @@ Status: native macOS validation is pending. The guard has passed local Windows v
 
 The next agent on a Mac should validate the existing implementation before changing it:
 
-1. Record the macOS version, CPU architecture, Node version, date, and tested commit. Use Node 24, run `npm run doctor`, and install dependencies/browser binaries as described in [TESTING.md](../TESTING.md) if needed.
+1. Record the macOS version, CPU architecture, Node version, date, and tested commit. Use Node 26, run `npm run doctor`, and install dependencies/browser binaries as described in [TESTING.md](../TESTING.md) if needed.
 2. Run `npm run test:tooling`, then `npm run verify -- --e2e`. The tooling suite covers concurrent acquisition, inherited ownership, stale recovery with surviving children, unreadable records, retained ownership, failures, and real POSIX interruption.
 3. While the full gate is active, use a second terminal to run `npm run verify:quick` and `npm run test:e2e:local -w frontend`. Both must exit nonzero before checks or builds and identify the owner. `npm run verify -- --list` must still succeed. Let the owning gate finish and confirm `.verification-lock/` is removed.
 4. Start a separate local browser run through `npm run test:e2e:local -w frontend`, interrupt it with Ctrl-C once Playwright and its server are active, and confirm nonzero exit, stopped owned npm/Vite/browser processes, and successful subsequent guarded execution. Inspect only this run's process tree; never delete active ownership to force another run. Report any surviving descendants even if the wrapper exits or the lock disappears.

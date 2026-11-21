@@ -57,7 +57,7 @@ The compatibility-safe dependency refresh does not mean every package is on its 
 
 Current deliberate deferrals from the post-upgrade dependency report:
 
-- Keep `@types/node` on 24 while the application runtime contract is Node 24.
+- Keep `@types/node` on 26 while the application runtime contract is Node 26.
 - Keep MSW pinned to 2.12.3 because 2.15 introduces an ESM interceptor path that the current CommonJS Jest transform cannot load.
 - Keep TypeScript on 5.9 until both `typescript-eslint` and `ts-jest` support TypeScript 7.
 
