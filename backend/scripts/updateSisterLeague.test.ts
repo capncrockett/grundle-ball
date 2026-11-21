@@ -16,9 +16,13 @@ const raw = {
   seasonId: 2030,
   settings: {
     name: ' Test League ',
-    scheduleSettings: { matchupPeriodCount: 14, playoffTeamCount: 6 },
+    scheduleSettings: {
+      matchupPeriodCount: 14,
+      playoffTeamCount: 6,
+      playoffMatchupPeriodLength: 1,
+    },
   },
-  status: { currentMatchupPeriod: 9 },
+  status: { currentMatchupPeriod: 9, finalScoringPeriod: 17 },
   members: [{ id: '{OWNER}', firstName: 'Private', lastName: 'Person', displayName: 'handle' }],
   teams: [
     {
@@ -37,6 +41,31 @@ const raw = {
       record: { overall: { wins: 6, losses: 1, ties: 1, pointsFor: 1000.1 } },
     },
   ],
+  schedule: [
+    {
+      matchupPeriodId: 9,
+      playoffTierType: 'NONE',
+      winner: 'UNDECIDED',
+      home: { teamId: 2, totalPoints: 12.5, pointsByScoringPeriod: { 9: 12.5 } },
+      away: { teamId: 1, totalPoints: 0 },
+    },
+    {
+      matchupPeriodId: 1,
+      playoffTierType: 'NONE',
+      winner: 'AWAY',
+      home: { teamId: 2, totalPoints: 101.236 },
+      away: { teamId: 1, totalPoints: 120.4 },
+    },
+    // Bye week, playoff, and post-season rows stay out of the regular-season schedule.
+    { matchupPeriodId: 2, playoffTierType: 'NONE', winner: 'UNDECIDED', home: { teamId: 1 } },
+    {
+      matchupPeriodId: 15,
+      playoffTierType: 'WINNERS_BRACKET',
+      winner: 'UNDECIDED',
+      home: { teamId: 1, totalPoints: 0 },
+      away: { teamId: 2, totalPoints: 0 },
+    },
+  ],
 } as unknown as RawEspnLeague;
 
 test('snapshot keeps team names, records, and points and drops member identities', () => {
@@ -50,9 +79,21 @@ test('snapshot keeps team names, records, and points and drops member identities
     currentMatchupPeriod: 9,
     regularSeasonWeeks: 14,
     playoffTeamCount: 6,
+    playoffByeCount: 2,
     teams: [
       { id: 1, name: 'First', wins: 6, losses: 1, ties: 1, pointsFor: 1000.1, seed: 1 },
       { id: 2, name: 'Second', wins: 5, losses: 3, ties: 0, pointsFor: 900.12, seed: 2 },
+    ],
+    matchups: [
+      {
+        week: 1,
+        homeTeamId: 2,
+        awayTeamId: 1,
+        homePoints: 101.24,
+        awayPoints: 120.4,
+        final: true,
+      },
+      { week: 9, homeTeamId: 2, awayTeamId: 1, homePoints: 12.5, awayPoints: 0, final: false },
     ],
   });
   assert.doesNotMatch(JSON.stringify(snapshot), /OWNER|Private|Person|handle/);
@@ -94,7 +135,7 @@ test('credentials require both cookies and a braced SWID', () => {
   assert.throws(() => readCredentials({ ESPN_S2: 's2', ESPN_SWID: 'ID' }), /curly braces/);
 });
 
-test('fetch sends the cookies and requests only settings and team views', async () => {
+test('fetch sends the cookies and requests only settings, team, and score views', async () => {
   let requested: { url: string; cookie: string | undefined } | undefined;
   const result = await fetchEspnLeague(
     credentials,
@@ -108,7 +149,7 @@ test('fetch sends the cookies and requests only settings and team views', async 
   assert.equal(result.id, 42);
   assert.equal(
     requested?.url,
-    'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2030/segments/0/leagues/42?view=mSettings&view=mTeam',
+    'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2030/segments/0/leagues/42?view=mSettings&view=mTeam&view=mMatchupScore',
   );
   assert.equal(requested.cookie, 'espn_s2=test-s2; SWID={TEST-SWID}');
 });

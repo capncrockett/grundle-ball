@@ -1,9 +1,9 @@
 // frontend/src/sisterLeague/sisterLeague.ts
 //
 // Snapshot shape and seeding math for the Sister League, a separate ESPN
-// league shown at /sister-league. The
-// snapshot is written by backend/scripts/updateSisterLeague.ts and keeps only
-// team names, records, and points; ESPN member identities are dropped.
+// league shown at /sister-league. The snapshot is written by
+// backend/scripts/updateSisterLeague.ts and keeps only team names, records,
+// points, and the regular-season schedule; ESPN member identities are dropped.
 
 export type SisterLeagueTeam = {
   id: number;
@@ -16,6 +16,16 @@ export type SisterLeagueTeam = {
   seed: number;
 };
 
+/** One regular-season game. Scores are only meaningful when `final`. */
+export type SisterLeagueMatchup = {
+  week: number;
+  homeTeamId: number;
+  awayTeamId: number;
+  homePoints: number;
+  awayPoints: number;
+  final: boolean;
+};
+
 export type SisterLeagueSnapshot = {
   leagueId: string;
   seasonId: number;
@@ -24,7 +34,10 @@ export type SisterLeagueSnapshot = {
   currentMatchupPeriod: number;
   regularSeasonWeeks: number;
   playoffTeamCount: number;
+  /** Top seeds that skip the first playoff round. */
+  playoffByeCount: number;
   teams: SisterLeagueTeam[];
+  matchups: SisterLeagueMatchup[];
 };
 
 export type SisterLeagueSeedRange = {

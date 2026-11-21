@@ -1,6 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { SISTER_LEAGUE } from '../../frontend/src/config/league.ts';
 import type {
+  SisterLeagueMatchup,
   SisterLeagueSnapshot,
   SisterLeagueTeam,
 } from '../../frontend/src/sisterLeague/sisterLeague.ts';
@@ -26,16 +27,60 @@ type RawEspnTeam = {
   record: { overall: RawEspnRecord };
 };
 
+type RawEspnMatchupSide = { teamId: number; totalPoints: number };
+
+type RawEspnMatchup = {
+  matchupPeriodId: number;
+  playoffTierType: string;
+  winner: 'HOME' | 'AWAY' | 'TIE' | 'UNDECIDED';
+  home: RawEspnMatchupSide;
+  away?: RawEspnMatchupSide;
+};
+
 export type RawEspnLeague = {
   id: number;
   seasonId: number;
   settings: {
     name: string;
-    scheduleSettings: { matchupPeriodCount: number; playoffTeamCount: number };
+    scheduleSettings: {
+      matchupPeriodCount: number;
+      playoffTeamCount: number;
+      playoffMatchupPeriodLength: number;
+    };
   };
-  status: { currentMatchupPeriod: number };
+  status: { currentMatchupPeriod: number; finalScoringPeriod: number };
   teams: RawEspnTeam[];
+  schedule: RawEspnMatchup[];
 };
+
+// Playoff rounds fill a power-of-two bracket; the top seeds take the empty
+// slots as byes (6 teams over 3 rounds -> 8-team bracket -> 2 byes).
+const playoffByeCount = (raw: RawEspnLeague): number => {
+  const { matchupPeriodCount, playoffTeamCount, playoffMatchupPeriodLength } =
+    raw.settings.scheduleSettings;
+  const playoffWeeks = raw.status.finalScoringPeriod - matchupPeriodCount;
+  const rounds = Math.ceil(playoffWeeks / Math.max(playoffMatchupPeriodLength, 1));
+  if (rounds <= 0) return 0;
+  return Math.max(2 ** rounds - playoffTeamCount, 0);
+};
+
+const toMatchups = (raw: RawEspnLeague): SisterLeagueMatchup[] =>
+  raw.schedule
+    .filter(
+      (matchup) =>
+        matchup.playoffTierType === 'NONE' &&
+        matchup.away !== undefined &&
+        matchup.matchupPeriodId <= raw.settings.scheduleSettings.matchupPeriodCount,
+    )
+    .map((matchup) => ({
+      week: matchup.matchupPeriodId,
+      homeTeamId: matchup.home.teamId,
+      awayTeamId: matchup.away?.teamId ?? 0,
+      homePoints: round(matchup.home.totalPoints),
+      awayPoints: round(matchup.away?.totalPoints ?? 0),
+      final: matchup.winner !== 'UNDECIDED',
+    }))
+    .sort((a, b) => a.week - b.week || a.homeTeamId - b.homeTeamId);
 
 export type EspnCredentials = { espnS2: string; swid: string };
 
@@ -98,7 +143,9 @@ export function toSisterLeagueSnapshot(
     currentMatchupPeriod: raw.status.currentMatchupPeriod,
     regularSeasonWeeks: scheduleSettings.matchupPeriodCount,
     playoffTeamCount: scheduleSettings.playoffTeamCount,
+    playoffByeCount: playoffByeCount(raw),
     teams: teams.sort((a, b) => a.seed - b.seed),
+    matchups: toMatchups(raw),
   };
 }
 
@@ -107,7 +154,7 @@ export async function fetchEspnLeague(
   { leagueId, seasonId }: { leagueId: string; seasonId: number } = SISTER_LEAGUE,
   fetchImpl: FetchLike = fetch,
 ): Promise<RawEspnLeague> {
-  const url = `${ESPN_API_BASE}/seasons/${seasonId.toString()}/segments/0/leagues/${leagueId}?view=mSettings&view=mTeam`;
+  const url = `${ESPN_API_BASE}/seasons/${seasonId.toString()}/segments/0/leagues/${leagueId}?view=mSettings&view=mTeam&view=mMatchupScore`;
   const response = await fetchImpl(url, {
     headers: { Cookie: `espn_s2=${credentials.espnS2}; SWID=${credentials.swid}` },
   });

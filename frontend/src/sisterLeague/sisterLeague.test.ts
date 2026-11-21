@@ -31,7 +31,9 @@ const snapshot = (
   currentMatchupPeriod: 11,
   regularSeasonWeeks: 14,
   playoffTeamCount: 2,
+  playoffByeCount: 0,
   teams,
+  matchups: [],
   ...overrides,
 });
 
