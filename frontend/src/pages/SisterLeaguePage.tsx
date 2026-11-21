@@ -1,7 +1,7 @@
 // frontend/src/pages/SisterLeaguePage.tsx
 //
-// Public, unlisted /sister-league page for the Sister League, a separate
-// ESPN-hosted league (not the Grundle League). It renders the checked-in
+// Staging-only /local/sister-league page for the Sister League, a separate
+// ESPN-hosted league (not the Grundle League), gated like Draft Intel. It renders the checked-in
 // snapshot from `npm run sister:update`; it never calls ESPN from the
 // browser. Odds come from a deterministic in-browser simulation of the
 // remaining schedule (see sisterLeague/projections.ts).
@@ -77,7 +77,10 @@ export function SisterLeaguePage({
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-4">
-        <span className="badge badge-accent badge-sm mb-1">Sister League</span>
+        <span className="flex gap-1 mb-1">
+          <span className="badge badge-secondary badge-sm">Staging</span>
+          <span className="badge badge-accent badge-sm">Sister League</span>
+        </span>
         <h1 className="text-2xl font-bold">{snapshot.leagueName}</h1>
         <p className="text-sm text-base-content/70">
           ESPN snapshot, week {week.toString()} of {snapshot.regularSeasonWeeks.toString()}. Top{' '}

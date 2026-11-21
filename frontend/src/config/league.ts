@@ -26,7 +26,8 @@ export const PLAYOFF_WEEKS = {
 } as const;
 
 // The Sister League: a separate ESPN-hosted league (not the Grundle League), shown as a
-// public, unlisted snapshot at /sister-league. The league is private on ESPN, so the
+// staging-only snapshot at /local/sister-league behind the same gate as Draft
+// Intel (see frontend/src/draftIntelAccess.ts). The league is private on ESPN, so the
 // snapshot is refreshed locally with `npm run sister:update`, which reads
 // ESPN_S2/ESPN_SWID from the root .env; the cookies never leave that machine.
 //

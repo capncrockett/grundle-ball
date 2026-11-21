@@ -7,7 +7,7 @@ Read the root [AGENTS.md](../AGENTS.md). This workspace contains maintenance too
 - [matchupHistoryStore.ts](matchupHistoryStore.ts) provides JSON and optional local SQLite adapters. Every replacement is scoped by league, season, and week; Team identity must not cross those scopes.
 - [updateMatchupHistory.ts](scripts/updateMatchupHistory.ts) validates selectors and resolves the selected league's season before writing.
 - [updateDraftHistory.ts](scripts/updateDraftHistory.ts) follows linked leagues and their canonical `draft_id`, excluding abandoned draft records.
-- [updateSisterLeague.ts](scripts/updateSisterLeague.ts) refreshes the `/sister-league` snapshot of a separate, private ESPN league using `ESPN_S2`/`ESPN_SWID` from the root `.env`. Never log, commit, or write those cookie values, and keep ESPN member identities out of the snapshot.
+- [updateSisterLeague.ts](scripts/updateSisterLeague.ts) refreshes the staging-only `/local/sister-league` snapshot of a separate, private ESPN league using `ESPN_S2`/`ESPN_SWID` from the root `.env`. Never log, commit, or write those cookie values, and keep ESPN member identities out of the snapshot.
 - Both updaters share the frontend's [league configuration](../frontend/src/config/league.ts). Keep explicit `--league` overrides working.
 - Stored-history and keeper terminology lives in [CONTEXT.md](../CONTEXT.md). Persistence behavior lives in [data-model.md](../docs/data-model.md).
 
