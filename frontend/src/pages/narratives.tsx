@@ -35,34 +35,7 @@ export const STANDINGS_GLOSSARY: GlossaryEntry[] = [
   {
     code: 'bw',
     description:
-      'Best/Worst range showing the highest and lowest possible seed (e.g., 3-8, 1-4, 1-1)',
-  },
-  {
-    code: 'sc',
-    description:
-      'Locked barring a small stat correction (scores would need an unusual swing to change the result)',
-  },
-];
-
-// The Megalabowl mirror has no divisions and no bracket byes - the official
-// rules are just "top 6 by record, ties broken by Points For, reach the
-// playoff pool" (see issue #57). Reusing the main glossary's `y`
-// (division) and `z` (bye) codes there would describe things that don't
-// exist in this league, so it gets its own, narrower glossary instead.
-export const MEGALABOWL_STANDINGS_GLOSSARY: GlossaryEntry[] = [
-  {
-    code: 'x',
-    description:
-      'Clinched a top 6 spot (record + Points For tiebreak) - locked into the Megalabowl playoff pool even in the worst case',
-  },
-  {
-    code: '6',
-    description: 'Currently holds the 6th and final Megalabowl playoff seed',
-  },
-  {
-    code: 'bw',
-    description:
-      'Best/Worst range showing the highest and lowest possible final seed (e.g., 3-8, 1-4, 1-1) - this decides the top-6 cut, since Megalabowl has no divisions or byes',
+      'Best/Worst range showing the highest and lowest seed still possible under the remaining schedule (e.g., 3-8, 1-4, 1-1)',
   },
   {
     code: 'sc',

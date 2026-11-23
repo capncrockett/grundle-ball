@@ -29,7 +29,7 @@ import { PlayoffRacePanels } from '../components/PlayoffRacePanels';
 import { buildPlayoffNarratives } from './narratives';
 import { LEAGUE_ID } from '../config/league';
 
-export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
+export default function PlayoffsPage() {
   const [view, setView] = useState<'live' | 'if-today'>('live');
   const [currentWeek, setCurrentWeek] = useState<number | null>(null);
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
@@ -52,10 +52,10 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         setCurrentWeek(null);
 
         const [leagueData, users, rosters, brackets, nflState] = await Promise.all([
-          getLeague(leagueId),
-          getLeagueUsers(leagueId),
-          getLeagueRosters(leagueId),
-          Promise.all([getWinnersBracket(leagueId), getLosersBracket(leagueId)])
+          getLeague(LEAGUE_ID),
+          getLeagueUsers(LEAGUE_ID),
+          getLeagueRosters(LEAGUE_ID),
+          Promise.all([getWinnersBracket(LEAGUE_ID), getLosersBracket(LEAGUE_ID)])
             .then((data) => ({ data, error: null }))
             .catch(() => ({ data: [[], []], error: 'Sleeper bracket data is unavailable.' })),
           getNFLState().catch(() => null),
@@ -87,7 +87,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
     return () => {
       cancelled = true;
     };
-  }, [leagueId]);
+  }, []);
 
   const teamsById = useMemo(() => {
     const map = new Map<number, Team>();
@@ -132,7 +132,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         : buildPlayoffNarratives(seededTeams, currentWeek),
     [seededTeams, currentWeek, hasCompletedGame],
   );
-  const supportsPreview = leagueId === LEAGUE_ID && playoffTeams === 6;
+  const supportsPreview = playoffTeams === 6;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">

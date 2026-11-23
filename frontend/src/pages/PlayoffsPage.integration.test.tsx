@@ -10,7 +10,6 @@ import {
   mockPlayoffWinnersBracket,
   mockPlayoffLosersBracket,
 } from '../test/fixtures/sleeper';
-import * as sleeperApi from '../api/sleeper';
 
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 
@@ -109,34 +108,6 @@ describe('PlayoffsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('threads a custom leagueId through to the Sleeper API calls', async () => {
-    const leagueSpy = jest.spyOn(sleeperApi, 'getLeague');
-    const usersSpy = jest.spyOn(sleeperApi, 'getLeagueUsers');
-    const rostersSpy = jest.spyOn(sleeperApi, 'getLeagueRosters');
-    const winnersSpy = jest.spyOn(sleeperApi, 'getWinnersBracket');
-    const losersSpy = jest.spyOn(sleeperApi, 'getLosersBracket');
-    const customLeagueId = 'megalabowl-test-league';
-
-    try {
-      renderWithRouter(<PlayoffsPage leagueId={customLeagueId} />);
-
-      expect(
-        await screen.findByRole('heading', { name: /championship bracket/i }),
-      ).toBeInTheDocument();
-      expect(leagueSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(usersSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(rostersSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(winnersSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(losersSpy).toHaveBeenCalledWith(customLeagueId);
-    } finally {
-      leagueSpy.mockRestore();
-      usersSpy.mockRestore();
-      rostersSpy.mockRestore();
-      winnersSpy.mockRestore();
-      losersSpy.mockRestore();
-    }
-  });
-
   it('marks Sleeper bracket seeds as provisional before games are played', async () => {
     const preseasonRosters = mockSleeperRosters.map((roster) => ({
       ...roster,
@@ -206,7 +177,7 @@ describe('PlayoffsPage', () => {
   });
 
   it('falls back to the default playoff week when Sleeper reports an unconfigured 0', async () => {
-    // Some linked leagues (e.g. the Megalabowl mirror) report
+    // Some Sleeper leagues report
     // `playoff_week_start: 0` rather than omitting the field entirely when
     // their commissioner hasn't configured it. `0` is still a `number`, so
     // it must be treated the same as "not configured" instead of literally

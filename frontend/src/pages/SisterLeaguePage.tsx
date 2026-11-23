@@ -205,9 +205,11 @@ export function SisterLeaguePage({
           </p>
         )}
         <p>
-          <span className="font-semibold">B-W</span> is the best and worst possible final seed. Best
-          assumes the team wins every remaining game while everyone else loses; worst assumes the
-          reverse. Seeds go by record, then total points scored.
+          <span className="font-semibold">B-W</span> is the best and worst final seed still possible
+          under the remaining schedule. Every remaining game is a win or a loss against the team
+          actually scheduled, so two teams that play each other cannot both win or both lose. Seeds
+          go by record, then total points scored; since points are not final, a tied record counts
+          in the team&apos;s favor for its best seed and against it for its worst.
         </p>
         <p>The line under seed {snapshot.playoffTeamCount.toString()} marks the playoff cut.</p>
         <p>This league is hosted on ESPN and is not part of the Grundle League.</p>

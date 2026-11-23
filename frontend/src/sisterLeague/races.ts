@@ -14,7 +14,14 @@ import {
   type SeasonSimulation,
   type TeamScoring,
 } from './projections';
-import type { SisterLeagueSeedRange, SisterLeagueSnapshot, SisterLeagueTeam } from './sisterLeague';
+import {
+  remainingSchedule,
+  SISTER_LEAGUE_SEEDING,
+  toSeedRangeTeams,
+  type SisterLeagueSeedRange,
+  type SisterLeagueSnapshot,
+} from './sisterLeague';
+import { worstSeedIfWinsOut } from '../utils/seedRanges';
 
 export type RaceEntry = {
   teamId: number;
@@ -46,28 +53,16 @@ const MAX_ROOTING_GAMES = 3;
 // Hide remaining-record rows that almost never happen.
 const MIN_RECORD_SHARE = 0.01;
 
-const winPoints = (team: SisterLeagueTeam): number => team.wins + team.ties * 0.5;
-
-// Worst-case seed if the team wins out: it beats everyone it still plays,
-// and every other team wins all of its other games. Ties go against it.
-const winsOutWithin = (
-  snapshot: SisterLeagueSnapshot,
-  sim: SeasonSimulation,
-  team: SisterLeagueTeam,
-  cut: number,
-): boolean => {
-  const remaining = (id: number, excludingOpponent?: number) =>
-    sim.remainingGames.filter(
-      (game) =>
-        (game.homeTeamId === id || game.awayTeamId === id) &&
-        (excludingOpponent === undefined ||
-          (game.homeTeamId !== excludingOpponent && game.awayTeamId !== excludingOpponent)),
-    ).length;
-  const ceiling = winPoints(team) + remaining(team.id);
-  const ahead = snapshot.teams.filter(
-    (other) => other.id !== team.id && winPoints(other) + remaining(other.id, team.id) >= ceiling,
-  ).length;
-  return ahead + 1 <= cut;
+// True when the team's worst possible seed after winning out, under the
+// remaining schedule, is inside the cut. Ties go against it.
+const winsOutWithin = (snapshot: SisterLeagueSnapshot, teamId: number, cut: number): boolean => {
+  const worst = worstSeedIfWinsOut(
+    toSeedRangeTeams(snapshot),
+    remainingSchedule(snapshot),
+    SISTER_LEAGUE_SEEDING,
+    teamId,
+  );
+  return worst !== null && worst <= cut;
 };
 
 const buildRace = (
@@ -103,7 +98,7 @@ const buildRace = (
         byWins: oddsByRemainingWins(snapshot, sim, team.id, target).filter(
           (row) => row.share >= MIN_RECORD_SHARE,
         ),
-        winOutClinches: winsOutWithin(snapshot, sim, team, cut),
+        winOutClinches: winsOutWithin(snapshot, team.id, cut),
         rooting: rootingInterests(snapshot, sim, team.id, target)
           .filter(
             (interest) =>

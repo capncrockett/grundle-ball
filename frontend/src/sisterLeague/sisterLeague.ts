@@ -5,6 +5,15 @@
 // backend/scripts/updateSisterLeague.ts and keeps only team names, records,
 // points, and the regular-season schedule; ESPN member identities are dropped.
 
+import {
+  computeScheduleFreeSeedRanges,
+  computeSeedRanges,
+  scheduleCoversRemaining,
+  type ScheduledGame,
+  type SeedingRule,
+  type SeedRangeTeam,
+} from '../utils/seedRanges';
+
 export type SisterLeagueTeam = {
   id: number;
   name: string;
@@ -51,40 +60,54 @@ export type SisterLeagueSeedRange = {
 
 const gamesPlayed = (team: SisterLeagueTeam): number => team.wins + team.losses + team.ties;
 
-const winPoints = (team: SisterLeagueTeam): number => team.wins + team.ties * 0.5;
+/** ESPN seeds by record alone; a tie counts as half a win. */
+export const SISTER_LEAGUE_SEEDING: SeedingRule = { kind: 'record' };
 
-const remainingGames = (team: SisterLeagueTeam, regularSeasonWeeks: number): number =>
-  Math.max(regularSeasonWeeks - gamesPlayed(team), 0);
+export const toSeedRangeTeams = (snapshot: SisterLeagueSnapshot): SeedRangeTeam[] =>
+  snapshot.teams.map((team) => ({
+    id: team.id,
+    wins: team.wins,
+    ties: team.ties,
+    divisionId: null,
+  }));
+
+/** Regular-season games not yet final, as scheduled. */
+export const remainingSchedule = (snapshot: SisterLeagueSnapshot): ScheduledGame[] =>
+  snapshot.matchups
+    .filter((matchup) => !matchup.final)
+    .map((matchup) => ({ teamA: matchup.homeTeamId, teamB: matchup.awayTeamId }));
 
 /**
- * Best/worst possible final seed, using the same bounds as the Grundle
- * standings: best case, the team wins out while everyone else loses out;
- * worst case, the reverse. Points-for ties break toward the team in its best
- * case and against it in its worst case, since season points are not final.
+ * Best/worst possible final seed under the remaining schedule (see
+ * utils/seedRanges.ts): every remaining game is a win or a loss against the
+ * opponent actually scheduled. Points-for ties break toward the team in its
+ * best case and against it in its worst case, since season points are not
+ * final.
  */
 export function computeSisterLeagueSeedRanges(
   snapshot: SisterLeagueSnapshot,
 ): SisterLeagueSeedRange[] {
   const { teams, regularSeasonWeeks, playoffTeamCount } = snapshot;
-  const seasonComplete = teams.every((team) => remainingGames(team, regularSeasonWeeks) === 0);
+  const remainingByTeam = new Map(
+    teams.map((team) => [team.id, Math.max(regularSeasonWeeks - gamesPlayed(team), 0)]),
+  );
+  const seasonComplete = [...remainingByTeam.values()].every((count) => count === 0);
+  const schedule = remainingSchedule(snapshot);
+  const bounds = seasonComplete
+    ? null
+    : scheduleCoversRemaining(schedule, remainingByTeam)
+      ? computeSeedRanges(toSeedRangeTeams(snapshot), schedule, SISTER_LEAGUE_SEEDING)
+      : computeScheduleFreeSeedRanges(
+          toSeedRangeTeams(snapshot),
+          remainingByTeam,
+          SISTER_LEAGUE_SEEDING,
+        );
 
   return [...teams]
     .sort((a, b) => a.seed - b.seed)
     .map((team) => {
-      let best = team.seed;
-      let worst = team.seed;
-
-      if (!seasonComplete) {
-        const ceiling = winPoints(team) + remainingGames(team, regularSeasonWeeks);
-        const floor = winPoints(team);
-        const others = teams.filter((other) => other.id !== team.id);
-        best = 1 + others.filter((other) => winPoints(other) > ceiling).length;
-        worst =
-          1 +
-          others.filter(
-            (other) => winPoints(other) + remainingGames(other, regularSeasonWeeks) >= floor,
-          ).length;
-      }
+      const best = bounds?.get(team.id)?.best ?? team.seed;
+      const worst = bounds?.get(team.id)?.worst ?? team.seed;
 
       return {
         teamId: team.id,
