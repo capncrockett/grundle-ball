@@ -14,6 +14,8 @@ import { isDraftIntelHost } from './draftIntelAccess';
 import { MEGALABOWL_LEAGUE_ID } from './config/league';
 
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+// Public but unlisted: no nav link. See frontend/src/config/league.ts SISTER_LEAGUE.
+const SisterLeaguePage = lazy(() => import('./pages/SisterLeaguePage'));
 const draftIntelBuildEnabled =
   typeof __DRAFT_INTEL_BUILD__ === 'undefined' || __DRAFT_INTEL_BUILD__;
 const draftIntelEnabled =
@@ -23,12 +25,6 @@ const DraftIntelPage = draftIntelEnabled ? lazy(() => import('./pages/DraftIntel
 // The Megalabowl mirror uses the identical staging/localhost gate as Draft
 // Intel; there is no separate build-time define for it.
 const megalabowlEnabled = draftIntelEnabled;
-// The Sister League (a separate ESPN league) uses the same gate, and its page
-// and snapshot are lazy so the public production build omits them.
-const sisterLeagueEnabled = draftIntelEnabled;
-const SisterLeaguePage = sisterLeagueEnabled
-  ? lazy(() => import('./pages/SisterLeaguePage'))
-  : null;
 
 type NavLinkProps = {
   to: string;
@@ -152,17 +148,6 @@ export default function App() {
                 }
               />
             )}
-            {sisterLeagueEnabled && (
-              <NavLink
-                to="/local/sister-league"
-                label="Sister League"
-                icon={
-                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-info/20 text-[0.5rem] font-black text-info">
-                    SL
-                  </span>
-                }
-              />
-            )}
             <NavLink
               to="/constitution"
               label="Constitution"
@@ -253,22 +238,20 @@ export default function App() {
               />
             </>
           )}
-          {sisterLeagueEnabled && SisterLeaguePage && (
-            <Route
-              path="/local/sister-league"
-              element={
-                <Suspense
-                  fallback={
-                    <div className="flex justify-center py-16">
-                      <span className="loading loading-spinner loading-lg" />
-                    </div>
-                  }
-                >
-                  <SisterLeaguePage />
-                </Suspense>
-              }
-            />
-          )}
+          <Route
+            path="/sister-league"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-16">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
+                }
+              >
+                <SisterLeaguePage />
+              </Suspense>
+            }
+          />
           <Route path="/constitution" element={<ConstitutionPage />} />
           <Route
             path="/beta/grundle-bowl"

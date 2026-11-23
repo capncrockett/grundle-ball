@@ -115,15 +115,12 @@ describe('App routing + nav', () => {
     expect(historyLink).toHaveAttribute('href', '/history');
   });
 
-  it('renders the Sister League through its restricted route on an approved host', async () => {
-    renderWithRouter(<App />, { route: '/local/sister-league' });
+  it('renders the unlisted Sister League route without a nav link', async () => {
+    renderWithRouter(<App />, { route: '/sister-league' });
 
     expect(await screen.findByText('Sister League Page')).toBeInTheDocument();
-
     const banner = screen.getByRole('banner');
-    const sisterLink = within(banner).getByRole('link', { name: /sister league/i });
-    expect(sisterLink).toHaveClass('btn-active');
-    expect(sisterLink).toHaveAttribute('href', '/local/sister-league');
+    expect(within(banner).queryByRole('link', { name: /sister/i })).not.toBeInTheDocument();
   });
 
   it('renders Draft Intel through its restricted route on an approved host', async () => {

@@ -6,7 +6,7 @@ import type {
   SisterLeagueTeam,
 } from '../../frontend/src/sisterLeague/sisterLeague.ts';
 
-// Refreshes frontend/src/data/sisterLeagueSnapshot.json for the /local/sister-league page.
+// Refreshes frontend/src/data/sisterLeagueSnapshot.json for the /sister-league page.
 // The league is private on ESPN, so requests carry the espn_s2 and SWID
 // cookies from the root .env. Cookie values are never logged or written.
 

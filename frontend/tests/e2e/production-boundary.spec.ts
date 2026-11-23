@@ -130,29 +130,6 @@ test('production output omits the restricted Megalabowl mirror', async () => {
   expect(productionText).not.toContain('1402702919295377408');
 });
 
-test('production omits the restricted Sister League navigation and route', async ({ page }) => {
-  await page.goto(`${productionOrigin}/`);
-
-  await expect(page.getByRole('banner')).toBeVisible();
-  await expect(page.getByRole('link', { name: /sister league/i })).toHaveCount(0);
-
-  await page.goto(`${productionOrigin}/local/sister-league`);
-
-  await expect(page.getByRole('banner')).toBeVisible();
-  await expect(page.getByText(/ESPN snapshot|Season Scoring/)).toHaveCount(0);
-  await expect(page.getByRole('link', { name: /sister league/i })).toHaveCount(0);
-});
-
-test('production output omits the restricted Sister League snapshot', async () => {
-  const productionText = await readProductionText(distRoot);
-
-  expect(productionText).not.toContain('Sister League');
-  expect(productionText).not.toContain('GL 2026 League');
-  expect(productionText).not.toContain('346160653');
-  expect(productionText).not.toContain('ESPN snapshot');
-  expect(productionText).not.toContain('Help that matters most');
-});
-
 test('production output omits the restricted draft planning features', async () => {
   const productionText = await readProductionText(distRoot);
 
