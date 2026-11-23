@@ -14,7 +14,7 @@ export const PLAYOFF_WEEKS = {
 // The Sister League: a separate ESPN-hosted league (not the Grundle League), shown as a
 // public, unlisted snapshot at /sister-league. The league is private on ESPN, so the
 // snapshot is refreshed locally with `npm run sister:update`, which reads
-// ESPN_S2/ESPN_SWID from the root .env; the cookies never leave that machine.
+// ESPN_S2/ESPN_SWID from the root .env; cookies are sent only to ESPN, never to the snapshot.
 //
 // The snapshot is public, so the updater replaces the ESPN league name and any
 // team name built on a member's first name. Overrides are keyed by ESPN team

@@ -103,6 +103,25 @@ describe('SisterLeaguePage', () => {
     expect(screen.getByRole('columnheader', { name: 'Bye' })).toBeInTheDocument();
   });
 
+  it('keeps standings and scoring but withholds odds and races for an incomplete schedule', () => {
+    const incomplete = {
+      ...bubbleSnapshot,
+      matchups: bubbleSnapshot.matchups.slice(0, -1),
+    };
+    render(<SisterLeaguePage snapshot={incomplete} simulationRuns={100} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/remaining schedule is incomplete/i);
+    const standings = within(screen.getByRole('table', { name: 'Standings' }));
+    const bravo = within(standings.getByRole('row', { name: /Bravo/ })).getAllByRole('cell');
+    expect(bravo[2]).toHaveTextContent('1-1');
+    expect(bravo[4]).toHaveTextContent('-');
+    expect(bravo[5]).toHaveTextContent('-');
+    expect(screen.queryByRole('region', { name: 'Bubble Watch' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Bye Chase' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Season scoring' })).toBeInTheDocument();
+    expect(screen.queryByText(/simulated finishes to the regular season/)).not.toBeInTheDocument();
+  });
+
   it("summarizes each team's season scoring", () => {
     render(<SisterLeaguePage snapshot={bubbleSnapshot} simulationRuns={200} />);
 

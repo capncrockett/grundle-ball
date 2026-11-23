@@ -51,8 +51,6 @@ export default function PlayoffsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    // A function so the check after an await is not narrowed away.
-    const isCancelled = () => cancelled;
     async function load() {
       try {
         setIsLoading(true);
@@ -80,17 +78,19 @@ export default function PlayoffsPage() {
         }
         const [winnersBracket, losersBracket] = brackets.data;
         const merged = mergeRostersAndUsersToTeams(rosters, users, leagueData);
-        // The race narratives need the remaining schedule; a failure only
-        // loosens their best/worst ranges.
-        const schedule = merged.some((team) => gamesPlayed(team) > 0)
-          ? await loadRemainingGames(LEAGUE_ID, merged, regularSeasonWeeksFor(leagueData))
-          : null;
-        if (isCancelled()) return;
         setLeague(leagueData);
-        setRemainingGames(schedule);
         setTeams(merged);
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
+        // The race schedule refines conservative bounds without delaying
+        // either the published bracket or the standings preview.
+        if (merged.some((team) => gamesPlayed(team) > 0)) {
+          void loadRemainingGames(LEAGUE_ID, merged, regularSeasonWeeksFor(leagueData)).then(
+            (schedule) => {
+              if (!cancelled) setRemainingGames(schedule);
+            },
+          );
+        }
       } catch (err) {
         if (cancelled) return;
         console.error(err);

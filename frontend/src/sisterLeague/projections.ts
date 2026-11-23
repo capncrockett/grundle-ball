@@ -9,7 +9,11 @@
 // Results are deterministic for a given snapshot and PRNG seed so the page
 // does not reshuffle odds on every render.
 
-import type { SisterLeagueMatchup, SisterLeagueSnapshot } from './sisterLeague';
+import {
+  hasCompleteRemainingSchedule,
+  type SisterLeagueMatchup,
+  type SisterLeagueSnapshot,
+} from './sisterLeague';
 
 export type TeamScoring = {
   teamId: number;
@@ -34,6 +38,8 @@ export type TeamOutlook = {
 export type SimulatedGame = SisterLeagueMatchup & { index: number };
 
 export type SeasonSimulation = {
+  /** False means projections are withheld because scheduled games are missing or invalid. */
+  scheduleComplete: boolean;
   runs: number;
   teamIds: number[];
   remainingGames: SimulatedGame[];
@@ -167,6 +173,17 @@ export function simulateSeason(
   const remainingGames = snapshot.matchups
     .filter((matchup) => !matchup.final)
     .map((matchup, index) => ({ ...matchup, index }));
+  if (!hasCompleteRemainingSchedule(snapshot)) {
+    return {
+      scheduleComplete: false,
+      runs: 0,
+      teamIds,
+      remainingGames,
+      outlooks: new Map(),
+      homeWins: new Uint8Array(0),
+      finalSeeds: new Uint8Array(0),
+    };
+  }
   const models = scoreModels(snapshot);
   const normal = createNormal(createRandom(seed));
 
@@ -226,7 +243,7 @@ export function simulateSeason(
     });
   });
 
-  return { runs, teamIds, remainingGames, outlooks, homeWins, finalSeeds };
+  return { scheduleComplete: true, runs, teamIds, remainingGames, outlooks, homeWins, finalSeeds };
 }
 
 const targetCut = (snapshot: SisterLeagueSnapshot, target: PlayoffTarget): number =>
@@ -242,6 +259,7 @@ export function oddsByRemainingWins(
   teamId: number,
   target: PlayoffTarget,
 ): OddsByWins[] {
+  if (!sim.scheduleComplete) return [];
   const teamIdx = sim.teamIds.indexOf(teamId);
   const cut = targetCut(snapshot, target);
   const ownGames = sim.remainingGames.filter(
@@ -280,6 +298,7 @@ export function rootingInterests(
   teamId: number,
   target: PlayoffTarget,
 ): RootingInterest[] {
+  if (!sim.scheduleComplete) return [];
   const teamIdx = sim.teamIds.indexOf(teamId);
   const cut = targetCut(snapshot, target);
 

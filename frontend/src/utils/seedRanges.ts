@@ -418,6 +418,8 @@ export function scheduleCoversRemaining(
 ): boolean {
   const scheduled = new Map<number, number>();
   for (const game of remainingGames) {
+    // The search discards self-pairings, so they must not satisfy coverage.
+    if (game.teamA === game.teamB) return false;
     scheduled.set(game.teamA, (scheduled.get(game.teamA) ?? 0) + 1);
     scheduled.set(game.teamB, (scheduled.get(game.teamB) ?? 0) + 1);
   }

@@ -43,9 +43,11 @@ export type RawEspnLeague = {
   settings: {
     name: string;
     scheduleSettings: {
+      divisions: { id: number; size: number }[];
       matchupPeriodCount: number;
       playoffTeamCount: number;
       playoffMatchupPeriodLength: number;
+      playoffSeedingRule: string;
     };
   };
   status: { currentMatchupPeriod: number; finalScoringPeriod: number };
@@ -53,15 +55,12 @@ export type RawEspnLeague = {
   schedule: RawEspnMatchup[];
 };
 
-// Playoff rounds fill a power-of-two bracket; the top seeds take the empty
-// slots as byes (6 teams over 3 rounds -> 8-team bracket -> 2 byes).
+// The top seeds take the empty slots in the smallest power-of-two bracket.
+// Extra scoring weeks or longer playoff matchups do not add first-round byes.
 const playoffByeCount = (raw: RawEspnLeague): number => {
-  const { matchupPeriodCount, playoffTeamCount, playoffMatchupPeriodLength } =
-    raw.settings.scheduleSettings;
-  const playoffWeeks = raw.status.finalScoringPeriod - matchupPeriodCount;
-  const rounds = Math.ceil(playoffWeeks / Math.max(playoffMatchupPeriodLength, 1));
-  if (rounds <= 0) return 0;
-  return Math.max(2 ** rounds - playoffTeamCount, 0);
+  const { playoffTeamCount } = raw.settings.scheduleSettings;
+  if (playoffTeamCount < 2) return 0;
+  return 2 ** Math.ceil(Math.log2(playoffTeamCount)) - playoffTeamCount;
 };
 
 const toMatchups = (raw: RawEspnLeague): SisterLeagueMatchup[] =>
@@ -106,7 +105,7 @@ export type SnapshotNaming = {
 };
 
 // A leading capitalized word with a possessive ("Name's" / "Names'") usually
-// means a member's first name; the updater warns so it can be abbreviated.
+// means a member's first name; require a reviewed override before publishing.
 const LOOKS_LIKE_PERSONAL_NAME = /^[A-Z][a-z]+'s?\s/;
 
 export function findUnreviewedPersonalNames(
@@ -125,6 +124,22 @@ export function toSisterLeagueSnapshot(
   { displayName, teamNameOverrides = {} }: SnapshotNaming = {},
 ): SisterLeagueSnapshot {
   const { scheduleSettings } = raw.settings;
+  // ESPN gives division winners the top seeds. The public page currently
+  // models one division and total points as the record tiebreaker only.
+  if (
+    scheduleSettings.playoffSeedingRule !== 'TOTAL_POINTS_SCORED' ||
+    scheduleSettings.divisions.filter((division) => division.size > 0).length !== 1
+  ) {
+    throw new Error(
+      'Unsupported ESPN playoff seeding: Sister League requires one division and total points as the record tiebreaker. Update the seeding model before refreshing.',
+    );
+  }
+  const unreviewed = findUnreviewedPersonalNames(raw, teamNameOverrides);
+  if (unreviewed.length > 0) {
+    throw new Error(
+      `Team ids ${unreviewed.join(', ')} may contain a member's name; add reviewed teamNameOverrides in frontend/src/config/league.ts before refreshing.`,
+    );
+  }
   const teams: SisterLeagueTeam[] = raw.teams.map((team) => ({
     id: team.id,
     name: teamNameOverrides[team.id] ?? (team.name?.trim() || `Team ${team.id.toString()}`),
@@ -170,12 +185,6 @@ export async function fetchEspnLeague(
 async function main(): Promise<void> {
   const credentials = readCredentials(process.env);
   const raw = await fetchEspnLeague(credentials);
-  const unreviewed = findUnreviewedPersonalNames(raw, SISTER_LEAGUE.teamNameOverrides);
-  if (unreviewed.length > 0) {
-    console.warn(
-      `Team ids ${unreviewed.join(', ')} may contain a member's name; add teamNameOverrides in frontend/src/config/league.ts.`,
-    );
-  }
   const snapshot = toSisterLeagueSnapshot(raw, new Date().toISOString(), SISTER_LEAGUE);
   writeFileSync(SNAPSHOT_PATH, `${JSON.stringify(snapshot, null, 2)}\n`);
   console.log(

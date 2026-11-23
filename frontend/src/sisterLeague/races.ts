@@ -15,6 +15,7 @@ import {
   type TeamScoring,
 } from './projections';
 import {
+  hasCompleteRemainingSchedule,
   remainingSchedule,
   SISTER_LEAGUE_SEEDING,
   toSeedRangeTeams,
@@ -119,6 +120,10 @@ export function buildSisterLeagueRaces(
   scoring: Map<number, TeamScoring>,
   ranges: Map<number, SisterLeagueSeedRange>,
 ): { bubble: SisterLeagueRace | null; bye: SisterLeagueRace | null } {
+  // Do not narrate a partial season or make guarantees from a truncated schedule.
+  if (!sim.scheduleComplete || !hasCompleteRemainingSchedule(snapshot)) {
+    return { bubble: null, bye: null };
+  }
   const averageRanks = new Map(
     [...scoring.values()]
       .sort((a, b) => b.average - a.average)

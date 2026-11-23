@@ -77,6 +77,18 @@ export const remainingSchedule = (snapshot: SisterLeagueSnapshot): ScheduledGame
     .filter((matchup) => !matchup.final)
     .map((matchup) => ({ teamA: matchup.homeTeamId, teamB: matchup.awayTeamId }));
 
+const remainingGameCounts = (snapshot: SisterLeagueSnapshot): Map<number, number> =>
+  new Map(
+    snapshot.teams.map((team) => [
+      team.id,
+      Math.max(snapshot.regularSeasonWeeks - gamesPlayed(team), 0),
+    ]),
+  );
+
+/** Every team must have all of its remaining games before odds or guarantees are safe. */
+export const hasCompleteRemainingSchedule = (snapshot: SisterLeagueSnapshot): boolean =>
+  scheduleCoversRemaining(remainingSchedule(snapshot), remainingGameCounts(snapshot));
+
 /**
  * Best/worst possible final seed under the remaining schedule (see
  * utils/seedRanges.ts): every remaining game is a win or a loss against the
@@ -87,10 +99,8 @@ export const remainingSchedule = (snapshot: SisterLeagueSnapshot): ScheduledGame
 export function computeSisterLeagueSeedRanges(
   snapshot: SisterLeagueSnapshot,
 ): SisterLeagueSeedRange[] {
-  const { teams, regularSeasonWeeks, playoffTeamCount } = snapshot;
-  const remainingByTeam = new Map(
-    teams.map((team) => [team.id, Math.max(regularSeasonWeeks - gamesPlayed(team), 0)]),
-  );
+  const { teams, playoffTeamCount } = snapshot;
+  const remainingByTeam = remainingGameCounts(snapshot);
   const seasonComplete = [...remainingByTeam.values()].every((count) => count === 0);
   const schedule = remainingSchedule(snapshot);
   const bounds = seasonComplete

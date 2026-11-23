@@ -171,6 +171,7 @@ function PlayoffsIfTodayPage() {
   );
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         setIsLoading(true);
@@ -181,30 +182,35 @@ function PlayoffsIfTodayPage() {
           getLeagueRosters(LEAGUE_ID),
           getNFLState(),
         ]);
+        if (cancelled) return;
         setCurrentWeek(nflState.week);
 
         const merged = mergeRostersAndUsersToTeams(rosters, users);
         const withSeeds = computeSeeds(merged);
 
-        setRemainingGames(
-          merged.some((team) => gamesPlayed(team) > 0)
-            ? await loadRemainingGames(LEAGUE_ID, merged, REGULAR_SEASON_WEEKS)
-            : null,
-        );
         setTeams(withSeeds);
 
         // Project the entire bracket using season-long weekly scoring averages
         const projectedSlots = projectBracketWithAverages(withSeeds);
         setSlots(projectedSlots);
+        if (merged.some((team) => gamesPlayed(team) > 0)) {
+          void loadRemainingGames(LEAGUE_ID, merged, REGULAR_SEASON_WEEKS).then((schedule) => {
+            if (!cancelled) setRemainingGames(schedule);
+          });
+        }
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Slots are now managed by state and set in the useEffect

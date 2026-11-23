@@ -17,9 +17,11 @@ const raw = {
   settings: {
     name: ' Test League ',
     scheduleSettings: {
+      divisions: [{ id: 0, size: 2 }],
       matchupPeriodCount: 14,
       playoffTeamCount: 6,
       playoffMatchupPeriodLength: 1,
+      playoffSeedingRule: 'TOTAL_POINTS_SCORED',
     },
   },
   status: { currentMatchupPeriod: 9, finalScoringPeriod: 17 },
@@ -124,6 +126,67 @@ test('flags possessive first-name team names that have no override', () => {
   } as RawEspnLeague;
 
   assert.deepEqual(findUnreviewedPersonalNames(named, { 8: 'P Picks' }), [5, 6]);
+});
+
+test('snapshot refuses unreviewed personal names without disclosing them in its error', () => {
+  const named: RawEspnLeague = {
+    ...raw,
+    teams: [{ ...raw.teams[0], id: 5, name: "Sam's Squad" }],
+  };
+
+  assert.throws(
+    () => toSisterLeagueSnapshot(named, '2030-11-01T00:00:00.000Z'),
+    (error: Error) => {
+      assert.match(error.message, /Team ids 5.*reviewed teamNameOverrides/);
+      assert.doesNotMatch(error.message, /Sam|Squad/);
+      return true;
+    },
+  );
+  const reviewed = toSisterLeagueSnapshot(named, '2030-11-01T00:00:00.000Z', {
+    teamNameOverrides: { 5: 'S Team' },
+  });
+  assert.equal(reviewed.teams[0].name, 'S Team');
+});
+
+test('snapshot refuses playoff settings the record-and-points model cannot represent', () => {
+  for (const scheduleSettings of [
+    { ...raw.settings.scheduleSettings, playoffSeedingRule: 'H2H_RECORD' },
+    {
+      ...raw.settings.scheduleSettings,
+      divisions: [
+        { id: 0, size: 1 },
+        { id: 1, size: 1 },
+      ],
+    },
+  ]) {
+    assert.throws(
+      () =>
+        toSisterLeagueSnapshot(
+          { ...raw, settings: { ...raw.settings, scheduleSettings } },
+          '2030-11-01T00:00:00.000Z',
+        ),
+      /Unsupported ESPN playoff seeding/,
+    );
+  }
+});
+
+test('first-round byes depend on bracket size rather than extra playoff scoring weeks', () => {
+  for (const playoffTeamCount of [6, 8]) {
+    for (const finalScoringPeriod of [17, 18]) {
+      const snapshot = toSisterLeagueSnapshot(
+        {
+          ...raw,
+          settings: {
+            ...raw.settings,
+            scheduleSettings: { ...raw.settings.scheduleSettings, playoffTeamCount },
+          },
+          status: { ...raw.status, finalScoringPeriod },
+        },
+        '2030-11-01T00:00:00.000Z',
+      );
+      assert.equal(snapshot.playoffByeCount, playoffTeamCount === 6 ? 2 : 0);
+    }
+  }
 });
 
 test('credentials require both cookies and a braced SWID', () => {

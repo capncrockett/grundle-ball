@@ -127,6 +127,27 @@ describe('scheduleCoversRemaining', () => {
       ),
     ).toBe(false);
   });
+
+  it('rejects self-pairings even when every remaining count matches', () => {
+    // Counting each endpoint would accept these as two games per team, but
+    // the search discards both games and could falsely lock the seeds.
+    expect(
+      scheduleCoversRemaining(
+        games([
+          [1, 1],
+          [2, 2],
+        ]),
+        new Map([
+          [1, 2],
+          [2, 2],
+        ]),
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects opponents outside the league', () => {
+    expect(scheduleCoversRemaining(games([[1, 99]]), new Map([[1, 1]]))).toBe(false);
+  });
 });
 
 describe('computeScheduleFreeSeedRanges', () => {
@@ -142,6 +163,35 @@ describe('computeScheduleFreeSeedRanges', () => {
       '1-3',
       '4-4',
     ]);
+  });
+});
+
+describe('search safety fallbacks', () => {
+  it('uses conservative bounds when the encoded state exceeds safe integer precision', () => {
+    const teams = teamsFrom([0, ...new Array<number>(19).fill(6)]);
+    const schedule: ScheduledGame[] = [];
+    let order = teams.map((team) => team.id);
+    for (let week = 0; week < 10; week += 1) {
+      for (let i = 0; i < 10; i += 1) {
+        schedule.push({ teamA: order[i], teamB: order[19 - i] });
+      }
+      order = [order[0], order[19], ...order.slice(1, 19)];
+    }
+
+    // After Team 1 wins out to 10 wins, each of its 19 rivals needs five
+    // additional wins to pass it. The encoding has 7 ** 19 states, beyond
+    // safe integer precision. First place is a safe relaxation even though
+    // the schedule forces some rival above Team 1 (90 non-focus wins cannot
+    // fit into 19 teams with at most four wins each).
+    const bounds = computeSeedRanges(teams, schedule, RECORD).get(1);
+    const relaxed = computeScheduleFreeSeedRanges(
+      teams,
+      new Map(teams.map((team) => [team.id, 10])),
+      RECORD,
+    ).get(1);
+
+    expect(bounds).toEqual({ best: 1, worst: 20 });
+    expect(bounds).toEqual(relaxed);
   });
 });
 
@@ -270,6 +320,12 @@ describe('agreement with brute force on small random leagues', () => {
       const schedule = pairs.map(([a, b]) => ({ teamA: teams[a].id, teamB: teams[b].id }));
 
       const ranges = computeSeedRanges(teams, schedule, rule);
+      const remainingByTeam = new Map(teams.map((team) => [team.id, 0]));
+      for (const game of schedule) {
+        remainingByTeam.set(game.teamA, (remainingByTeam.get(game.teamA) ?? 0) + 1);
+        remainingByTeam.set(game.teamB, (remainingByTeam.get(game.teamB) ?? 0) + 1);
+      }
+      const relaxed = computeScheduleFreeSeedRanges(teams, remainingByTeam, rule);
       const actual = teams.map((team) => ({
         best: ranges.get(team.id)?.best,
         worst: ranges.get(team.id)?.worst,
@@ -277,6 +333,13 @@ describe('agreement with brute force on small random leagues', () => {
       }));
 
       expect(actual).toEqual(bruteForce(teams, pairs, rule));
+      for (const team of teams) {
+        const exact = ranges.get(team.id);
+        const bound = relaxed.get(team.id);
+        if (!exact || !bound) throw new Error('Missing seed range');
+        expect(bound.best).toBeLessThanOrEqual(exact.best);
+        expect(bound.worst).toBeGreaterThanOrEqual(exact.worst);
+      }
     }
   });
 });

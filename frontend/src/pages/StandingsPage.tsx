@@ -203,6 +203,7 @@ export function StandingsPage() {
   };
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         setIsLoading(true);
@@ -213,6 +214,7 @@ export function StandingsPage() {
           getLeagueUsers(LEAGUE_ID),
           getLeagueRosters(LEAGUE_ID),
         ]);
+        if (cancelled) return;
 
         const totalWeeks = regularSeasonWeeksFor(league);
         setRegularSeasonWeeks(totalWeeks);
@@ -223,19 +225,27 @@ export function StandingsPage() {
         const merged = mergeRostersAndUsersToTeams(rosters, users, league);
         const hasCompletedGames = merged.some((team) => gamesPlayed(team) > 0);
 
-        setRemainingGames(
-          hasCompletedGames ? await loadRemainingGames(LEAGUE_ID, merged, totalWeeks) : null,
-        );
         setTeams(hasCompletedGames ? computeSeeds(merged) : merged);
+        // Schedule data only refines the conservative ranges. Keep the
+        // standings available while these optional requests are pending.
+        if (hasCompletedGames) {
+          void loadRemainingGames(LEAGUE_ID, merged, totalWeeks).then((schedule) => {
+            if (!cancelled) setRemainingGames(schedule);
+          });
+        }
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const latestCompletedWeek = useMemo(

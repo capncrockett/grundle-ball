@@ -72,7 +72,9 @@ export function SisterLeaguePage({
   const medianScore = useMemo(() => leagueMedianScore(snapshot), [snapshot]);
   const week = Math.min(snapshot.currentMatchupPeriod, snapshot.regularSeasonWeeks);
   const byeCount = snapshot.playoffByeCount;
-  const seasonOver = simulation.remainingGames.length === 0;
+  const seasonOver = snapshot.teams.every(
+    (team) => team.wins + team.losses + team.ties >= snapshot.regularSeasonWeeks,
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -86,6 +88,13 @@ export function SisterLeaguePage({
           {formatSnapshotTime(snapshot.fetchedAt)}.
         </p>
       </div>
+
+      {!simulation.scheduleComplete && (
+        <div className="alert alert-warning mb-4" role="alert">
+          The remaining schedule is incomplete. Playoff odds and race updates are unavailable; B-W
+          shows conservative bounds until the schedule is restored.
+        </div>
+      )}
 
       <div className="overflow-auto overscroll-x-contain touch-pan-x touch-pan-y border border-base-300 rounded-lg bg-base-100">
         <table className="table table-zebra w-full" aria-label="Standings">
@@ -194,7 +203,7 @@ export function SisterLeaguePage({
       </section>
 
       <div className="mt-4 text-xs text-base-content/70 space-y-1">
-        {!seasonOver && (
+        {!seasonOver && simulation.scheduleComplete && (
           <p>
             <span className="font-semibold">Playoffs</span> and{' '}
             <span className="font-semibold">Bye</span> are the share of{' '}
@@ -205,11 +214,12 @@ export function SisterLeaguePage({
           </p>
         )}
         <p>
-          <span className="font-semibold">B-W</span> is the best and worst final seed still possible
-          under the remaining schedule. Every remaining game is a win or a loss against the team
-          actually scheduled, so two teams that play each other cannot both win or both lose. Seeds
-          go by record, then total points scored; since points are not final, a tied record counts
-          in the team&apos;s favor for its best seed and against it for its worst.
+          <span className="font-semibold">B-W</span>{' '}
+          {simulation.scheduleComplete
+            ? 'is the best and worst final seed still possible under the remaining schedule. Every remaining game is a win or a loss against the team actually scheduled, so two teams that play each other cannot both win or both lose.'
+            : 'shows conservative best and worst final seeds without assuming who plays whom.'}{' '}
+          Seeds go by record, then total points scored; since points are not final, a tied record
+          counts in the team&apos;s favor for its best seed and against it for its worst.
         </p>
         <p>The line under seed {snapshot.playoffTeamCount.toString()} marks the playoff cut.</p>
         <p>This league is hosted on ESPN and is not part of the Grundle League.</p>

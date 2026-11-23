@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { StandingsPage } from './StandingsPage';
 import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 import * as sleeperApi from '../api/sleeper';
@@ -329,8 +329,42 @@ describe('StandingsPage', () => {
       const { row, cell } = await findBestWorstCell('5 Fingers 2 Ur Face');
       expect(matchupsSpy).toHaveBeenCalledWith(LEAGUE_ID, 14);
       // Even with a loss, at most one of the two 7-6 teams catches it: no worse than 5th.
-      expect(cell).toHaveTextContent('3-5');
+      await waitFor(() => {
+        expect(cell).toHaveTextContent('3-5');
+      });
       expect(within(row).getByTitle('Clinched Playoffs')).toBeInTheDocument();
+    });
+
+    it('renders conservative bounds before the optional schedule responds, then refines them', async () => {
+      let resolveSchedule!: (value: typeof finalWeekMatchups) => void;
+      const schedule = new Promise<typeof finalWeekMatchups>((resolve) => {
+        resolveSchedule = resolve;
+      });
+      const matchupsSpy = jest
+        .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+        .mockReturnValue(schedule);
+      const view = render(<StandingsPage />);
+
+      try {
+        const { row, cell } = await findBestWorstCell('5 Fingers 2 Ur Face');
+        expect(matchupsSpy).toHaveBeenCalledWith(LEAGUE_ID, 14);
+        expect(cell).toHaveTextContent('3-7');
+        expect(within(row).queryByTitle('Clinched Playoffs')).not.toBeInTheDocument();
+
+        await act(async () => {
+          resolveSchedule(finalWeekMatchups);
+          await schedule;
+        });
+
+        expect(cell).toHaveTextContent('3-5');
+        expect(within(row).getByTitle('Clinched Playoffs')).toBeInTheDocument();
+      } finally {
+        view.unmount();
+        await act(async () => {
+          resolveSchedule(finalWeekMatchups);
+          await schedule;
+        });
+      }
     });
 
     it('falls back to the schedule-free bound when the schedule is unavailable', async () => {

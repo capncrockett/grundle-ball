@@ -1,9 +1,11 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import PlayoffsPage from './PlayoffsPage';
 import { renderWithRouter } from '../test/testUtils';
 import { server } from '../test/server';
 import { errorHandlers } from '../test/mocks/handlers';
+import * as sleeperApi from '../api/sleeper';
+import type { SleeperMatchup } from '../api/sleeper';
 import {
   mockSleeperLeague,
   mockSleeperRosters,
@@ -14,6 +16,34 @@ import {
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 
 describe('PlayoffsPage', () => {
+  it('renders live and preview brackets while the optional race schedule is pending', async () => {
+    let resolveSchedule!: (value: SleeperMatchup[]) => void;
+    const schedule = new Promise<SleeperMatchup[]>((resolve) => {
+      resolveSchedule = resolve;
+    });
+    const matchupsSpy = jest
+      .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+      .mockReturnValue(schedule);
+    const view = renderWithRouter(<PlayoffsPage />);
+
+    try {
+      await screen.findByRole('heading', { name: 'Championship Bracket' });
+      expect(matchupsSpy).toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+      expect(
+        screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Bubble Watch')).toBeInTheDocument();
+    } finally {
+      view.unmount();
+      await act(async () => {
+        resolveSchedule([]);
+        await schedule;
+      });
+      matchupsSpy.mockRestore();
+    }
+  });
+
   it('renders the official bracket mirrored directly from Sleeper', async () => {
     renderWithRouter(<PlayoffsPage />);
 

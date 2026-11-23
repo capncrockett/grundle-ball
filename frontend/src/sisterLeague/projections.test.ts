@@ -102,10 +102,26 @@ describe('simulateSeason', () => {
     expect(odds(3)).toBeLessThan(0.9);
   });
 
+  it.each([
+    [
+      'one missing game',
+      snapshot.matchups.filter((matchup) => !(matchup.week === 4 && matchup.homeTeamId === 2)),
+    ],
+    ['the entire remaining schedule', snapshot.matchups.filter((matchup) => matchup.final)],
+  ])('withholds projections when %s is missing', (_, matchups) => {
+    const incomplete = { ...snapshot, matchups };
+    const sim = simulateSeason(incomplete, { runs: 100 });
+    expect(sim).toMatchObject({ scheduleComplete: false, runs: 0 });
+    expect(sim.outlooks.size).toBe(0);
+    expect(oddsByRemainingWins(incomplete, sim, 2, 'playoffs')).toEqual([]);
+    expect(rootingInterests(incomplete, sim, 2, 'playoffs')).toEqual([]);
+  });
+
   it('keeps current seeds when no games remain', () => {
     const finished = simulateSeason(
       {
         ...snapshot,
+        regularSeasonWeeks: 2,
         matchups: snapshot.matchups.filter((matchup) => matchup.final),
       },
       { runs: 10 },
@@ -156,6 +172,52 @@ describe('buildSisterLeagueRaces', () => {
       expect(entry.odds).toBeGreaterThan(0.02);
       expect(entry.odds).toBeLessThan(0.98);
     });
+  });
+});
+
+describe('incomplete schedule guarantees', () => {
+  // A and C can both win the last week, so A can still lose the second
+  // playoff spot on points. Dropping B-C must not turn A's win into a lock.
+  const finalWeek: SisterLeagueSnapshot = {
+    ...snapshot,
+    currentMatchupPeriod: 4,
+    teams: [
+      { id: 1, name: 'B', wins: 3, losses: 0, ties: 0, pointsFor: 330, seed: 1 },
+      { id: 2, name: 'A', wins: 1, losses: 2, ties: 0, pointsFor: 330, seed: 2 },
+      { id: 3, name: 'C', wins: 1, losses: 2, ties: 0, pointsFor: 310, seed: 3 },
+      { id: 4, name: 'D', wins: 1, losses: 2, ties: 0, pointsFor: 300, seed: 4 },
+    ],
+    matchups: [
+      game(1, 1, 2, 110, 100),
+      game(1, 3, 4, 110, 100),
+      game(2, 1, 3, 110, 100),
+      game(2, 4, 2, 110, 100),
+      game(3, 1, 4, 110, 90),
+      game(3, 2, 3, 130, 100),
+      game(4, 2, 4),
+      game(4, 1, 3),
+    ],
+  };
+  const racesFor = (data: SisterLeagueSnapshot) =>
+    buildSisterLeagueRaces(
+      data,
+      simulateSeason(data, { runs: 2000 }),
+      computeTeamScoring(data),
+      new Map(computeSisterLeagueSeedRanges(data).map((range) => [range.teamId, range])),
+    );
+
+  it('keeps the complete-schedule win-out path open', () => {
+    expect(racesFor(finalWeek).bubble?.entries.find((entry) => entry.teamId === 2)).toMatchObject({
+      winOutClinches: false,
+    });
+  });
+
+  it('withholds races instead of claiming a false guarantee after another game disappears', () => {
+    const incomplete = { ...finalWeek, matchups: finalWeek.matchups.slice(0, -1) };
+    expect(
+      computeSisterLeagueSeedRanges(incomplete).find((range) => range.teamId === 2),
+    ).toMatchObject({ best: 2, worst: 4, clinched: false });
+    expect(racesFor(incomplete)).toEqual({ bubble: null, bye: null });
   });
 });
 
