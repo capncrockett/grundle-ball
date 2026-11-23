@@ -27,6 +27,13 @@ import {
 } from '../sleeperBracket/ifToday';
 import { PlayoffRacePanels } from '../components/PlayoffRacePanels';
 import { buildPlayoffNarratives } from './narratives';
+import type { ScheduledGame } from '../utils/seedRanges';
+import {
+  computeGrundleSeedRanges,
+  gamesPlayed,
+  loadRemainingGames,
+  regularSeasonWeeksFor,
+} from '../utils/grundleSeedRanges';
 import { LEAGUE_ID } from '../config/league';
 
 export default function PlayoffsPage() {
@@ -36,6 +43,7 @@ export default function PlayoffsPage() {
   const [bracketError, setBracketError] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
+  const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
   const [winners, setWinners] = useState<ResolvedBracketMatchup[]>([]);
   const [losers, setLosers] = useState<ResolvedBracketMatchup[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,6 +51,8 @@ export default function PlayoffsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    // A function so the check after an await is not narrowed away.
+    const isCancelled = () => cancelled;
     async function load() {
       try {
         setIsLoading(true);
@@ -70,7 +80,14 @@ export default function PlayoffsPage() {
         }
         const [winnersBracket, losersBracket] = brackets.data;
         const merged = mergeRostersAndUsersToTeams(rosters, users, leagueData);
+        // The race narratives need the remaining schedule; a failure only
+        // loosens their best/worst ranges.
+        const schedule = merged.some((team) => gamesPlayed(team) > 0)
+          ? await loadRemainingGames(LEAGUE_ID, merged, regularSeasonWeeksFor(leagueData))
+          : null;
+        if (isCancelled()) return;
         setLeague(leagueData);
+        setRemainingGames(schedule);
         setTeams(merged);
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
@@ -96,9 +113,7 @@ export default function PlayoffsPage() {
   }, [teams]);
 
   const hasBracket = winners.length > 0 || losers.length > 0;
-  const hasCompletedGame = teams.some(
-    (team) => team.record.wins + team.record.losses + team.record.ties > 0,
-  );
+  const hasCompletedGame = teams.some((team) => gamesPlayed(team) > 0);
   const hasBracketResult = [...winners, ...losers].some(
     (matchup) => matchup.winnerRosterId !== null || matchup.loserRosterId !== null,
   );
@@ -129,8 +144,12 @@ export default function PlayoffsPage() {
     () =>
       currentWeek == null || !hasCompletedGame
         ? null
-        : buildPlayoffNarratives(seededTeams, currentWeek),
-    [seededTeams, currentWeek, hasCompletedGame],
+        : buildPlayoffNarratives(
+            seededTeams,
+            currentWeek,
+            computeGrundleSeedRanges(seededTeams, remainingGames, regularSeasonWeeksFor(league)),
+          ),
+    [seededTeams, currentWeek, hasCompletedGame, remainingGames, league],
   );
   const supportsPreview = playoffTeams === 6;
 

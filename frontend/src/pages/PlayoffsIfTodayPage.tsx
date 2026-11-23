@@ -10,9 +10,18 @@ import { Bracket } from '../components/bracket/Bracket';
 import { TeamAvatars } from '../components/common/TeamAvatars';
 import { BracketModeToggle } from '../components/common/BracketModeToggle';
 import { TeamSelector } from '../components/common/TeamSelector';
-import { LEAGUE_ID } from '../config/league';
+import { LEAGUE_ID, PLAYOFF_WEEKS } from '../config/league';
+import type { ScheduledGame } from '../utils/seedRanges';
+import {
+  computeGrundleSeedRanges,
+  gamesPlayed,
+  loadRemainingGames,
+} from '../utils/grundleSeedRanges';
 import { PlayoffRacePanels } from '../components/PlayoffRacePanels';
 import { buildPlayoffNarratives } from './narratives.tsx';
+
+// The Beta bracket starts in PLAYOFF_WEEKS.round1, so the regular season ends the week before.
+const REGULAR_SEASON_WEEKS = PLAYOFF_WEEKS.round1 - 1;
 
 type BracketMode = 'score' | 'reward';
 
@@ -148,9 +157,17 @@ function PlayoffsIfTodayPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [mode, setMode] = useState<BracketMode>('score');
   const [currentWeek, setCurrentWeek] = useState<number | null>(null);
+  const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
   const narratives = useMemo(
-    () => (currentWeek == null ? null : buildPlayoffNarratives(teams, currentWeek)),
-    [teams, currentWeek],
+    () =>
+      currentWeek == null
+        ? null
+        : buildPlayoffNarratives(
+            teams,
+            currentWeek,
+            computeGrundleSeedRanges(teams, remainingGames, REGULAR_SEASON_WEEKS),
+          ),
+    [teams, currentWeek, remainingGames],
   );
 
   useEffect(() => {
@@ -169,6 +186,11 @@ function PlayoffsIfTodayPage() {
         const merged = mergeRostersAndUsersToTeams(rosters, users);
         const withSeeds = computeSeeds(merged);
 
+        setRemainingGames(
+          merged.some((team) => gamesPlayed(team) > 0)
+            ? await loadRemainingGames(LEAGUE_ID, merged, REGULAR_SEASON_WEEKS)
+            : null,
+        );
         setTeams(withSeeds);
 
         // Project the entire bracket using season-long weekly scoring averages

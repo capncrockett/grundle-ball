@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import type { Team } from '../models/fantasy';
+import type { SeedBounds } from '../utils/seedRanges';
 import { computePlayoffRaceInsights, gamesBack } from './playoffRaceInsights';
 
 type NarrativeSection = {
@@ -55,57 +56,8 @@ const seedToken = (team: Team): ReactNode => {
 
 const boldName = (team: Team): ReactNode => <strong>{team.teamName}</strong>;
 
-const winPoints = (team: Team): number => team.record.wins + team.record.ties * 0.5;
-
-type BestWorst = { best: number; worst: number; label: string };
-
-const rankTeams = (entries: { winPoints: number; pf: number; id: number }[]): number[] => {
-  const sorted = [...entries].sort((a, b) => {
-    if (b.winPoints !== a.winPoints) return b.winPoints - a.winPoints;
-    return b.pf - a.pf;
-  });
-  return sorted.map((entry) => entry.id);
-};
-
-const computeBestWorstRanges = (teams: Team[], regularSeasonWeeks = 14): Map<number, BestWorst> => {
-  const map = new Map<number, BestWorst>();
-  teams.forEach((team) => {
-    const gamesPlayed = team.record.wins + team.record.losses + team.record.ties;
-    const remaining = Math.max(regularSeasonWeeks - gamesPlayed, 0);
-    const minWinPoints = winPoints(team);
-    const maxWinPoints = minWinPoints + remaining;
-
-    const optimisticEntries = teams.map((t) => {
-      const isSelf = t.sleeperRosterId === team.sleeperRosterId;
-      return {
-        id: t.sleeperRosterId,
-        winPoints: isSelf ? maxWinPoints : winPoints(t), // others at floor
-        pf: isSelf ? Number.POSITIVE_INFINITY : t.pointsFor,
-      };
-    });
-
-    const pessimisticEntries = teams.map((t) => {
-      const gp = t.record.wins + t.record.losses + t.record.ties;
-      const rem = Math.max(regularSeasonWeeks - gp, 0);
-      const isSelf = t.sleeperRosterId === team.sleeperRosterId;
-      return {
-        id: t.sleeperRosterId,
-        winPoints: isSelf ? minWinPoints : winPoints(t) + rem, // others at ceiling
-        pf: isSelf ? Number.NEGATIVE_INFINITY : t.pointsFor,
-      };
-    });
-
-    const bestRank = rankTeams(optimisticEntries).indexOf(team.sleeperRosterId) + 1;
-    const worstRank = rankTeams(pessimisticEntries).indexOf(team.sleeperRosterId) + 1;
-
-    map.set(team.sleeperRosterId, {
-      best: bestRank,
-      worst: worstRank,
-      label: `${bestRank.toString()}-${worstRank.toString()}`,
-    });
-  });
-  return map;
-};
+// Best/worst seeds from the real remaining schedule; see utils/grundleSeedRanges.ts.
+type BestWorst = SeedBounds;
 
 const isSeasonComplete = (teams: Team[], regularSeasonWeeks = 14): boolean => {
   const gamesPlayed = teams.map((team) => team.record.wins + team.record.losses + team.record.ties);
@@ -471,13 +423,16 @@ const buildDivisionNarratives = (
   if (isSeasonComplete(teams)) return [];
 
   const sections: NarrativeSection[] = [];
+  // Division winners take seeds 1 through the number of divisions.
+  const divisionCount = new Set(teams.map((team) => team.divisionId).filter((id) => id !== null))
+    .size;
 
   insights.divisionRaces.forEach((race) => {
     const leaderRange = ranges.get(race.leader.sleeperRosterId);
     const chaserRange = ranges.get(race.chaser.sleeperRosterId);
     if (!leaderRange || !chaserRange) return;
-    // Require overlap: chaser must be able to finish above leader
-    if (chaserRange.best >= leaderRange.worst) return;
+    // Skip unless the chaser can still win the division.
+    if (chaserRange.best > divisionCount) return;
 
     const pfGap = pfSwingNeeded(race.leader, race.chaser);
     const contexts = computePfContexts(teams);
@@ -541,14 +496,18 @@ const buildDivisionNarratives = (
 // meaningless week of scores.
 export const PLAYOFF_NARRATIVES_MIN_WEEK = 3;
 
+/**
+ * `ranges` are best/worst seeds per Sleeper roster id from
+ * computeGrundleSeedRanges, so races only appear when the remaining schedule
+ * still allows them.
+ */
 export function buildPlayoffNarratives(
   teams: Team[],
   currentWeek: number,
+  ranges: Map<number, BestWorst>,
 ): PlayoffNarratives | null {
   if (!teams.length) return null;
   if (currentWeek < PLAYOFF_NARRATIVES_MIN_WEEK) return null;
-
-  const ranges = computeBestWorstRanges(teams);
 
   const bubble = buildBubbleNarrative(teams, ranges);
   const bye = buildByeNarrative(teams, ranges);

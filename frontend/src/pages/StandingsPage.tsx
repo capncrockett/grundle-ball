@@ -1,26 +1,16 @@
 // src/pages/StandingsPage.tsx
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  getLeague,
-  getLeagueMatchupsForWeek,
-  getLeagueRosters,
-  getLeagueUsers,
-} from '../api/sleeper';
+import { getLeague, getLeagueRosters, getLeagueUsers } from '../api/sleeper';
 import type { SleeperLeague } from '../api/sleeper';
+import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
+import type { ScheduledGame } from '../utils/seedRanges';
 import {
-  mergeRostersAndUsersToTeams,
-  computeSeeds,
-  RECORD_SEED_COUNT,
-  scheduledGamesFromMatchups,
-} from '../utils/sleeperTransforms';
-import {
-  computeScheduleFreeSeedRanges,
-  computeSeedRanges,
-  scheduleCoversRemaining,
-  type ScheduledGame,
-  type SeedingRule,
-} from '../utils/seedRanges';
+  computeGrundleSeedRanges,
+  gamesPlayed,
+  loadRemainingGames,
+  regularSeasonWeeksFor,
+} from '../utils/grundleSeedRanges';
 import type { Team } from '../models/fantasy';
 import { TeamAvatars } from '../components/common/TeamAvatars';
 import { computeStandingsInsights, MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
@@ -33,33 +23,6 @@ import {
   normalizeTeamName,
 } from '../data/matchupHistory';
 import { LEAGUE_ID } from '../config/league';
-
-const SEEDING_RULE: SeedingRule = { kind: 'divisions', recordSeeds: RECORD_SEED_COUNT };
-
-const gamesPlayed = (team: Team): number =>
-  team.record.wins + team.record.losses + team.record.ties;
-
-/**
- * Pairings for every regular-season week not yet reflected in the records.
- * Returns null when Sleeper cannot supply them; ranges then fall back to the
- * schedule-free bound.
- */
-async function loadRemainingGames(
-  leagueId: string,
-  teams: Team[],
-  regularSeasonWeeks: number,
-): Promise<ScheduledGame[] | null> {
-  const completedWeeks = Math.max(0, ...teams.map(gamesPlayed));
-  const weeks: number[] = [];
-  for (let week = completedWeeks + 1; week <= regularSeasonWeeks; week += 1) weeks.push(week);
-  try {
-    const byWeek = await Promise.all(weeks.map((week) => getLeagueMatchupsForWeek(leagueId, week)));
-    return byWeek.flatMap(scheduledGamesFromMatchups);
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
-}
 
 const InsightChip = ({
   label,
@@ -123,27 +86,12 @@ export function StandingsPage() {
   const [league, setLeague] = useState<SleeperLeague | null>(null);
   const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
 
-  // Best/worst seeds from the real remaining schedule. Records count wins
-  // only, matching computeSeeds. Without a schedule that covers every
-  // remaining game, fall back to the looser schedule-free bound.
-  const seedRanges = useMemo(() => {
-    if (!teams.length) return null;
-    const seedTeams = teams.map((team) => ({
-      id: team.sleeperRosterId,
-      wins: team.record.wins,
-      ties: 0,
-      divisionId: team.divisionId,
-    }));
-    const remainingByTeam = new Map(
-      teams.map((team) => [
-        team.sleeperRosterId,
-        Math.max(regularSeasonWeeks - gamesPlayed(team), 0),
-      ]),
-    );
-    return remainingGames && scheduleCoversRemaining(remainingGames, remainingByTeam)
-      ? computeSeedRanges(seedTeams, remainingGames, SEEDING_RULE)
-      : computeScheduleFreeSeedRanges(seedTeams, remainingByTeam, SEEDING_RULE);
-  }, [teams, remainingGames, regularSeasonWeeks]);
+  // Best/worst seeds from the real remaining schedule (see grundleSeedRanges.ts).
+  const seedRanges = useMemo(
+    () =>
+      teams.length ? computeGrundleSeedRanges(teams, remainingGames, regularSeasonWeeks) : null,
+    [teams, remainingGames, regularSeasonWeeks],
+  );
 
   const storedMatchups = useMemo(
     () =>
@@ -266,11 +214,7 @@ export function StandingsPage() {
           getLeagueRosters(LEAGUE_ID),
         ]);
 
-        const totalWeeks =
-          typeof league.settings.playoff_week_start === 'number' &&
-          league.settings.playoff_week_start > 0
-            ? Math.max(1, league.settings.playoff_week_start - 1)
-            : 14;
+        const totalWeeks = regularSeasonWeeksFor(league);
         setRegularSeasonWeeks(totalWeeks);
         setActiveLeagueId(league.league_id);
         setLeagueSeason(league.season);
