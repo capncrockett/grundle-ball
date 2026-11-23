@@ -151,6 +151,7 @@ test('snapshot refuses unreviewed personal names without disclosing them in its 
 test('snapshot refuses playoff settings the record-and-points model cannot represent', () => {
   for (const scheduleSettings of [
     { ...raw.settings.scheduleSettings, playoffSeedingRule: 'H2H_RECORD' },
+    { ...raw.settings.scheduleSettings, divisions: undefined },
     {
       ...raw.settings.scheduleSettings,
       divisions: [

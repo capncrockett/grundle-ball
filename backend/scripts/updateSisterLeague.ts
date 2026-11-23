@@ -43,7 +43,8 @@ export type RawEspnLeague = {
   settings: {
     name: string;
     scheduleSettings: {
-      divisions: { id: number; size: number }[];
+      // Optional so a response without it is reported as unsupported, not a TypeError.
+      divisions?: { id: number; size: number }[];
       matchupPeriodCount: number;
       playoffTeamCount: number;
       playoffMatchupPeriodLength: number;
@@ -128,7 +129,7 @@ export function toSisterLeagueSnapshot(
   // models one division and total points as the record tiebreaker only.
   if (
     scheduleSettings.playoffSeedingRule !== 'TOTAL_POINTS_SCORED' ||
-    scheduleSettings.divisions.filter((division) => division.size > 0).length !== 1
+    (scheduleSettings.divisions ?? []).filter((division) => division.size > 0).length !== 1
   ) {
     throw new Error(
       'Unsupported ESPN playoff seeding: Sister League requires one division and total points as the record tiebreaker. Update the seeding model before refreshing.',

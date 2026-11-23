@@ -27,6 +27,16 @@ test('Sister League standings, races, and scoring work without live APIs', async
 
   for (const name of ['Bubble Watch', 'Bye Chase']) {
     const panel = page.getByRole('region', { name, exact: true });
+    // Race cards exist only while a race is open, so a refreshed snapshot can
+    // legitimately have none (always the case once the season ends). The
+    // SisterLeaguePage integration tests cover the cards with a fixture.
+    if ((await panel.count()) === 0) {
+      testInfo.annotations.push({
+        type: 'skipped-check',
+        description: `${name}: no open race in the checked-in snapshot`,
+      });
+      continue;
+    }
     const card = panel.locator('details').first();
     const summary = card.locator('summary');
     await expect(summary).toBeVisible();
