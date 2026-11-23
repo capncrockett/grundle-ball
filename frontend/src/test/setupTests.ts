@@ -80,10 +80,10 @@ type TestGlobal = Omit<
 
 const globalScope = globalThis as TestGlobal;
 const polyfillTextEncoder = TextEncoder;
-const polyfillTextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
+const polyfillTextDecoder = TextDecoder;
 const polyfillTransformStream = TransformStream as unknown as typeof globalThis.TransformStream;
 const polyfillReadableStream = ReadableStream as unknown as typeof globalThis.ReadableStream;
-const polyfillWritableStream = WritableStream as unknown as typeof globalThis.WritableStream;
+const polyfillWritableStream = WritableStream;
 const polyfillBroadcastChannel =
   MockBroadcastChannel as unknown as typeof globalThis.BroadcastChannel;
 

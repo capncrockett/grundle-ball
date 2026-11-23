@@ -72,6 +72,7 @@ Production is hosted at <https://grundle-ball.vercel.app>. A live root check ret
 | `/history`                    | Historical draftboards and Team-specific keeper designations                   |
 | `/local/draft-intel`          | Restricted local/staging draft patterns, ADP, mock, and IDP planning tools     |
 | `/constitution`               | Current in-repo constitution and review-draft PDF link                         |
+| `/sister-league`              | Unlisted Sister League (separate ESPN league) odds, bubble watch, and scoring  |
 | `/beta/grundle-bowl/live`     | Beta custom bracket populated from playoff results                             |
 | `/beta/grundle-bowl/if-today` | Beta custom bracket seeded from current standings                              |
 
@@ -94,6 +95,14 @@ Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the correspon
   ```bash
   npm run fetch:drafts -w frontend
   ```
+
+- `frontend/src/data/sisterLeagueSnapshot.json` backs the unlisted `/sister-league` page for the Sister League, a separate, private ESPN league (not the Grundle League). It keeps only team names, records, points, seeds, and the regular-season schedule with weekly scores; the page simulates the remaining schedule in the browser for playoff/bye odds and Bubble Watch / Bye Chase narratives. Refresh it locally with the `espn_s2` and `SWID` cookies of an account in that league, set as `ESPN_S2` and `ESPN_SWID` in the root `.env` (gitignored; cookies are sent only to ESPN and never included in the snapshot):
+
+  ```bash
+  npm run sister:update
+  ```
+
+  The updater requires reviewed overrides for detected personal-name teams and rejects seeding settings the page cannot model. If the remaining schedule is incomplete, standings and conservative B-W bounds remain available, while odds and race narratives are withheld.
 
 ## Documentation
 

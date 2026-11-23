@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { GrundleBowlBetaLayout } from './components/GrundleBowlBetaLayout';
-import { MegalabowlLayout } from './components/MegalabowlLayout';
 import { ThemeSelector } from './components/ThemeSelector';
 import { ConstitutionPage } from './pages/ConstitutionPage';
 import { MatchupsPage } from './pages/MatchupsPage';
@@ -11,18 +10,16 @@ import PlayoffsLivePage from './pages/PlayoffsLivePage';
 import PlayoffsPage from './pages/PlayoffsPage';
 import { StandingsPage } from './pages/StandingsPage';
 import { isDraftIntelHost } from './draftIntelAccess';
-import { MEGALABOWL_LEAGUE_ID } from './config/league';
 
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+// Public but unlisted: no nav link. See frontend/src/config/league.ts SISTER_LEAGUE.
+const SisterLeaguePage = lazy(() => import('./pages/SisterLeaguePage'));
 const draftIntelBuildEnabled =
   typeof __DRAFT_INTEL_BUILD__ === 'undefined' || __DRAFT_INTEL_BUILD__;
 const draftIntelEnabled =
   draftIntelBuildEnabled &&
   isDraftIntelHost(typeof window === 'undefined' ? undefined : window.location.hostname);
 const DraftIntelPage = draftIntelEnabled ? lazy(() => import('./pages/DraftIntelPage')) : null;
-// The Megalabowl mirror uses the identical staging/localhost gate as Draft
-// Intel; there is no separate build-time define for it.
-const megalabowlEnabled = draftIntelEnabled;
 
 type NavLinkProps = {
   to: string;
@@ -135,17 +132,6 @@ export default function App() {
                 }
               />
             )}
-            {megalabowlEnabled && (
-              <NavLink
-                to="/local/megalabowl"
-                label="Megalabowl"
-                icon={
-                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-accent/20 text-[0.5rem] font-black text-accent">
-                    MB
-                  </span>
-                }
-              />
-            )}
             <NavLink
               to="/constitution"
               label="Constitution"
@@ -212,30 +198,20 @@ export default function App() {
               }
             />
           )}
-          {megalabowlEnabled && (
-            <>
-              <Route
-                path="/local/megalabowl"
-                element={<Navigate to="/local/megalabowl/standings" replace />}
-              />
-              <Route
-                path="/local/megalabowl/standings"
-                element={
-                  <MegalabowlLayout>
-                    <StandingsPage leagueId={MEGALABOWL_LEAGUE_ID} />
-                  </MegalabowlLayout>
+          <Route
+            path="/sister-league"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-16">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
                 }
-              />
-              <Route
-                path="/local/megalabowl/playoffs"
-                element={
-                  <MegalabowlLayout>
-                    <PlayoffsPage leagueId={MEGALABOWL_LEAGUE_ID} />
-                  </MegalabowlLayout>
-                }
-              />
-            </>
-          )}
+              >
+                <SisterLeaguePage />
+              </Suspense>
+            }
+          />
           <Route path="/constitution" element={<ConstitutionPage />} />
           <Route
             path="/beta/grundle-bowl"

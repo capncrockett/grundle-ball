@@ -1,20 +1,49 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import PlayoffsPage from './PlayoffsPage';
 import { renderWithRouter } from '../test/testUtils';
 import { server } from '../test/server';
 import { errorHandlers } from '../test/mocks/handlers';
+import * as sleeperApi from '../api/sleeper';
+import type { SleeperMatchup } from '../api/sleeper';
 import {
   mockSleeperLeague,
   mockSleeperRosters,
   mockPlayoffWinnersBracket,
   mockPlayoffLosersBracket,
 } from '../test/fixtures/sleeper';
-import * as sleeperApi from '../api/sleeper';
 
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 
 describe('PlayoffsPage', () => {
+  it('renders live and preview brackets while the optional race schedule is pending', async () => {
+    let resolveSchedule!: (value: SleeperMatchup[]) => void;
+    const schedule = new Promise<SleeperMatchup[]>((resolve) => {
+      resolveSchedule = resolve;
+    });
+    const matchupsSpy = jest
+      .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+      .mockReturnValue(schedule);
+    const view = renderWithRouter(<PlayoffsPage />);
+
+    try {
+      await screen.findByRole('heading', { name: 'Championship Bracket' });
+      expect(matchupsSpy).toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+      expect(
+        screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Bubble Watch')).toBeInTheDocument();
+    } finally {
+      view.unmount();
+      await act(async () => {
+        resolveSchedule([]);
+        await schedule;
+      });
+      matchupsSpy.mockRestore();
+    }
+  });
+
   it('renders the official bracket mirrored directly from Sleeper', async () => {
     renderWithRouter(<PlayoffsPage />);
 
@@ -109,34 +138,6 @@ describe('PlayoffsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('threads a custom leagueId through to the Sleeper API calls', async () => {
-    const leagueSpy = jest.spyOn(sleeperApi, 'getLeague');
-    const usersSpy = jest.spyOn(sleeperApi, 'getLeagueUsers');
-    const rostersSpy = jest.spyOn(sleeperApi, 'getLeagueRosters');
-    const winnersSpy = jest.spyOn(sleeperApi, 'getWinnersBracket');
-    const losersSpy = jest.spyOn(sleeperApi, 'getLosersBracket');
-    const customLeagueId = 'megalabowl-test-league';
-
-    try {
-      renderWithRouter(<PlayoffsPage leagueId={customLeagueId} />);
-
-      expect(
-        await screen.findByRole('heading', { name: /championship bracket/i }),
-      ).toBeInTheDocument();
-      expect(leagueSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(usersSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(rostersSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(winnersSpy).toHaveBeenCalledWith(customLeagueId);
-      expect(losersSpy).toHaveBeenCalledWith(customLeagueId);
-    } finally {
-      leagueSpy.mockRestore();
-      usersSpy.mockRestore();
-      rostersSpy.mockRestore();
-      winnersSpy.mockRestore();
-      losersSpy.mockRestore();
-    }
-  });
-
   it('marks Sleeper bracket seeds as provisional before games are played', async () => {
     const preseasonRosters = mockSleeperRosters.map((roster) => ({
       ...roster,
@@ -206,7 +207,7 @@ describe('PlayoffsPage', () => {
   });
 
   it('falls back to the default playoff week when Sleeper reports an unconfigured 0', async () => {
-    // Some linked leagues (e.g. the Megalabowl mirror) report
+    // Some Sleeper leagues report
     // `playoff_week_start: 0` rather than omitting the field entirely when
     // their commissioner hasn't configured it. `0` is still a `number`, so
     // it must be treated the same as "not configured" instead of literally

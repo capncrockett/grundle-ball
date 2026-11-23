@@ -23,7 +23,7 @@ function fixtureRepository() {
     JSON.stringify({
       name: 'fixture',
       version: '2.4.1',
-      engines: { node: '24.x' },
+      engines: { node: '26.x' },
     }),
   );
   writeFileSync(

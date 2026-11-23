@@ -1,11 +1,37 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import PlayoffsIfTodayPage from './PlayoffsIfTodayPage';
 import { errorHandlers } from '../test/mocks/handlers';
 import { server } from '../test/server';
 import { mockNFLState } from '../test/fixtures/sleeper';
+import * as sleeperApi from '../api/sleeper';
+import type { SleeperMatchup } from '../api/sleeper';
 
 describe('PlayoffsIfTodayPage', () => {
+  it('renders its projection while the optional race schedule is pending', async () => {
+    let resolveSchedule!: (value: SleeperMatchup[]) => void;
+    const schedule = new Promise<SleeperMatchup[]>((resolve) => {
+      resolveSchedule = resolve;
+    });
+    const matchupsSpy = jest
+      .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+      .mockReturnValue(schedule);
+    const view = render(<PlayoffsIfTodayPage />);
+
+    try {
+      expect(await screen.findByRole('heading', { name: 'Champ Bowl' })).toBeInTheDocument();
+      expect(matchupsSpy).toHaveBeenCalled();
+      expect(screen.getByText('Bubble Watch')).toBeInTheDocument();
+    } finally {
+      view.unmount();
+      await act(async () => {
+        resolveSchedule([]);
+        await schedule;
+      });
+      matchupsSpy.mockRestore();
+    }
+  });
+
   it('renders bracket preview and toggles modes', async () => {
     render(<PlayoffsIfTodayPage />);
 

@@ -4,10 +4,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { getLeague, getLeagueRosters, getLeagueUsers } from '../api/sleeper';
 import type { SleeperLeague } from '../api/sleeper';
 import { mergeRostersAndUsersToTeams, computeSeeds } from '../utils/sleeperTransforms';
+import type { ScheduledGame } from '../utils/seedRanges';
+import {
+  computeGrundleSeedRanges,
+  gamesPlayed,
+  loadRemainingGames,
+  regularSeasonWeeksFor,
+} from '../utils/grundleSeedRanges';
 import type { Team } from '../models/fantasy';
 import { TeamAvatars } from '../components/common/TeamAvatars';
 import { computeStandingsInsights, MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
-import { STANDINGS_GLOSSARY, MEGALABOWL_STANDINGS_GLOSSARY } from './narratives.tsx';
+import { STANDINGS_GLOSSARY } from './narratives.tsx';
 import {
   findMatchupForTeam,
   getLatestCompletedWeek,
@@ -15,21 +22,7 @@ import {
   getStoredMatchups,
   normalizeTeamName,
 } from '../data/matchupHistory';
-import { LEAGUE_ID, MEGALABOWL_LEAGUE_ID } from '../config/league';
-import {
-  computeMegalabowlPlayoffOdds,
-  MEGALABOWL_PLAYOFF_FIELD_SIZE,
-} from './megalabowlPlayoffOdds';
-
-// Duplicated from App.tsx's __DRAFT_INTEL_BUILD__ check rather than
-// imported: Vite's define only literal-folds this expression (and lets
-// Rollup dead-code-eliminate everything downstream of it) when it appears
-// directly in the file that uses it. Importing a shared constant from
-// another module defeated that folding in testing - Draft Intel's own
-// lazy-loaded chunk stopped being eliminated - so this is intentionally
-// copy-pasted, not refactored away.
-const MEGALABOWL_BUILD_ENABLED =
-  typeof __DRAFT_INTEL_BUILD__ === 'undefined' || __DRAFT_INTEL_BUILD__;
+import { LEAGUE_ID } from '../config/league';
 
 const InsightChip = ({
   label,
@@ -83,7 +76,7 @@ const groupTeamsByDivision = (teams: Team[]): DivisionRosterGroup[] => {
     });
 };
 
-export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
+export function StandingsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,16 +84,14 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
   const [activeLeagueId, setActiveLeagueId] = useState<string | null>(null);
   const [leagueSeason, setLeagueSeason] = useState<string | null>(null);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
+  const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
 
-  const winPoints = (team: Team): number => team.record.wins + team.record.ties * 0.5;
-
-  const rankTeams = (entries: { winPoints: number; pf: number; id: number }[]): number[] => {
-    const sorted = [...entries].sort((a, b) => {
-      if (b.winPoints !== a.winPoints) return b.winPoints - a.winPoints;
-      return b.pf - a.pf;
-    });
-    return sorted.map((entry) => entry.id);
-  };
+  // Best/worst seeds from the real remaining schedule (see grundleSeedRanges.ts).
+  const seedRanges = useMemo(
+    () =>
+      teams.length ? computeGrundleSeedRanges(teams, remainingGames, regularSeasonWeeks) : null,
+    [teams, remainingGames, regularSeasonWeeks],
+  );
 
   const storedMatchups = useMemo(
     () =>
@@ -155,8 +146,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
     marginByTeam: Map<string, number>,
     latestWeek: number | null,
   ): { best: number; worst: number; label: string; statCorrectionRisk: boolean } => {
-    const gamesPlayed = team.record.wins + team.record.losses + team.record.ties;
-    const remaining = Math.max(regularSeasonWeeks - gamesPlayed, 0);
+    const remaining = Math.max(regularSeasonWeeks - gamesPlayed(team), 0);
     const currentSeed = team.seed ?? team.rank;
     const normalizedName = normalizeTeamName(team.teamName);
     const margin = marginByTeam.get(team.teamName) ?? marginByTeam.get(normalizedName);
@@ -179,102 +169,84 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
       };
     }
 
-    const minWinPoints = winPoints(team);
-    const maxWinPoints = minWinPoints + remaining;
-
-    const optimisticEntries = allTeams.map((t) => {
-      const isSelf = t.sleeperRosterId === team.sleeperRosterId;
-      return {
-        id: t.sleeperRosterId,
-        winPoints: isSelf ? maxWinPoints : winPoints(t), // others at their floor for best case
-        pf: isSelf ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY,
-      };
-    });
-
-    const pessimisticEntries = allTeams.map((t) => {
-      const gp = t.record.wins + t.record.losses + t.record.ties;
-      const rem = Math.max(regularSeasonWeeks - gp, 0);
-      const isSelf = t.sleeperRosterId === team.sleeperRosterId;
-      return {
-        id: t.sleeperRosterId,
-        winPoints: isSelf ? minWinPoints : winPoints(t) + rem, // others at their ceiling for worst case
-        pf: isSelf ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY,
-      };
-    });
-
-    const bestRank = rankTeams(optimisticEntries).indexOf(team.sleeperRosterId) + 1;
-    const worstRank = rankTeams(pessimisticEntries).indexOf(team.sleeperRosterId) + 1;
+    const bounds = seedRanges?.get(team.sleeperRosterId) ?? {
+      best: currentSeed,
+      worst: currentSeed,
+    };
 
     return {
-      best: bestRank,
-      worst: worstRank,
-      label: `${bestRank.toString()}-${worstRank.toString()}`,
+      best: bounds.best,
+      worst: bounds.worst,
+      label: `${bounds.best.toString()}-${bounds.worst.toString()}`,
       statCorrectionRisk,
     };
   };
 
+  // Seeds 1-3 are the division winners and seeds 1-2 get the bye, so a
+  // worst-case seed inside those cuts clinches them.
   const teamBadges = (
     team: Team,
     bw: { best: number; worst: number; statCorrectionRisk: boolean },
-    isMegalabowl: boolean,
   ): string[] => {
     const badges = new Set<string>();
     const seed = team.seed ?? team.rank;
-    // Megalabowl has no divisions and no bracket bye, so the `*`/`y`/`z`
-    // codes (No. 1 seed, clinched division, clinched bye) don't apply -
-    // see MEGALABOWL_STANDINGS_GLOSSARY.
-    if (!isMegalabowl) {
-      if (bw.worst <= 1) {
-        badges.add('*');
-        badges.add('z');
-      } else if (bw.worst <= 2) {
-        badges.add('z');
-      }
-      if (bw.worst <= 3) badges.add('y');
+    if (bw.worst <= 1) {
+      badges.add('*');
+      badges.add('z');
+    } else if (bw.worst <= 2) {
+      badges.add('z');
     }
+    if (bw.worst <= 3) badges.add('y');
     if (bw.worst <= 6) badges.add('x');
     if (seed === 6) badges.add('6');
     return Array.from(badges);
   };
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         setIsLoading(true);
         setError(null);
 
         const [league, users, rosters] = await Promise.all([
-          getLeague(leagueId),
-          getLeagueUsers(leagueId),
-          getLeagueRosters(leagueId),
+          getLeague(LEAGUE_ID),
+          getLeagueUsers(LEAGUE_ID),
+          getLeagueRosters(LEAGUE_ID),
         ]);
+        if (cancelled) return;
 
-        const totalWeeks =
-          typeof league.settings.playoff_week_start === 'number' &&
-          league.settings.playoff_week_start > 0
-            ? Math.max(1, league.settings.playoff_week_start - 1)
-            : 14;
+        const totalWeeks = regularSeasonWeeksFor(league);
         setRegularSeasonWeeks(totalWeeks);
         setActiveLeagueId(league.league_id);
         setLeagueSeason(league.season);
         setLeague(league);
 
         const merged = mergeRostersAndUsersToTeams(rosters, users, league);
-        const hasCompletedGames = merged.some(
-          (team) => team.record.wins + team.record.losses + team.record.ties > 0,
-        );
+        const hasCompletedGames = merged.some((team) => gamesPlayed(team) > 0);
 
         setTeams(hasCompletedGames ? computeSeeds(merged) : merged);
+        // Schedule data only refines the conservative ranges. Keep the
+        // standings available while these optional requests are pending.
+        if (hasCompletedGames) {
+          void loadRemainingGames(LEAGUE_ID, merged, totalWeeks).then((schedule) => {
+            if (!cancelled) setRemainingGames(schedule);
+          });
+        }
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
     void load();
-  }, [leagueId]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const latestCompletedWeek = useMemo(
     () => getLatestCompletedWeek(storedMatchups),
@@ -287,25 +259,13 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
   }, [latestCompletedWeek, storedMatchups]);
 
   const insights = computeStandingsInsights(teams);
-  // Gated on the same build-time constant as the Megalabowl route/nav, not
-  // just the leagueId check below - StandingsPage is also the public
-  // /standings route, so without this, Megalabowl-only copy and data ship
-  // in the production bundle even though its route stays hidden.
-  const isMegalabowl = MEGALABOWL_BUILD_ENABLED && leagueId === MEGALABOWL_LEAGUE_ID;
-  const standingsGlossary = isMegalabowl ? MEGALABOWL_STANDINGS_GLOSSARY : STANDINGS_GLOSSARY;
-  const megalabowlPlayoffOdds = useMemo(
-    () => (isMegalabowl ? computeMegalabowlPlayoffOdds(teams) : []),
-    [isMegalabowl, teams],
-  );
   const hasDivisionData = teams.some((team) => team.divisionId !== null);
-  const hasStandingsData = teams.some(
-    (team) => team.record.wins + team.record.losses + team.record.ties > 0,
-  );
+  const hasStandingsData = teams.some((team) => gamesPlayed(team) > 0);
   const preseasonDivisions = useMemo(() => groupTeamsByDivision(teams), [teams]);
 
   // Sleeper reports `settings.divisions` only for leagues actually configured
-  // with divisions. A league genuinely built without divisions (e.g. the
-  // Megalabowl mirror) omits it entirely, which looks identical to
+  // with divisions. A league genuinely built without divisions omits it
+  // entirely, which looks identical to
   // `hasDivisionData` being false for a division-having league that simply
   // hasn't returned roster assignments yet. Distinguish "no divisions by
   // design" from "division data is missing" using that settings field, so a
@@ -555,8 +515,8 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                   </thead>
                   <tbody>
                     {teams.map((team) => {
-                      const gamesPlayed = team.record.wins + team.record.losses + team.record.ties;
-                      const avgPoints = gamesPlayed > 0 ? team.pointsFor / gamesPlayed : 0;
+                      const played = gamesPlayed(team);
+                      const avgPoints = played > 0 ? team.pointsFor / played : 0;
                       const paPfRatio =
                         team.pointsFor > 0 ? team.pointsAgainst / team.pointsFor : null;
                       const bw = bestWorstRange(team, teams, marginByTeam, latestCompletedWeek);
@@ -577,11 +537,11 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                               <span className="flex items-center gap-1">
                                 {team.teamName}
                                 <span className="flex items-center gap-0.5 text-[0.6rem] text-base-content/60">
-                                  {teamBadges(team, bw, isMegalabowl).map((code) => (
+                                  {teamBadges(team, bw).map((code) => (
                                     <span
                                       key={code}
                                       title={
-                                        standingsGlossary.find((g) => g.code === code)
+                                        STANDINGS_GLOSSARY.find((g) => g.code === code)
                                           ?.description ?? ''
                                       }
                                     >
@@ -631,7 +591,7 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                 <div className="card-body p-4 space-y-1">
                   <h3 className="card-title text-sm">Standings Glossary</h3>
                   <ul className="text-sm leading-snug space-y-1">
-                    {standingsGlossary.map((entry) => (
+                    {STANDINGS_GLOSSARY.map((entry) => (
                       <li key={entry.code}>
                         <span className="font-semibold">{entry.code}</span> - {entry.description}
                       </li>
@@ -639,44 +599,6 @@ export function StandingsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = 
                   </ul>
                 </div>
               </div>
-              {isMegalabowl && insights && megalabowlPlayoffOdds.length > 0 && (
-                <div
-                  className="card bg-base-200 mt-4"
-                  data-testid="megalabowl-playoff-odds"
-                  aria-label="Megalabowl playoff odds"
-                >
-                  <div className="card-body p-4 space-y-2">
-                    <h3 className="card-title text-sm">Megalabowl Playoff Odds (Projected)</h3>
-                    <p className="text-xs text-base-content/60">
-                      Best/worst scoring rank among the current top {MEGALABOWL_PLAYOFF_FIELD_SIZE}{' '}
-                      seeds, based on each team&apos;s season scoring average +/-35%. Megalabowl
-                      playoff advancement (weeks 15-17) is score-only across every league&apos;s
-                      6-seeds pooled together, so this is an in-league estimate only - it does not
-                      yet account for the other leagues in that pool.
-                    </p>
-                    <table className="table table-sm w-full">
-                      <thead>
-                        <tr>
-                          <th>Seed</th>
-                          <th>Team</th>
-                          <th>Avg PF/Week</th>
-                          <th>Odds Range</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {megalabowlPlayoffOdds.map((entry) => (
-                          <tr key={entry.sleeperRosterId}>
-                            <td>{entry.seed}</td>
-                            <td>{entry.teamName}</td>
-                            <td>{entry.avgPointsPerGame.toFixed(2)}</td>
-                            <td>{entry.label}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </>

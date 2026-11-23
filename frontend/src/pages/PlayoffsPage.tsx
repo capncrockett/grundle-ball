@@ -27,15 +27,23 @@ import {
 } from '../sleeperBracket/ifToday';
 import { PlayoffRacePanels } from '../components/PlayoffRacePanels';
 import { buildPlayoffNarratives } from './narratives';
+import type { ScheduledGame } from '../utils/seedRanges';
+import {
+  computeGrundleSeedRanges,
+  gamesPlayed,
+  loadRemainingGames,
+  regularSeasonWeeksFor,
+} from '../utils/grundleSeedRanges';
 import { LEAGUE_ID } from '../config/league';
 
-export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
+export default function PlayoffsPage() {
   const [view, setView] = useState<'live' | 'if-today'>('live');
   const [currentWeek, setCurrentWeek] = useState<number | null>(null);
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
   const [bracketError, setBracketError] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
+  const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
   const [winners, setWinners] = useState<ResolvedBracketMatchup[]>([]);
   const [losers, setLosers] = useState<ResolvedBracketMatchup[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -52,10 +60,10 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         setCurrentWeek(null);
 
         const [leagueData, users, rosters, brackets, nflState] = await Promise.all([
-          getLeague(leagueId),
-          getLeagueUsers(leagueId),
-          getLeagueRosters(leagueId),
-          Promise.all([getWinnersBracket(leagueId), getLosersBracket(leagueId)])
+          getLeague(LEAGUE_ID),
+          getLeagueUsers(LEAGUE_ID),
+          getLeagueRosters(LEAGUE_ID),
+          Promise.all([getWinnersBracket(LEAGUE_ID), getLosersBracket(LEAGUE_ID)])
             .then((data) => ({ data, error: null }))
             .catch(() => ({ data: [[], []], error: 'Sleeper bracket data is unavailable.' })),
           getNFLState().catch(() => null),
@@ -74,6 +82,15 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
         setTeams(merged);
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
+        // The race schedule refines conservative bounds without delaying
+        // either the published bracket or the standings preview.
+        if (merged.some((team) => gamesPlayed(team) > 0)) {
+          void loadRemainingGames(LEAGUE_ID, merged, regularSeasonWeeksFor(leagueData)).then(
+            (schedule) => {
+              if (!cancelled) setRemainingGames(schedule);
+            },
+          );
+        }
       } catch (err) {
         if (cancelled) return;
         console.error(err);
@@ -87,7 +104,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
     return () => {
       cancelled = true;
     };
-  }, [leagueId]);
+  }, []);
 
   const teamsById = useMemo(() => {
     const map = new Map<number, Team>();
@@ -96,9 +113,7 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
   }, [teams]);
 
   const hasBracket = winners.length > 0 || losers.length > 0;
-  const hasCompletedGame = teams.some(
-    (team) => team.record.wins + team.record.losses + team.record.ties > 0,
-  );
+  const hasCompletedGame = teams.some((team) => gamesPlayed(team) > 0);
   const hasBracketResult = [...winners, ...losers].some(
     (matchup) => matchup.winnerRosterId !== null || matchup.loserRosterId !== null,
   );
@@ -129,10 +144,14 @@ export default function PlayoffsPage({ leagueId = LEAGUE_ID }: { leagueId?: stri
     () =>
       currentWeek == null || !hasCompletedGame
         ? null
-        : buildPlayoffNarratives(seededTeams, currentWeek),
-    [seededTeams, currentWeek, hasCompletedGame],
+        : buildPlayoffNarratives(
+            seededTeams,
+            currentWeek,
+            computeGrundleSeedRanges(seededTeams, remainingGames, regularSeasonWeeksFor(league)),
+          ),
+    [seededTeams, currentWeek, hasCompletedGame, remainingGames, league],
   );
-  const supportsPreview = leagueId === LEAGUE_ID && playoffTeams === 6;
+  const supportsPreview = playoffTeams === 6;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">

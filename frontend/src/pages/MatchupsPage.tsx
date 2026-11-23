@@ -19,7 +19,7 @@ import type { Team, LiveMatchData, SeasonState } from '../models/fantasy';
 import { MatchupCard } from '../components/matchups/MatchupCard';
 import { LEAGUE_ID } from '../config/league';
 
-export function MatchupsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {}) {
+export function MatchupsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [liveMatchups, setLiveMatchups] = useState<LiveMatchData[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
@@ -64,9 +64,9 @@ export function MatchupsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {
         setCompletionAvailable(false);
 
         const [users, rosters, matchups] = await Promise.all([
-          getLeagueUsers(leagueId),
-          getLeagueRosters(leagueId),
-          getLeagueMatchupsForWeek(leagueId, week),
+          getLeagueUsers(LEAGUE_ID),
+          getLeagueRosters(LEAGUE_ID),
+          getLeagueMatchupsForWeek(LEAGUE_ID, week),
         ]);
         if (isCancelled()) return;
 
@@ -112,7 +112,7 @@ export function MatchupsPage({ leagueId = LEAGUE_ID }: { leagueId?: string } = {
     return () => {
       cancelled = true;
     };
-  }, [selectedWeek, seasonState, leagueId]);
+  }, [selectedWeek, seasonState]);
 
   const seasonLabel = seasonState
     ? seasonState.seasonType === 'pre'

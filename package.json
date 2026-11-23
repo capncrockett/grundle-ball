@@ -1,9 +1,9 @@
 {
   "name": "grundle-ball",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "private": true,
   "engines": {
-    "node": "24.x"
+    "node": "26.x"
   },
   "workspaces": [
     "frontend",
@@ -20,7 +20,8 @@
     "format:write": "npm run format:write -w frontend",
     "lint": "npm run lint -w frontend && npm run lint -w backend",
     "prepare": "node .husky/install.mjs",
-    "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend"
+    "typecheck": "npm run typecheck -w frontend && npm run typecheck -w backend",
+    "sister:update": "node --env-file-if-exists=.env backend/scripts/updateSisterLeague.ts"
   },
   "lint-staged": {
     "*.{cjs,css,html,js,json,jsx,md,mjs,ts,tsx,yaml,yml}": "prettier --config frontend/.prettierrc --write"
@@ -28,6 +29,6 @@
   "devDependencies": {
     "husky": "9.1.7",
     "lightningcss": "^1.33.0",
-    "lint-staged": "17.4.1"
+    "lint-staged": "17.6.1"
   }
 }

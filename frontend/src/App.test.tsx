@@ -28,6 +28,12 @@ jest.mock('./pages/HistoryPage', () => ({
   HistoryPage: () => <div>History Page</div>,
 }));
 
+jest.mock('./pages/SisterLeaguePage', () => ({
+  __esModule: true,
+  default: () => <div>Sister League Page</div>,
+  SisterLeaguePage: () => <div>Sister League Page</div>,
+}));
+
 jest.mock('./pages/DraftIntelPage', () => ({
   __esModule: true,
   default: () => <div>Draft Intel Page</div>,
@@ -109,6 +115,14 @@ describe('App routing + nav', () => {
     expect(historyLink).toHaveAttribute('href', '/history');
   });
 
+  it('renders the unlisted Sister League route without a nav link', async () => {
+    renderWithRouter(<App />, { route: '/sister-league' });
+
+    expect(await screen.findByText('Sister League Page')).toBeInTheDocument();
+    const banner = screen.getByRole('banner');
+    expect(within(banner).queryByRole('link', { name: /sister/i })).not.toBeInTheDocument();
+  });
+
   it('renders Draft Intel through its restricted route on an approved host', async () => {
     renderWithRouter(<App />, { route: '/local/draft-intel' });
 
@@ -118,20 +132,6 @@ describe('App routing + nav', () => {
     const draftIntelLink = within(banner).getByRole('link', { name: /draft intel/i });
     expect(draftIntelLink).toHaveClass('btn-active');
     expect(draftIntelLink).toHaveAttribute('href', '/local/draft-intel');
-  });
-
-  it('renders the Megalabowl mirror through its restricted route on an approved host', async () => {
-    renderWithRouter(<App />, { route: '/local/megalabowl/standings' });
-
-    expect(await screen.findByText('Standings Page')).toBeInTheDocument();
-    expect(
-      screen.getByText(/staging-only mirror of a separate, linked Sleeper league/i),
-    ).toBeInTheDocument();
-
-    const banner = screen.getByRole('banner');
-    const megalabowlLink = within(banner).getByRole('link', { name: /megalabowl/i });
-    expect(megalabowlLink).toHaveClass('btn-active');
-    expect(megalabowlLink).toHaveAttribute('href', '/local/megalabowl');
   });
 
   it('shows only the useful deployment details in the footer', () => {

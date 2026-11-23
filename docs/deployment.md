@@ -11,7 +11,7 @@ Grundle Ball is deployed as a static Vite SPA on Vercel. This document separates
 - Build output: `frontend/dist`.
 - Production: `https://grundle-ball.vercel.app`.
 - Protected staging and Draft Intel target: `https://grundle-ball-staging.vercel.app`.
-- The root package and GitHub Actions use Node 24.x; the Vercel project should use the same major version unless a release explicitly validates a different one.
+- The root package and GitHub Actions use Node 26.x; the Vercel project should use the same major version unless a release explicitly validates a different one.
 
 Live checks performed during the rebrand audit established only host-level state:
 
@@ -47,8 +47,6 @@ Draft Intel uses two deployment gates:
 
 The hostname check is not authentication. Keep Vercel Deployment Protection enabled for staging and use its normal authenticated session when opening Draft Intel on a phone.
 
-The Megalabowl mirror (a second, staging-only Sleeper league mirrored at `/local/megalabowl`) reuses this exact gate rather than defining its own; there is no separate `__MEGALABOWL_BUILD__` Vite define. Its nav link and routes are included and rendered under the same conditions as Draft Intel, so it is likewise excluded from the public production build and origin.
-
 `VITE_LEAGUE_ID` is not implemented. The confirmed 2026 league ID is centralized in `frontend/src/config/league.ts`; all frontend pages use it, and the Node history updater imports it as its default. Before adding a Vercel variable, define how both the Vite build and the Node updater will receive and validate the same configuration instead of creating separate defaults; see `frontend/TODO.md`.
 
 ## GitHub Actions and release flow
@@ -56,7 +54,7 @@ The Megalabowl mirror (a second, staging-only Sleeper league mirrored at `/local
 Classify the release and select its version using [`versioning.md`](versioning.md). The root `package.json` version is canonical.
 
 1. Branch from `main` as `release/MAJOR.MINOR.PATCH`, then set the same version in the root package and lockfile.
-2. GitHub Actions uses Node 24.x to run formatting, root frontend/backend lint and typecheck, plus the frontend Jest suite. These checks run for pull requests and `release/**` pushes.
+2. GitHub Actions uses Node 26.x to run formatting, root frontend/backend lint and typecheck, plus the frontend Jest suite. These checks run for pull requests and `release/**` pushes.
 3. Playwright starts and tests the checked-out app for `release/**` pushes, pull requests targeting `main`, and manual dispatches.
 4. Require the release-branch workflows to pass, then merge to `main`.
 5. Allow the configured Vercel production deployment to build.
@@ -92,7 +90,7 @@ Repository-backed items:
 - [x] New staging hostname exists behind Vercel protection; legacy Keeper Bowl hosts return 404.
 - [x] Draft Intel build/runtime gates allow localhost and protected staging while excluding public production.
 - [x] GitHub Actions run Jest, backend Node tests, the production Vite build, and conditional local Playwright jobs.
-- [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 24.x.
+- [x] GitHub Actions run frontend/backend typechecks alongside root lint on Node 26.x.
 - [x] Vite embeds the Vercel environment and Git branch, the footer links to the public repository, and the app renders Vercel Speed Insights.
 - [x] The hosted constitution PDF is present at `frontend/public/docs/Grundle_League_Constitution_2026_REVIEW_DRAFT_v2.pdf`.
 

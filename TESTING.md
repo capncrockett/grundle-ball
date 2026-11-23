@@ -120,7 +120,7 @@ Most smoke checks target the configured deployment and therefore exercise its cu
 
 ## GitHub Actions behavior
 
-- Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 24.x, matching the root package engine.
+- Both workflows use `actions/checkout@v7`, `actions/setup-node@v7`, and Node 26.x, matching the root package engine.
 - `.github/workflows/lint.yml` runs root formatting, lint, and typechecks on pull requests, `release/**` pushes, and manual dispatch. The lint and typecheck commands cover both frontend and backend workspaces.
 - The lint workflow also runs `repo:check` for root package/lockfile consistency and the repository's ASCII dash convention. Both repository and documentation checks include new, non-ignored files before staging.
 - `.github/workflows/test.yml` runs the frontend Jest CI suite, backend matchup-history store tests, and the production Vite build on pull requests, `release/**` pushes, and manual dispatch.

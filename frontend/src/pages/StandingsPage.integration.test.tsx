@@ -1,11 +1,11 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { StandingsPage } from './StandingsPage';
 import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 import * as sleeperApi from '../api/sleeper';
 import * as matchupHistory from '../data/matchupHistory';
 import type { StoredMatchup } from '../data/matchupHistoryTypes';
 import { MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
-import { MEGALABOWL_LEAGUE_ID } from '../config/league';
+import { LEAGUE_ID } from '../config/league';
 
 describe('StandingsPage', () => {
   let leagueSpy: jest.SpyInstance;
@@ -31,17 +31,6 @@ describe('StandingsPage', () => {
     const row = rows.find((candidate) => within(candidate).queryByText(/Big Ol' TDs/i));
     expect(row).toBeInTheDocument();
     expect(row).toHaveTextContent(/\b1\b/);
-  });
-
-  it('threads a custom leagueId through to the Sleeper API calls', async () => {
-    const customLeagueId = 'megalabowl-test-league';
-
-    render(<StandingsPage leagueId={customLeagueId} />);
-
-    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
-    expect(leagueSpy).toHaveBeenCalledWith(customLeagueId);
-    expect(usersSpy).toHaveBeenCalledWith(customLeagueId);
-    expect(rostersSpy).toHaveBeenCalledWith(customLeagueId);
   });
 
   it('requests stored history for the active Sleeper league and season', async () => {
@@ -245,7 +234,7 @@ describe('StandingsPage', () => {
   });
 
   it('computes a full-season best/worst range when Sleeper reports an unconfigured 0 for playoff_week_start', async () => {
-    // Some linked leagues (e.g. the Megalabowl mirror) report
+    // Some Sleeper leagues report
     // `playoff_week_start: 0` rather than omitting the field when their
     // commissioner hasn't configured it. `0` is still a `number`, so it must
     // be treated the same as "not configured" (14-week season), not taken
@@ -271,6 +260,124 @@ describe('StandingsPage', () => {
     // instead collapse every row to its current, already-decided seed.
     dataRows.forEach((row) => {
       expect(row).toHaveTextContent('1-12');
+    });
+  });
+
+  describe('best/worst ranges from the remaining schedule', () => {
+    // One week left. "5 Fingers 2 Ur Face" (Alpha, 8-5) trails three teams;
+    // the two 7-6 Beta teams play each other, so only one of them can catch it.
+    const winsByRoster: Record<number, number> = {
+      1: 11,
+      2: 9,
+      3: 10,
+      4: 7,
+      5: 8,
+      6: 7,
+      7: 4,
+      8: 5,
+      9: 3,
+      10: 3,
+      11: 2,
+      12: 1,
+    };
+    const finalWeekPairs = [
+      [4, 6],
+      [1, 2],
+      [5, 7],
+      [3, 8],
+      [9, 10],
+      [11, 12],
+    ];
+    const finalWeekMatchups = finalWeekPairs.flatMap(([a, b], index) =>
+      [a, b].map((rosterId) => ({
+        roster_id: rosterId,
+        matchup_id: index + 1,
+        points: 0,
+        starters: [],
+        players: [],
+      })),
+    );
+
+    const findBestWorstCell = async (teamName: string) => {
+      const rows = await screen.findAllByRole('row');
+      const row = rows.find((candidate) => within(candidate).queryByText(teamName));
+      if (!(row instanceof HTMLElement)) throw new Error(`No row for ${teamName}`);
+      return { row, cell: within(row).getAllByRole('cell')[3] };
+    };
+
+    beforeEach(() => {
+      rostersSpy.mockResolvedValue(
+        mockSleeperRosters.map((roster) => ({
+          ...roster,
+          settings: {
+            ...roster.settings,
+            wins: winsByRoster[roster.roster_id],
+            losses: 13 - winsByRoster[roster.roster_id],
+            ties: 0,
+          },
+        })),
+      );
+    });
+
+    it('rules out results the schedule makes impossible', async () => {
+      const matchupsSpy = jest
+        .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+        .mockResolvedValue(finalWeekMatchups);
+
+      render(<StandingsPage />);
+
+      const { row, cell } = await findBestWorstCell('5 Fingers 2 Ur Face');
+      expect(matchupsSpy).toHaveBeenCalledWith(LEAGUE_ID, 14);
+      // Even with a loss, at most one of the two 7-6 teams catches it: no worse than 5th.
+      await waitFor(() => {
+        expect(cell).toHaveTextContent('3-5');
+      });
+      expect(within(row).getByTitle('Clinched Playoffs')).toBeInTheDocument();
+    });
+
+    it('renders conservative bounds before the optional schedule responds, then refines them', async () => {
+      let resolveSchedule!: (value: typeof finalWeekMatchups) => void;
+      const schedule = new Promise<typeof finalWeekMatchups>((resolve) => {
+        resolveSchedule = resolve;
+      });
+      const matchupsSpy = jest
+        .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+        .mockReturnValue(schedule);
+      const view = render(<StandingsPage />);
+
+      try {
+        const { row, cell } = await findBestWorstCell('5 Fingers 2 Ur Face');
+        expect(matchupsSpy).toHaveBeenCalledWith(LEAGUE_ID, 14);
+        expect(cell).toHaveTextContent('3-7');
+        expect(within(row).queryByTitle('Clinched Playoffs')).not.toBeInTheDocument();
+
+        await act(async () => {
+          resolveSchedule(finalWeekMatchups);
+          await schedule;
+        });
+
+        expect(cell).toHaveTextContent('3-5');
+        expect(within(row).getByTitle('Clinched Playoffs')).toBeInTheDocument();
+      } finally {
+        view.unmount();
+        await act(async () => {
+          resolveSchedule(finalWeekMatchups);
+          await schedule;
+        });
+      }
+    });
+
+    it('falls back to the schedule-free bound when the schedule is unavailable', async () => {
+      jest
+        .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+        .mockRejectedValue(new Error('Sleeper unavailable'));
+
+      render(<StandingsPage />);
+
+      const { row, cell } = await findBestWorstCell('5 Fingers 2 Ur Face');
+      // Without pairings, both 7-6 teams could win, so the playoff spot is not clinched.
+      expect(cell).toHaveTextContent('3-7');
+      expect(within(row).queryByTitle('Clinched Playoffs')).not.toBeInTheDocument();
     });
   });
 
@@ -322,46 +429,6 @@ describe('StandingsPage', () => {
     expect(screen.queryByText(/did not return division assignments/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'D1' })).not.toBeInTheDocument();
     expect(within(preseason).getByText(/Big Ol' TDs/i)).toBeInTheDocument();
-  });
-
-  it('does not show the Megalabowl playoff odds card for the main league', async () => {
-    render(<StandingsPage />);
-
-    expect(await screen.findByText(/Toughest Schedule/i)).toBeInTheDocument();
-    expect(screen.queryByTestId('megalabowl-playoff-odds')).not.toBeInTheDocument();
-  });
-
-  it('shows the Megalabowl playoff odds card, ranking only the top 6 seeds, for the Megalabowl leagueId', async () => {
-    render(<StandingsPage leagueId={MEGALABOWL_LEAGUE_ID} />);
-
-    const card = await screen.findByTestId('megalabowl-playoff-odds');
-    expect(within(card).getByText(/Megalabowl Playoff Odds/i)).toBeInTheDocument();
-
-    const rows = within(card).getAllByRole('row');
-    // header row + one row per top-6 seed
-    expect(rows.length).toBe(7);
-    expect(within(card).getByText("Big Ol' TDs")).toBeInTheDocument();
-    expect(within(card).queryByText('Team Nine')).not.toBeInTheDocument();
-  });
-
-  it('swaps in the Megalabowl-specific glossary and suppresses division/bye badges for the Megalabowl leagueId', async () => {
-    render(<StandingsPage leagueId={MEGALABOWL_LEAGUE_ID} />);
-
-    const rows = await screen.findAllByRole('row');
-    const row = rows.find((candidate) => within(candidate).queryByText(/Big Ol' TDs/i));
-    expect(row).toBeDefined();
-    if (row instanceof HTMLElement) {
-      // Megalabowl has no divisions or bracket bye, so these main-league
-      // badges/tooltips must not appear even for the No. 1 seed.
-      expect(within(row).queryByTitle(/Clinched Division/i)).not.toBeInTheDocument();
-      expect(within(row).queryByTitle(/Clinched First-Round Bye/i)).not.toBeInTheDocument();
-      expect(within(row).queryByTitle(/Clinched No\. 1 Overall Seed/i)).not.toBeInTheDocument();
-    }
-
-    expect(screen.queryByText(/Clinched Division/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Clinched First-Round Bye/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/Megalabowl playoff pool/i)).toBeInTheDocument();
-    expect(screen.getByText(/6th and final Megalabowl playoff seed/i)).toBeInTheDocument();
   });
 
   it('shows a waiting message instead of a division-data warning during early weeks', async () => {

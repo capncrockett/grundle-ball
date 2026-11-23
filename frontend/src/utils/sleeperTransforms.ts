@@ -127,6 +127,26 @@ export const scoreFor = (matchup: SleeperMatchup): number =>
 export const isScoreEdited = (matchup: SleeperMatchup): boolean =>
   typeof matchup.custom_points === 'number';
 
+/**
+ * Head-to-head pairings for one week, by Sleeper roster id. Rows without a
+ * matchup id or without exactly one opponent (byes, incomplete data) are
+ * skipped.
+ */
+export function scheduledGamesFromMatchups(
+  matchups: SleeperMatchup[],
+): { teamA: number; teamB: number }[] {
+  const rosterIdsByMatchup = new Map<number, number[]>();
+  for (const row of matchups) {
+    if (typeof row.matchup_id !== 'number') continue;
+    const rosterIds = rosterIdsByMatchup.get(row.matchup_id) ?? [];
+    rosterIds.push(row.roster_id);
+    rosterIdsByMatchup.set(row.matchup_id, rosterIds);
+  }
+  return [...rosterIdsByMatchup.values()]
+    .filter((rosterIds) => rosterIds.length === 2)
+    .map(([teamA, teamB]) => ({ teamA, teamB }));
+}
+
 export function pairMatchups(
   week: number,
   matchups: SleeperMatchup[],
@@ -261,6 +281,9 @@ export function computeStandings(teams: Team[]): Team[] {
   }));
 }
 
+/** Seeds filled by division winners and then the best records, before the points-for seed. */
+export const RECORD_SEED_COUNT = 5;
+
 /**
  * League-specific seeding rules:
  * - Seeds 1-3: Division winners (sorted by record > points for).
@@ -294,7 +317,7 @@ export function computeSeeds(teams: Team[]): Team[] {
 
   // Seeds 4-5: next best records (regardless of division)
   for (const team of sortedByRank) {
-    if (seeded.length >= 5) break;
+    if (seeded.length >= RECORD_SEED_COUNT) break;
     if (usedRosterIds.has(team.sleeperRosterId)) continue;
     seeded.push(team);
     usedRosterIds.add(team.sleeperRosterId);
