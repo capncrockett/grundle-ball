@@ -37,7 +37,7 @@ The snapshot keeps only team names, divisions, records, points, weekly scores, a
    - The Sweater Song came out at 25.6%.
 3. **Independent cross-check (REAL data, independent code).**
    - [odds_check.py](odds_check.py) re-implements the seeding from the constitution text.
-   - Four score models agree within simulation noise, so the result does not hinge on the model: app model 25.3%, raw team mean and sd 25.4%, league sd for everyone 23.3%, bootstrap from actual weekly scores 24.3%.
+   - The four score models give broadly similar estimates: app model 25.3%, raw team mean and sd 25.4%, league sd for everyone 23.3%, bootstrap from actual weekly scores 24.3%. That 2.1-point spread is model sensitivity, not sampling noise; at 40,000 runs, sampling error is about ±0.4 points at 95% confidence.
    - FantasyPros also showed 26% (USER-REPORTED).
 4. **Sister League unchanged (REAL, checked-in snapshot).** A temporary Jest dump before and after extracting the shared model was byte-identical. It covered outlooks, odds by record, rooting interests, and the first 500 simulated seeds.
 5. **Seeding tests (SYNTHETIC).**
