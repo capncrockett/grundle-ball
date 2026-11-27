@@ -64,17 +64,17 @@ Production is hosted at <https://grundle-ball.vercel.app>. A live root check ret
 
 ## Routes
 
-| Route                         | Purpose                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| `/standings`                  | Default landing page; standings, division summaries, and playoff-race insights |
-| `/playoffs`                   | Official Sleeper winners and consolation brackets                              |
-| `/matchups`                   | Week-selectable matchups and starter completion counts                         |
-| `/history`                    | Historical draftboards and Team-specific keeper designations                   |
-| `/local/draft-intel`          | Restricted local/staging draft patterns, ADP, mock, and IDP planning tools     |
-| `/constitution`               | Current in-repo constitution and review-draft PDF link                         |
-| `/sister-league`              | Unlisted Sister League (separate ESPN league) odds, bubble watch, and scoring  |
-| `/beta/grundle-bowl/live`     | Beta custom bracket populated from playoff results                             |
-| `/beta/grundle-bowl/if-today` | Beta custom bracket seeded from current standings                              |
+| Route                         | Purpose                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------ |
+| `/standings`                  | Default landing page; standings, playoff/bye odds, division summaries, and playoff-race insights |
+| `/playoffs`                   | Official Sleeper winners and consolation brackets                                                |
+| `/matchups`                   | Week-selectable matchups and starter completion counts                                           |
+| `/history`                    | Historical draftboards and Team-specific keeper designations                                     |
+| `/local/draft-intel`          | Restricted local/staging draft patterns, ADP, mock, and IDP planning tools                       |
+| `/constitution`               | Current in-repo constitution and review-draft PDF link                                           |
+| `/sister-league`              | Unlisted Sister League (separate ESPN league) odds, bubble watch, and scoring                    |
+| `/beta/grundle-bowl/live`     | Beta custom bracket populated from playoff results                                               |
+| `/beta/grundle-bowl/if-today` | Beta custom bracket seeded from current standings                                                |
 
 Legacy `/playoffs/live` and `/playoffs/if-today` links redirect to the corresponding Beta routes.
 

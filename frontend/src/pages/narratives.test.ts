@@ -7,6 +7,8 @@ import {
 } from './narratives.tsx';
 import { computeSeeds, mergeRostersAndUsersToTeams } from '../utils/sleeperTransforms';
 import { computeGrundleSeedRanges } from '../utils/grundleSeedRanges';
+import { simulateGrundleSeason } from '../utils/grundleOdds';
+import { formatOdds } from '../utils/seasonSimulation';
 import type { Team } from '../models/fantasy';
 import { mockSleeperLeague, mockSleeperRosters, mockSleeperUsers } from '../test/fixtures/sleeper';
 
@@ -124,6 +126,59 @@ describe('buildPlayoffNarratives', () => {
     expect(withoutSchedule?.bye).not.toBeNull();
     expect(withSchedule?.bye).toBeNull();
     expect(withSchedule?.bubble).not.toBeNull();
+  });
+
+  describe('simulated odds', () => {
+    const teams = buildTeams();
+    const finalWeek = [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+      [7, 8],
+      [9, 10],
+      [11, 12],
+    ].map(([teamA, teamB]) => ({ teamA, teamB }));
+    const ranges = computeGrundleSeedRanges(teams, finalWeek, 14);
+    const scores = new Map(
+      teams.map((team) => [team.sleeperRosterId, Array<number>(13).fill(team.pointsFor / 13)]),
+    );
+    const simulation = simulateGrundleSeason(teams, finalWeek, scores, 14, { runs: 2000 });
+
+    it('adds playoff odds to Bubble Watch and bye odds to Bye Chase for the teams they name', () => {
+      const narratives = buildPlayoffNarratives(teams, 14, ranges, simulation.outlooks);
+      const bubble = narratives?.bubble;
+      const bye = narratives?.bye;
+      if (!bubble?.odds || !bye?.odds) throw new Error('Expected both races with odds');
+
+      expect(bubble.odds.label).toBe('Playoff odds');
+      expect(bubble.odds.entries.slice(0, 2).map(({ team }) => team.seed)).toEqual([6, 7]);
+      bubble.odds.entries.forEach(({ team, value }) => {
+        const range = ranges.get(team.sleeperRosterId);
+        expect(value).toBe(
+          formatOdds(simulation.outlooks.get(team.sleeperRosterId)?.playoffOdds ?? -1, {
+            clinched: (range?.worst ?? 99) <= 6,
+            eliminated: (range?.best ?? 0) > 6,
+          }),
+        );
+      });
+
+      expect(bye.odds.label).toBe('Bye odds');
+      expect(bye.odds.entries[0].team.seed).toBe(2);
+      const byeText = toText(createElement(Fragment, null, bye.summary, bye.note ?? null))
+        .replace(/&amp;/g, '&')
+        .replace(/&#x27;/g, "'");
+      bye.odds.entries.forEach(({ team, value }) => {
+        expect(value).toMatch(/^(100%|0%|>99%|<1%|\d+%)$/);
+        expect(byeText).toContain(team.teamName);
+      });
+    });
+
+    it('omits odds when no complete simulation is supplied', () => {
+      const narratives = buildPlayoffNarratives(teams, 14, ranges);
+      expect(narratives?.bubble).not.toBeNull();
+      expect(narratives?.bubble?.odds).toBeUndefined();
+      expect(narratives?.bye?.odds).toBeUndefined();
+    });
   });
 
   it('exposes glossary entries for standings UI', () => {

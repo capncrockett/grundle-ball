@@ -34,6 +34,7 @@ import {
   loadRemainingGames,
   regularSeasonWeeksFor,
 } from '../utils/grundleSeedRanges';
+import { loadCompletedScores, simulateGrundleSeason } from '../utils/grundleOdds';
 import { LEAGUE_ID } from '../config/league';
 
 export default function PlayoffsPage() {
@@ -44,6 +45,7 @@ export default function PlayoffsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
   const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
+  const [completedScores, setCompletedScores] = useState<Map<number, number[]> | null>(null);
   const [winners, setWinners] = useState<ResolvedBracketMatchup[]>([]);
   const [losers, setLosers] = useState<ResolvedBracketMatchup[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -82,14 +84,17 @@ export default function PlayoffsPage() {
         setTeams(merged);
         setWinners(resolveBracketMatchups(winnersBracket));
         setLosers(resolveBracketMatchups(losersBracket));
-        // The race schedule refines conservative bounds without delaying
-        // either the published bracket or the standings preview.
+        // The race schedule and completed scores refine conservative bounds
+        // and add odds without delaying the published bracket or the preview.
         if (merged.some((team) => gamesPlayed(team) > 0)) {
           void loadRemainingGames(LEAGUE_ID, merged, regularSeasonWeeksFor(leagueData)).then(
             (schedule) => {
               if (!cancelled) setRemainingGames(schedule);
             },
           );
+          void loadCompletedScores(LEAGUE_ID, merged).then((scores) => {
+            if (!cancelled) setCompletedScores(scores);
+          });
         }
       } catch (err) {
         if (cancelled) return;
@@ -140,17 +145,22 @@ export default function PlayoffsPage() {
     () => new Map(seededTeams.map((team) => [team.sleeperRosterId, seasonAverage(team)])),
     [seededTeams],
   );
-  const narratives = useMemo(
-    () =>
-      currentWeek == null || !hasCompletedGame
-        ? null
-        : buildPlayoffNarratives(
-            seededTeams,
-            currentWeek,
-            computeGrundleSeedRanges(seededTeams, remainingGames, regularSeasonWeeksFor(league)),
-          ),
-    [seededTeams, currentWeek, hasCompletedGame, remainingGames, league],
-  );
+  const narratives = useMemo(() => {
+    if (currentWeek == null || !hasCompletedGame) return null;
+    const regularSeasonWeeks = regularSeasonWeeksFor(league);
+    const simulation = simulateGrundleSeason(
+      seededTeams,
+      remainingGames,
+      completedScores,
+      regularSeasonWeeks,
+    );
+    return buildPlayoffNarratives(
+      seededTeams,
+      currentWeek,
+      computeGrundleSeedRanges(seededTeams, remainingGames, regularSeasonWeeks),
+      simulation.scheduleComplete ? simulation.outlooks : undefined,
+    );
+  }, [seededTeams, currentWeek, hasCompletedGame, remainingGames, completedScores, league]);
   const supportsPreview = playoffTeams === 6;
 
   return (

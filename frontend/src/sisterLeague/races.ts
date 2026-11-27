@@ -24,6 +24,8 @@ import {
 } from './sisterLeague';
 import { worstSeedIfWinsOut } from '../utils/seedRanges';
 
+export { formatOdds } from '../utils/seasonSimulation';
+
 export type RaceEntry = {
   teamId: number;
   odds: number;
@@ -134,21 +136,6 @@ export function buildSisterLeagueRaces(
     bubble: buildRace(snapshot, sim, ranges, averageRanks, 'playoffs'),
     bye: buildRace(snapshot, sim, ranges, averageRanks, 'bye'),
   };
-}
-
-/**
- * Simulated odds as a whole percent. Mathematically settled results show
- * 100%/0%; anything still open never rounds to a false certainty.
- */
-export function formatOdds(
-  odds: number,
-  { clinched = false, eliminated = false }: { clinched?: boolean; eliminated?: boolean } = {},
-): string {
-  if (clinched) return '100%';
-  if (eliminated) return '0%';
-  if (odds >= 0.995) return '>99%';
-  if (odds < 0.005) return '<1%';
-  return `${Math.round(odds * 100).toString()}%`;
 }
 
 export function ordinal(value: number): string {

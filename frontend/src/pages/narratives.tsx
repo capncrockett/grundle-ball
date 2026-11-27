@@ -1,7 +1,15 @@
 import { type ReactNode } from 'react';
 import type { Team } from '../models/fantasy';
 import type { SeedBounds } from '../utils/seedRanges';
+import { GRUNDLE_BYE_SEEDS, GRUNDLE_PLAYOFF_TEAMS } from '../utils/grundleOdds';
+import { formatOdds, type TeamOutlook } from '../utils/seasonSimulation';
 import { computePlayoffRaceInsights, gamesBack } from './playoffRaceInsights';
+
+/** Simulated odds for the teams a race names, already formatted for display. */
+export type NarrativeOdds = {
+  label: string;
+  entries: { team: Team; value: string }[];
+};
 
 type NarrativeSection = {
   id?: string;
@@ -9,7 +17,10 @@ type NarrativeSection = {
   summary: ReactNode;
   scenarios: ReactNode[];
   note?: ReactNode;
+  odds?: NarrativeOdds;
 };
+
+type Outlooks = Map<number, TeamOutlook>;
 
 export type PlayoffNarratives = {
   bubble: NarrativeSection | null;
@@ -58,6 +69,29 @@ const boldName = (team: Team): ReactNode => <strong>{team.teamName}</strong>;
 
 // Best/worst seeds from the real remaining schedule; see utils/grundleSeedRanges.ts.
 type BestWorst = SeedBounds;
+
+// 100%/0% only once the best/worst range has settled the cut, as on Standings.
+const raceOdds = (
+  label: string,
+  raceTeams: Team[],
+  ranges: Map<number, BestWorst>,
+  outlooks: Outlooks | undefined,
+  cut: number,
+  pick: (outlook: TeamOutlook) => number,
+): NarrativeOdds | undefined => {
+  if (!outlooks) return undefined;
+  const entries = raceTeams.flatMap((team) => {
+    const outlook = outlooks.get(team.sleeperRosterId);
+    const range = ranges.get(team.sleeperRosterId);
+    if (!outlook || !range) return [];
+    const value = formatOdds(pick(outlook), {
+      clinched: range.worst <= cut,
+      eliminated: range.best > cut,
+    });
+    return [{ team, value }];
+  });
+  return entries.length ? { label, entries } : undefined;
+};
 
 const isSeasonComplete = (teams: Team[], regularSeasonWeeks = 14): boolean => {
   const gamesPlayed = teams.map((team) => team.record.wins + team.record.losses + team.record.ties);
@@ -180,6 +214,7 @@ const findBubbleThirdTeam = (
 const buildBubbleNarrative = (
   teams: Team[],
   ranges: Map<number, BestWorst>,
+  outlooks?: Outlooks,
 ): NarrativeSection | null => {
   const race = computePlayoffRaceInsights(teams)?.bubbleRace;
   if (!race) return null;
@@ -266,8 +301,9 @@ const buildBubbleNarrative = (
 
   const thirdRange = thirdTeam ? ranges.get(thirdTeam.sleeperRosterId) : null;
   const thirdCtx = thirdTeam ? contexts.perTeam.get(thirdTeam.sleeperRosterId) : null;
+  const showThird = Boolean(thirdTeam && thirdRange && thirdRange.best <= 6 && thirdCtx);
   const note =
-    thirdTeam && thirdRange && thirdRange.best <= 6 && thirdCtx ? (
+    showThird && thirdTeam && thirdCtx ? (
       <>
         A third team ({seedToken(thirdTeam)}) can still enter the mix. They would need a big PF week
         to clear the{' '}
@@ -288,6 +324,14 @@ const buildBubbleNarrative = (
     summary,
     scenarios,
     note,
+    odds: raceOdds(
+      'Playoff odds',
+      showThird && thirdTeam ? [cutoff, challenger, thirdTeam] : [cutoff, challenger],
+      ranges,
+      outlooks,
+      GRUNDLE_PLAYOFF_TEAMS,
+      (outlook) => outlook.playoffOdds,
+    ),
   };
 };
 
@@ -319,6 +363,7 @@ const findByeThirdTeam = (
 const buildByeNarrative = (
   teams: Team[],
   ranges: Map<number, BestWorst>,
+  outlooks?: Outlooks,
 ): NarrativeSection | null => {
   const race = computePlayoffRaceInsights(teams)?.byeRace;
   if (!race) return null;
@@ -411,6 +456,14 @@ const buildByeNarrative = (
     summary,
     scenarios,
     note,
+    odds: raceOdds(
+      'Bye odds',
+      thirdTeam ? [holder, challenger, thirdTeam] : [holder, challenger],
+      ranges,
+      outlooks,
+      GRUNDLE_BYE_SEEDS,
+      (outlook) => outlook.byeOdds,
+    ),
   };
 };
 
@@ -499,18 +552,20 @@ export const PLAYOFF_NARRATIVES_MIN_WEEK = 3;
 /**
  * `ranges` are best/worst seeds per Sleeper roster id from
  * computeGrundleSeedRanges, so races only appear when the remaining schedule
- * still allows them.
+ * still allows them. `outlooks`, from a complete simulateGrundleSeason run,
+ * adds playoff odds to Bubble Watch and bye odds to Bye Chase.
  */
 export function buildPlayoffNarratives(
   teams: Team[],
   currentWeek: number,
   ranges: Map<number, BestWorst>,
+  outlooks?: Outlooks,
 ): PlayoffNarratives | null {
   if (!teams.length) return null;
   if (currentWeek < PLAYOFF_NARRATIVES_MIN_WEEK) return null;
 
-  const bubble = buildBubbleNarrative(teams, ranges);
-  const bye = buildByeNarrative(teams, ranges);
+  const bubble = buildBubbleNarrative(teams, ranges, outlooks);
+  const bye = buildByeNarrative(teams, ranges, outlooks);
   const divisions = buildDivisionNarratives(teams, ranges);
 
   if (!bubble && !bye && divisions.length === 0) {
