@@ -367,6 +367,70 @@ describe('StandingsPage', () => {
       }
     });
 
+    // Weeks 1-13 are complete; each roster scores a steady weekly total.
+    const completedWeekMatchups = finalWeekPairs.flatMap(([a, b], index) =>
+      [a, b].map((rosterId) => ({
+        roster_id: rosterId,
+        matchup_id: index + 1,
+        points: 95 + rosterId * 2,
+        starters: [],
+        players: [],
+      })),
+    );
+    const oddsCells = async (teamName: string) => {
+      const { row } = await findBestWorstCell(teamName);
+      const cells = within(row).getAllByRole('cell');
+      return { playoffs: cells[4], bye: cells[5] };
+    };
+
+    it('shows simulated playoff and bye odds once scores and the schedule load', async () => {
+      const matchupsSpy = jest
+        .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+        .mockImplementation((_, week) =>
+          Promise.resolve(week === 14 ? finalWeekMatchups : completedWeekMatchups),
+        );
+
+      render(<StandingsPage />);
+
+      expect(await screen.findByRole('columnheader', { name: /^Playoffs$/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^Bye$/i })).toBeInTheDocument();
+      expect(await screen.findByText(/simulated finishes to the regular season/i)).toBeVisible();
+      expect(matchupsSpy).toHaveBeenCalledWith(LEAGUE_ID, 1);
+      expect(matchupsSpy).toHaveBeenCalledWith(LEAGUE_ID, 13);
+
+      // Clinched a playoff spot (B-W 3-5) but can no longer reach a bye seed.
+      const bubble = await oddsCells('5 Fingers 2 Ur Face');
+      expect(bubble.playoffs).toHaveTextContent('100%');
+      expect(bubble.bye).toHaveTextContent('0%');
+
+      // Clinched its division, one of the two bye seeds in this fixture.
+      const leader = await oddsCells("Big Ol' TDs");
+      expect(leader.bye).toHaveTextContent('100%');
+
+      const longShot = await oddsCells('Team Twelve');
+      expect(longShot.playoffs).toHaveTextContent(/^(<1%|\d+%)$/);
+    });
+
+    it('withholds odds but keeps refined ranges when completed scores fail', async () => {
+      jest
+        .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+        .mockImplementation((_, week) =>
+          week === 14
+            ? Promise.resolve(finalWeekMatchups)
+            : Promise.reject(new Error('Sleeper unavailable')),
+        );
+
+      render(<StandingsPage />);
+
+      expect(await screen.findByText(/odds are unavailable/i)).toBeInTheDocument();
+      const { cell } = await findBestWorstCell('5 Fingers 2 Ur Face');
+      expect(cell).toHaveTextContent('3-5');
+      const odds = await oddsCells('5 Fingers 2 Ur Face');
+      expect(odds.playoffs).toHaveTextContent('-');
+      expect(odds.bye).toHaveTextContent('-');
+      expect(screen.queryByText(/simulated finishes/i)).not.toBeInTheDocument();
+    });
+
     it('falls back to the schedule-free bound when the schedule is unavailable', async () => {
       jest
         .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')

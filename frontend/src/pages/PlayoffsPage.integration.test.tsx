@@ -77,6 +77,8 @@ describe('PlayoffsPage', () => {
     expect(await screen.findByText('Bubble Watch')).toBeInTheDocument();
     expect(screen.getByText('Bye Chase')).toBeInTheDocument();
     expect(screen.getByText('Division Races')).toBeInTheDocument();
+    // The default fixtures lack completed scores, so odds stay hidden.
+    expect(screen.queryByTestId('race-odds')).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Projected Championship Bracket' }),
     ).toBeInTheDocument();
@@ -92,6 +94,47 @@ describe('PlayoffsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Live Playoffs' }));
     expect(screen.getByRole('heading', { name: 'Consolation Bracket' })).toBeInTheDocument();
     expect(screen.getAllByText(/^TBD$/).length).toBeGreaterThan(0);
+  });
+
+  it('adds simulated odds to Bubble Watch and Bye Chase once scores and the schedule load', async () => {
+    const pairs = [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+      [7, 8],
+      [9, 10],
+      [11, 12],
+    ];
+    const weekRows = (points: (rosterId: number) => number): SleeperMatchup[] =>
+      pairs.flatMap(([a, b], index) =>
+        [a, b].map((rosterId) => ({
+          roster_id: rosterId,
+          matchup_id: index + 1,
+          points: points(rosterId),
+          starters: [],
+          players: [],
+        })),
+      );
+    const matchupsSpy = jest
+      .spyOn(sleeperApi, 'getLeagueMatchupsForWeek')
+      .mockImplementation((_, week) =>
+        Promise.resolve(week === 14 ? weekRows(() => 0) : weekRows((id) => 140 - id * 4)),
+      );
+
+    try {
+      renderWithRouter(<PlayoffsPage />);
+      await screen.findByRole('heading', { name: 'Championship Bracket' });
+      fireEvent.click(screen.getByRole('button', { name: 'If Today' }));
+
+      const odds = await screen.findAllByTestId('race-odds');
+      expect(odds.map((line) => line.textContent)).toEqual([
+        expect.stringMatching(/^Playoff odds: .+ (100%|0%|>99%|<1%|\d+%)/),
+        expect.stringMatching(/^Bye odds: .+ (100%|0%|>99%|<1%|\d+%)/),
+      ]);
+      expect(screen.getAllByText(/share of 10,000 simulated finishes/i)).toHaveLength(2);
+    } finally {
+      matchupsSpy.mockRestore();
+    }
   });
 
   it('keeps the preview available when the published bracket fails', async () => {

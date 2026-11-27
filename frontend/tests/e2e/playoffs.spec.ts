@@ -55,6 +55,18 @@ test.describe('Playoffs bracket layout', () => {
     await page.route('**/state/nfl**', (route) =>
       route.fulfill({ json: { season: mockSleeperLeague.season, week: 13 } }),
     );
+    // Thirteen scored weeks plus the final week's pairings, so race odds load.
+    await page.route(`**/league/${LEAGUE_ID}/matchups/**`, (route) => {
+      const week = Number(new URL(route.request().url()).pathname.split('/').pop());
+      const rows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((rosterId) => ({
+        roster_id: rosterId,
+        matchup_id: Math.ceil(rosterId / 2),
+        points: week === 14 ? 0 : 140 - rosterId * 4,
+        starters: [],
+        players: [],
+      }));
+      return route.fulfill({ json: rows });
+    });
     await page.goto('/playoffs');
     await expect(
       page.getByRole('heading', { name: 'Championship Bracket', exact: true }),
@@ -69,6 +81,9 @@ test.describe('Playoffs bracket layout', () => {
         .filter({ has: page.locator('summary', { hasText: title }) });
       const summary = panel.locator('summary');
       await expect(summary.getByTestId('race-chevron')).toBeVisible();
+      if (title !== 'Division Races') {
+        await expect(summary.getByTestId('race-odds')).toContainText(/odds: .+%/);
+      }
       if (testInfo.project.name === 'iphone-12') {
         await expect(summary.getByText('Expand', { exact: true })).toBeHidden();
       } else {

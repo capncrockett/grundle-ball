@@ -1,19 +1,27 @@
 // frontend/src/sisterLeague/projections.ts
 //
-// Season-scoring stats and a Monte Carlo playout of the Sister League's
-// remaining regular-season schedule. Each team's weekly score is drawn from
-// a normal distribution built from its own completed weeks (average nudged
-// slightly toward the league average, spread floored at half the league
-// spread). Seeds go by record, then total points, matching ESPN.
-//
-// Results are deterministic for a given snapshot and PRNG seed so the page
-// does not reshuffle odds on every render.
+// Season-scoring stats and the Sister League's playout of its remaining
+// regular-season schedule. The Monte Carlo model lives in
+// utils/seasonSimulation.ts; seeds here go by record (a tie is half a win),
+// then total points, matching ESPN.
 
+import {
+  mean,
+  median,
+  playOutSeason,
+  recordSeedOrder,
+  stdDev,
+  withheldSimulation,
+  type SeasonSimulation as CoreSeasonSimulation,
+  type SimulationOptions,
+} from '../utils/seasonSimulation';
 import {
   hasCompleteRemainingSchedule,
   type SisterLeagueMatchup,
   type SisterLeagueSnapshot,
 } from './sisterLeague';
+
+export type { TeamOutlook } from '../utils/seasonSimulation';
 
 export type TeamScoring = {
   teamId: number;
@@ -25,30 +33,9 @@ export type TeamScoring = {
   stdDev: number;
 };
 
-export type TeamOutlook = {
-  teamId: number;
-  playoffOdds: number;
-  byeOdds: number;
-  /** seedOdds[i] is the share of simulations finishing at seed i + 1. */
-  seedOdds: number[];
-  mostLikelySeed: number;
-  projectedWins: number;
-};
-
 export type SimulatedGame = SisterLeagueMatchup & { index: number };
 
-export type SeasonSimulation = {
-  /** False means projections are withheld because scheduled games are missing or invalid. */
-  scheduleComplete: boolean;
-  runs: number;
-  teamIds: number[];
-  remainingGames: SimulatedGame[];
-  outlooks: Map<number, TeamOutlook>;
-  /** runs x remainingGames: 1 when the home team won that simulated game. */
-  homeWins: Uint8Array;
-  /** runs x teamIds: the final seed each team reached in that simulation. */
-  finalSeeds: Uint8Array;
-};
+export type SeasonSimulation = CoreSeasonSimulation<SisterLeagueMatchup>;
 
 export type PlayoffTarget = 'playoffs' | 'bye';
 
@@ -65,28 +52,6 @@ export type OddsByWins = {
   losses: number;
   odds: number;
   share: number;
-};
-
-// Pulls each average this many "league-average weeks" toward the league mean.
-const SHRINK_WEEKS = 2;
-const MIN_SPREAD_SHARE = 0.5;
-
-const mean = (values: number[]): number =>
-  values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
-
-const median = (values: number[]): number => {
-  if (!values.length) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-};
-
-const stdDev = (values: number[]): number => {
-  if (values.length < 2) return 0;
-  const avg = mean(values);
-  return Math.sqrt(
-    values.reduce((sum, value) => sum + (value - avg) ** 2, 0) / (values.length - 1),
-  );
 };
 
 const completedScoresByTeam = (snapshot: SisterLeagueSnapshot): Map<number, number[]> => {
@@ -121,129 +86,31 @@ export function leagueMedianScore(snapshot: SisterLeagueSnapshot): number {
   return median([...completedScoresByTeam(snapshot).values()].flat());
 }
 
-// Mulberry32: small, fast, seedable PRNG.
-const createRandom = (seed: number): (() => number) => {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-};
-
-const createNormal = (random: () => number): (() => number) => {
-  let spare: number | null = null;
-  return () => {
-    if (spare !== null) {
-      const value = spare;
-      spare = null;
-      return value;
-    }
-    const u = Math.max(random(), Number.EPSILON);
-    const v = random();
-    const radius = Math.sqrt(-2 * Math.log(u));
-    spare = radius * Math.sin(2 * Math.PI * v);
-    return radius * Math.cos(2 * Math.PI * v);
-  };
-};
-
-const scoreModels = (snapshot: SisterLeagueSnapshot): Map<number, { mean: number; sd: number }> => {
-  const byTeam = completedScoresByTeam(snapshot);
-  const all = [...byTeam.values()].flat();
-  const leagueMean = mean(all);
-  const leagueSd = stdDev(all);
-  const models = new Map<number, { mean: number; sd: number }>();
-  byTeam.forEach((scores, teamId) => {
-    const n = scores.length;
-    const shrunkMean = (n * mean(scores) + SHRINK_WEEKS * leagueMean) / (n + SHRINK_WEEKS);
-    const sd = n >= 2 ? Math.max(stdDev(scores), leagueSd * MIN_SPREAD_SHARE) : leagueSd;
-    models.set(teamId, { mean: shrunkMean, sd });
-  });
-  return models;
-};
-
 export function simulateSeason(
   snapshot: SisterLeagueSnapshot,
-  { runs = 10000, seed = 2026 }: { runs?: number; seed?: number } = {},
+  options: SimulationOptions = {},
 ): SeasonSimulation {
-  const teamIds = snapshot.teams.map((team) => team.id);
-  const teamIndex = new Map(teamIds.map((id, index) => [id, index]));
-  const remainingGames = snapshot.matchups
-    .filter((matchup) => !matchup.final)
-    .map((matchup, index) => ({ ...matchup, index }));
+  const remainingGames = snapshot.matchups.filter((matchup) => !matchup.final);
   if (!hasCompleteRemainingSchedule(snapshot)) {
-    return {
-      scheduleComplete: false,
-      runs: 0,
-      teamIds,
+    return withheldSimulation(
+      snapshot.teams.map((team) => team.id),
       remainingGames,
-      outlooks: new Map(),
-      homeWins: new Uint8Array(0),
-      finalSeeds: new Uint8Array(0),
-    };
+    );
   }
-  const models = scoreModels(snapshot);
-  const normal = createNormal(createRandom(seed));
-
-  const teamCount = teamIds.length;
-  const baseWinPoints = snapshot.teams.map((team) => team.wins + team.ties * 0.5);
-  const basePoints = snapshot.teams.map((team) => team.pointsFor);
-  const homeWins = new Uint8Array(runs * remainingGames.length);
-  const finalSeeds = new Uint8Array(runs * teamCount);
-  const seedCounts = teamIds.map(() => new Array<number>(teamCount).fill(0));
-  const totalWins = new Array<number>(teamCount).fill(0);
-
-  const winPoints = new Array<number>(teamCount);
-  const points = new Array<number>(teamCount);
-  const order = teamIds.map((_, index) => index);
-
-  for (let run = 0; run < runs; run += 1) {
-    for (let i = 0; i < teamCount; i += 1) {
-      winPoints[i] = baseWinPoints[i];
-      points[i] = basePoints[i];
-    }
-
-    remainingGames.forEach((game) => {
-      const home = teamIndex.get(game.homeTeamId);
-      const away = teamIndex.get(game.awayTeamId);
-      if (home === undefined || away === undefined) return;
-      const homeModel = models.get(game.homeTeamId) ?? { mean: 0, sd: 0 };
-      const awayModel = models.get(game.awayTeamId) ?? { mean: 0, sd: 0 };
-      const homeScore = Math.max(0, homeModel.mean + homeModel.sd * normal());
-      const awayScore = Math.max(0, awayModel.mean + awayModel.sd * normal());
-      points[home] += homeScore;
-      points[away] += awayScore;
-      const homeWon = homeScore >= awayScore;
-      winPoints[homeWon ? home : away] += 1;
-      homeWins[run * remainingGames.length + game.index] = homeWon ? 1 : 0;
-    });
-
-    order.sort((a, b) => winPoints[b] - winPoints[a] || points[b] - points[a]);
-    order.forEach((teamIdx, position) => {
-      finalSeeds[run * teamCount + teamIdx] = position + 1;
-      seedCounts[teamIdx][position] += 1;
-    });
-    for (let i = 0; i < teamCount; i += 1) totalWins[i] += winPoints[i];
-  }
-
-  const outlooks = new Map<number, TeamOutlook>();
-  teamIds.forEach((teamId, index) => {
-    const seedOdds = seedCounts[index].map((count) => count / Math.max(runs, 1));
-    const sumThrough = (cut: number) => seedOdds.slice(0, cut).reduce((sum, odds) => sum + odds, 0);
-    const mostLikely = seedOdds.reduce((best, odds, i) => (odds > seedOdds[best] ? i : best), 0);
-    outlooks.set(teamId, {
-      teamId,
-      playoffOdds: sumThrough(snapshot.playoffTeamCount),
-      byeOdds: sumThrough(snapshot.playoffByeCount),
-      seedOdds,
-      mostLikelySeed: mostLikely + 1,
-      projectedWins: totalWins[index] / Math.max(runs, 1),
-    });
+  const scores = completedScoresByTeam(snapshot);
+  return playOutSeason({
+    teams: snapshot.teams.map((team) => ({
+      id: team.id,
+      winPoints: team.wins + team.ties * 0.5,
+      pointsFor: team.pointsFor,
+      scores: scores.get(team.id) ?? [],
+    })),
+    remainingGames,
+    seedOrder: recordSeedOrder,
+    playoffTeamCount: snapshot.playoffTeamCount,
+    playoffByeCount: snapshot.playoffByeCount,
+    ...options,
   });
-
-  return { scheduleComplete: true, runs, teamIds, remainingGames, outlooks, homeWins, finalSeeds };
 }
 
 const targetCut = (snapshot: SisterLeagueSnapshot, target: PlayoffTarget): number =>

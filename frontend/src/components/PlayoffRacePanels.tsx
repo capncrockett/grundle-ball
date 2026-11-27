@@ -1,5 +1,23 @@
-import type { ReactNode } from 'react';
-import type { PlayoffNarratives } from '../pages/narratives';
+import { Fragment, type ReactNode } from 'react';
+import type { NarrativeOdds, PlayoffNarratives } from '../pages/narratives';
+import { DEFAULT_SIMULATION_RUNS } from '../utils/seasonSimulation';
+
+// Shown in the panel header so the odds stay visible while it is collapsed.
+function RaceOddsLine({ odds }: { odds: NarrativeOdds }) {
+  return (
+    <span data-testid="race-odds">
+      {odds.label}:{' '}
+      {odds.entries.map(({ team, value }, index) => (
+        <Fragment key={team.sleeperRosterId}>
+          {index > 0 && ' · '}
+          {team.teamName} <span className="font-semibold tabular-nums">{value}</span>
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
+const ODDS_FOOTNOTE = `Odds are the share of ${DEFAULT_SIMULATION_RUNS.toLocaleString()} simulated finishes to the regular season; Standings shows every team.`;
 
 type NarrativeAccordionProps = {
   title: string;
@@ -47,7 +65,10 @@ export function PlayoffRacePanels({ narratives }: { narratives: PlayoffNarrative
   return (
     <div className="grid items-start gap-3 lg:grid-cols-3">
       {narratives.bubble && (
-        <NarrativeAccordion title={narratives.bubble.heading}>
+        <NarrativeAccordion
+          title={narratives.bubble.heading}
+          subtitle={narratives.bubble.odds && <RaceOddsLine odds={narratives.bubble.odds} />}
+        >
           <p className="text-base-content/90">{narratives.bubble.summary}</p>
           <ul className="list-disc list-inside text-base-content/80 space-y-1">
             {narratives.bubble.scenarios.map((line, idx) => (
@@ -57,11 +78,17 @@ export function PlayoffRacePanels({ narratives }: { narratives: PlayoffNarrative
           {narratives.bubble.note && (
             <p className="text-xs text-base-content/70">{narratives.bubble.note}</p>
           )}
+          {narratives.bubble.odds && (
+            <p className="text-xs text-base-content/60">{ODDS_FOOTNOTE}</p>
+          )}
         </NarrativeAccordion>
       )}
 
       {narratives.bye && (
-        <NarrativeAccordion title={narratives.bye.heading}>
+        <NarrativeAccordion
+          title={narratives.bye.heading}
+          subtitle={narratives.bye.odds && <RaceOddsLine odds={narratives.bye.odds} />}
+        >
           <p className="text-base-content/90">{narratives.bye.summary}</p>
           <ul className="list-disc list-inside text-base-content/80 space-y-1">
             {narratives.bye.scenarios.map((line, idx) => (
@@ -71,6 +98,7 @@ export function PlayoffRacePanels({ narratives }: { narratives: PlayoffNarrative
           {narratives.bye.note && (
             <p className="text-xs text-base-content/70">{narratives.bye.note}</p>
           )}
+          {narratives.bye.odds && <p className="text-xs text-base-content/60">{ODDS_FOOTNOTE}</p>}
         </NarrativeAccordion>
       )}
 

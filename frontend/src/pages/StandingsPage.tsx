@@ -11,6 +11,13 @@ import {
   loadRemainingGames,
   regularSeasonWeeksFor,
 } from '../utils/grundleSeedRanges';
+import {
+  GRUNDLE_BYE_SEEDS,
+  GRUNDLE_PLAYOFF_TEAMS,
+  loadCompletedScores,
+  simulateGrundleSeason,
+} from '../utils/grundleOdds';
+import { formatOdds } from '../utils/seasonSimulation';
 import type { Team } from '../models/fantasy';
 import { TeamAvatars } from '../components/common/TeamAvatars';
 import { computeStandingsInsights, MIN_GAMES_FOR_INSIGHTS } from './standingsInsights';
@@ -85,6 +92,8 @@ export function StandingsPage() {
   const [leagueSeason, setLeagueSeason] = useState<string | null>(null);
   const [league, setLeague] = useState<SleeperLeague | null>(null);
   const [remainingGames, setRemainingGames] = useState<ScheduledGame[] | null>(null);
+  const [completedScores, setCompletedScores] = useState<Map<number, number[]> | null>(null);
+  const [oddsPending, setOddsPending] = useState<boolean>(true);
 
   // Best/worst seeds from the real remaining schedule (see grundleSeedRanges.ts).
   const seedRanges = useMemo(
@@ -92,6 +101,16 @@ export function StandingsPage() {
       teams.length ? computeGrundleSeedRanges(teams, remainingGames, regularSeasonWeeks) : null,
     [teams, remainingGames, regularSeasonWeeks],
   );
+
+  // Playoff/bye odds from simulated finishes (see grundleOdds.ts).
+  const simulation = useMemo(
+    () =>
+      teams.some((team) => gamesPlayed(team) > 0)
+        ? simulateGrundleSeason(teams, remainingGames, completedScores, regularSeasonWeeks)
+        : null,
+    [teams, remainingGames, completedScores, regularSeasonWeeks],
+  );
+  const gamesRemain = teams.some((team) => gamesPlayed(team) < regularSeasonWeeks);
 
   const storedMatchups = useMemo(
     () =>
@@ -226,11 +245,17 @@ export function StandingsPage() {
         const hasCompletedGames = merged.some((team) => gamesPlayed(team) > 0);
 
         setTeams(hasCompletedGames ? computeSeeds(merged) : merged);
-        // Schedule data only refines the conservative ranges. Keep the
-        // standings available while these optional requests are pending.
+        // Schedule data only refines the conservative ranges and adds odds.
+        // Keep the standings available while these optional requests are pending.
         if (hasCompletedGames) {
-          void loadRemainingGames(LEAGUE_ID, merged, totalWeeks).then((schedule) => {
-            if (!cancelled) setRemainingGames(schedule);
+          const schedule = loadRemainingGames(LEAGUE_ID, merged, totalWeeks).then((games) => {
+            if (!cancelled) setRemainingGames(games);
+          });
+          const scores = loadCompletedScores(LEAGUE_ID, merged).then((weekly) => {
+            if (!cancelled) setCompletedScores(weekly);
+          });
+          void Promise.all([schedule, scores]).then(() => {
+            if (!cancelled) setOddsPending(false);
           });
         }
       } catch (err) {
@@ -505,6 +530,8 @@ export function StandingsPage() {
                       <th>Team</th>
                       {showDivisionColumn && <th>Division</th>}
                       <th>B/W</th>
+                      <th className="text-right">Playoffs</th>
+                      <th className="text-right">Bye</th>
                       <th>Owner</th>
                       <th>Record</th>
                       <th>Points For</th>
@@ -520,6 +547,7 @@ export function StandingsPage() {
                       const paPfRatio =
                         team.pointsFor > 0 ? team.pointsAgainst / team.pointsFor : null;
                       const bw = bestWorstRange(team, teams, marginByTeam, latestCompletedWeek);
+                      const outlook = simulation?.outlooks.get(team.sleeperRosterId);
 
                       return (
                         <tr key={team.sleeperRosterId}>
@@ -559,6 +587,22 @@ export function StandingsPage() {
                               <span className="ml-1 text-[0.65rem] text-base-content/60">sc</span>
                             )}
                           </td>
+                          <td className="text-right tabular-nums">
+                            {outlook
+                              ? formatOdds(outlook.playoffOdds, {
+                                  clinched: bw.worst <= GRUNDLE_PLAYOFF_TEAMS,
+                                  eliminated: bw.best > GRUNDLE_PLAYOFF_TEAMS,
+                                })
+                              : '-'}
+                          </td>
+                          <td className="text-right tabular-nums">
+                            {outlook
+                              ? formatOdds(outlook.byeOdds, {
+                                  clinched: bw.worst <= GRUNDLE_BYE_SEEDS,
+                                  eliminated: bw.best > GRUNDLE_BYE_SEEDS,
+                                })
+                              : '-'}
+                          </td>
                           <td>
                             <div className="flex items-center gap-2">
                               {team.userAvatarUrl && (
@@ -597,6 +641,24 @@ export function StandingsPage() {
                       </li>
                     ))}
                   </ul>
+                  {gamesRemain && simulation?.scheduleComplete && (
+                    <p className="text-xs text-base-content/70 pt-2">
+                      <span className="font-semibold">Playoffs</span> and{' '}
+                      <span className="font-semibold">Bye</span> are the share of{' '}
+                      {simulation.runs.toLocaleString()} simulated finishes to the regular season.
+                      Each remaining game is played out with every team scoring around its own
+                      season average (nudged slightly toward the league average) with its own
+                      week-to-week swings, then seeded by league rules: division winners, the next
+                      two records, and the points-for seed. They are estimates, not guarantees; 100%
+                      and 0% appear only once a result is mathematically settled.
+                    </p>
+                  )}
+                  {gamesRemain && !oddsPending && !simulation?.scheduleComplete && (
+                    <p className="text-xs text-base-content/70 pt-2" role="status">
+                      Playoff and bye odds are unavailable because Sleeper did not return every
+                      completed score and remaining matchup.
+                    </p>
+                  )}
                 </div>
               </div>
             </>
