@@ -23,6 +23,7 @@ See [the development workflow](docs/agent-workflow.md) for command behavior, fix
 | Domain glossary (ubiquitous language)                   | `CONTEXT.md` (created when terminology work starts)                                          |
 | Architecture Decision Records                           | `docs/adr/` (created lazily)                                                                 |
 | Versioning and release policy                           | `docs/versioning.md`                                                                         |
+| Dated investigations and research notes                 | `docs/investigations/`                                                                       |
 | Agent task map and verification workflow                | [docs/agent-workflow.md](docs/agent-workflow.md)                                             |
 | Installed agent skills                                  | `.agents/skills/`                                                                            |
 | League constitution source of truth                     | `frontend/src/content/constitution.md`                                                       |
